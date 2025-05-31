@@ -1,0 +1,9 @@
+# Sample inputs for the miner scoring circuit
+annualized_return = 1500 # 15% * SCALE
+max_drawdown = 500 # 5% * SCALE
+annualized_volatility = 800 # 8% * SCALE
+positive_returns_sum = 2500 # 25% * SCALE
+negative_returns_sum = 1000 # 10% * SCALE
+annualized_downside_deviation = 600 # 6% * SCALE
+t_statistic = 25000 # 2.5 * SCALE
+risk_profile_penalty = 2000 # 20% * SCALE
