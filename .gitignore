@@ -1,1 +1,54 @@
 build/**
+data/*
+/data/*
+/data/children/**
+.idea/*
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Noir circuit artifacts
+**/target/**
+circuits/*.gz
+circuits/proof
+circuits/vk
+circuits/Prover.toml
+
+# ZK proof artifacts
+*.proof
+*.vk
+vk_*/**
+proof_*
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build artifacts
+*.json.gz
+*.witness
+*.r1cs
+*.wasm
+*.zkey
+*.ptau
+
+# IDE and editor files
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+**venv**
+**Prover.toml
+**vk**
+**.json
