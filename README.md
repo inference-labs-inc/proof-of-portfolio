@@ -1,107 +1,137 @@
 # Proof of Portfolio
 
-This project provides tools for analyzing and scoring miner portfolios using both Python and Noir (for zero-knowledge proofs).
+A zero-knowledge proof system for privacy-preserving trading performance verification. This project enables miners to prove their trading performance using sophisticated financial metrics without revealing sensitive trading data. It also allows validators to publish records of miners' performance without revealing the miners' identities or their trading data.
 
-## Overview
+## Features
 
-The Proof of Portfolio project allows you to:
+- **Privacy-Preserving Verification**: Prove trading performance without revealing individual trades
+- **Sophisticated Financial Metrics**: 5 industry-standard performance calculations
+- **Merkle Tree Inclusion Proofs**: Cryptographic verification of trading signal authenticity
 
-1. Analyze trading data from miners
-2. Calculate performance metrics (Calmar ratio, Sharpe ratio, etc.)
-3. Generate an overall score for each miner
-4. Create zero-knowledge proofs of the scoring calculations using Noir
+## Financial Metrics
+
+The system calculates 5 sophisticated trading performance metrics:
+
+1. **Calmar Ratio**: Risk-adjusted return considering maximum drawdown
+2. **Sharpe Ratio**: Return per unit of volatility risk
+3. **Omega Ratio**: Probability-weighted ratio of gains vs losses
+4. **Sortino Ratio**: Downside deviation-adjusted returns
+5. **Statistical Confidence**: T-statistic based confidence measure
+
+All calculations are performed from raw daily returns, ensuring mathematical integrity.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.7+
-- Node.js and npm (for Noir CLI)
-- Noir toolchain (see [Noir Interface README](README_noir_interface.md) for installation instructions)
+- [Noir](https://noir-lang.org/) - Zero-knowledge proof framework
+- Python 3.7+ (for input generation)
+
+### Installation
+
+1. Install Noir:
+
+```bash
+curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+noirup
+```
+
+2. Clone and navigate to the project:
+
+```bash
+git clone https://github.com/inference-labs-inc/proof-of-portfolio
+cd proof-of-portfolio/circuits
+```
 
 ## Usage
 
-### 1. Input Data
-
-Place your miner data files in the `data/children` directory. Each file should be a JSON file named with the miner's hotkey as the filename (e.g., `5CcNVDt7YLa8YbyUJxS7TZ9y5gsR3qNq3rbKGU6B4A4H541W.json`).
-
-The JSON files should contain an array of position objects with the following structure:
-
-```json
-[
-  {
-    "is_closed_position": true,
-    "close_ms": 1625097600000,
-    "return_at_close": 1.05,
-    ...
-  },
-  ...
-]
-```
-
-### 2. Analyze Data
-
-To analyze the data and calculate scores for all miners:
-
-```python
-from main import Main
-
-# Create an instance of the Main class
-main = Main()
-
-# Get scores for all miners
-scores = main.get_all_scores()
-
-# Print the scores
-for miner_hotkey, score in scores.items():
-    print(f"{miner_hotkey}: {score:.4f}")
-```
-
-### 3. Test Scores in Python
-
-You can run the test script to see how the scoring functions work:
+### 1. Generate Test Inputs
 
 ```bash
-python src/test_noir_scoring.py
+python3 generate_inputs.py
 ```
 
-This will:
-- Test the scoring functions with sample data
-- Test with real miner data (simplified)
-- Test using the Noir CLI (if installed)
+This creates `Prover.toml` with test trading signals and proper Merkle tree data.
 
-### 4. Use the Noir CLI
-
-For generating and verifying zero-knowledge proofs of the scoring calculations, you can use the Noir CLI. See the [Noir Interface README](README_noir_interface.md) for detailed instructions.
-
-Basic usage:
+### 2. Execute the Circuit
 
 ```bash
-# Compile the circuit
-cd circuits
+nargo execute
+```
+
+This runs the circuit and outputs:
+
+- Trading performance score
+- Merkle verification status (true/false)
+
+### 3. Run Tests
+
+```bash
+nargo test
+```
+
+### 4. Generate Proof
+
+For proving, the Barretenberg backend is used:
+
+```bash
+# Compile to ACIR first
 nargo compile
 
-# Generate a proof
-nargo prove
-
-# Verify a proof
-nargo verify
+# Generate proof using Barretenberg (requires additional setup)
+bb prove -b ./target/miner_scoring.json -w ./target/miner_scoring.gz -o ./proof
+bb write_vk -b ./target/miner_scoring.json -o ./vk
+bb verify -k ./vk -p ./proof
 ```
+
+> [!NOTE]
+> Proof generation requires the Barretenberg proving system to be installed separately.
+
+## Circuit Architecture
+
+### Input Structure
+
+| Name              | Type                 | Description                                                      |
+| ----------------- | -------------------- | ---------------------------------------------------------------- |
+| `trading_signals` | `Vec<TradingSignal>` | Array of trading data (miner_hotkey, trade_pair_id, price, etc.) |
+| `merkle_proofs`   | `Vec<MerkleProof>`   | Inclusion paths and indices for signal verification              |
+| `parameters`      | `Parameters`         | Risk thresholds and penalty factors                              |
+
+### Output
+
+| Name       | Type   | Description                                 |
+| ---------- | ------ | ------------------------------------------- |
+| `score`    | `u64`  | Composite performance score (0-1000+ range) |
+| `verified` | `bool` | Boolean indicating Merkle proof validity    |
+
+### Privacy Model
+
+- **Private Inputs**: Individual trading signals (sensitive trading data)
+- **Public Inputs**: Merkle paths, root, risk parameters (structural verification data)
+- **Public Outputs**: Aggregated score and verification status
 
 ## Project Structure
 
-- `src/` - Python source code
-  - `main.py` - Main analysis functions
-  - `noir_interface.py` - Interface to the Noir implementation
-  - `test_noir_scoring.py` - Test script for the scoring functions
-- `circuits/` - Noir implementation
-  - `src/main.nr` - Main entry point for the Noir circuit
-  - `src/miner_scoring/miner_scoring.nr` - Scoring functions implementation
-  - `Nargo.toml` - Noir project configuration
-  - `Prover.toml` - Sample inputs for testing
-- `data/` - Data directory
-  - `children/` - Miner data files
+```
+circuits/
+├── src/main.nr              # Main circuit implementation
+├── Nargo.toml              # Noir project configuration
+├── generate_inputs.py      # Test input generator
+├── Prover.toml            # Generated test inputs (ignored by git)
+└── target/                # Build artifacts (ignored by git)
+```
 
-## Documentation
+## Contributing
 
-- [Noir Interface README](README_noir_interface.md) - Detailed documentation on the Noir interface and CLI usage
+1. Ensure all tests pass before submitting changes
+2. Add safety comments to any `unsafe` blocks
+3. Update test cases for new functionality
+4. Maintain backward compatibility for input formats
+
+## License
+
+MIT
+
+## Acknowledgments
+
+Built with [Noir](https://noir-lang.org/) - A domain-specific language for zero-knowledge proofs.
