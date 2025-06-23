@@ -1,5 +1,6 @@
 build/**
 data/*
+/data/*
 .idea/*
 **/__pycache__/
 *.pyc
