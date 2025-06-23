@@ -1,8 +1,7 @@
 [package]
-name = "miner_scoring"
+name = "circuits"
 type = "bin"
-version = "0.1.0"
-authors = ["Proof of Portfolio Team"]
-description = "Noir implementation of miner scoring functions"
+authors = ["Inference Labs Inc"]
 
 [dependencies]
+components = { path = "./components" }

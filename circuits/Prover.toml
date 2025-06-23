@@ -1,198 +1,2821 @@
-
-
-# Circuit parameters
-n_signals = "1"
-merkle_root = "11867626551045947428625699719016106318414315494538029175888081011781332338787"
-max_drawdown = "300"
-risk_profile_penalty = "1000"
-
-
-path_elements = [
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-]
-
-path_indices = [
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-    [
-        "0",
-        "0",
-        "0",
-        "0",
-    ],
-]
+RISK_FREE_RATE = ""
+actual_len = ""
+merkle_root = ""
+path_elements = [["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]
+path_indices = [["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""], ["", "", "", ""]]
 
 [[signals]]
-miner_hotkey = ["1", "2"]
-trade_pair_id = "1"
-order_type = "1"
-leverage_scaled = "2"
-price_scaled = "100000"
-processed_ms = "1234567890"
-order_uuid = ["1", "1"]
-position_uuid = ["1", "1"]
-src = "1"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
 
 [[signals]]
-miner_hotkey = ["0", "0"]
-trade_pair_id = "0"
-order_type = "0"
-leverage_scaled = "0"
-price_scaled = "0"
-processed_ms = "0"
-order_uuid = ["0", "0"]
-position_uuid = ["0", "0"]
-src = "0"
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""
+
+[[signals]]
+leverage_scaled = ""
+miner_hotkey = ["", ""]
+order_type = ""
+order_uuid = ["", ""]
+position_uuid = ["", ""]
+price_scaled = ""
+processed_ms = ""
+src = ""
+trade_pair_id = ""

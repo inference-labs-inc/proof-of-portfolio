@@ -7,7 +7,7 @@ data/*
 *.pyd
 
 # Noir circuit artifacts
-circuits/target/
+**/target/**
 circuits/*.gz
 circuits/proof
 circuits/vk
