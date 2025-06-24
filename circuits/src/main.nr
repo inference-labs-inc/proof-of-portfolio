@@ -20,26 +20,37 @@ fn calculate_simple_returns(
     let mut position_open = false;
     let mut entry_price: i64 = 0;
     let mut leverage: i64 = 1;
+    let mut position_is_short = false;
 
     for i in 0..MAX_SIGNALS {
         if (i as u32) < actual_len {
             let signal = signals[i];
-            // Open trade
-            if signal.order_type == 1 {
+
+            let type_u8 = signal.order_type as u8;
+
+            // Check for open signals (1 for Long, 3 for Short)
+            if (type_u8 == 1) | (type_u8 == 3) {
                 if !position_open {
                     entry_price = signal.price_scaled as i64;
                     leverage = signal.leverage_scaled as i64;
+                    position_is_short = type_u8 == 3;
                     position_open = true;
                 }
-            } else if signal.order_type == 2 {
-                // Closed trade
+            }
+            // Check for close signals (2 for Long, 4 for Short)
+            else if (type_u8 == 2) | (type_u8 == 4) {
                 if position_open {
                     let exit_price = signal.price_scaled as i64;
                     let safe_entry_price = if entry_price == 0 { 1 } else { entry_price };
-                    let price_diff = exit_price - entry_price;
+                    let mut price_diff = exit_price - entry_price;
+
+                    // If it was a short position, profit is made when exit price is lower.
+                    if position_is_short {
+                        price_diff = -price_diff;
+                    }
 
                     // Taylor instead of log
-                    let return_value = (price_diff * leverage * 10000) / safe_entry_price;
+                    let return_value = (price_diff * leverage * 100) / safe_entry_price;
 
                     if (return_count as u32) < MAX_SIGNALS {
                         returns[return_count] = return_value;

@@ -1,7 +1,7 @@
 use std;
 
 // Globals
-pub global MERKLE_DEPTH: u32 = 4;
+pub global MERKLE_DEPTH: u32 = 8;
 
 pub struct TradingSignal {
     pub miner_hotkey: [Field; 2],

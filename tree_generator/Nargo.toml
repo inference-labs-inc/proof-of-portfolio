@@ -1,8 +1,8 @@
 [package]
-name = "circuits"
+name = "tree_generator"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.28.0"
 
 [dependencies]
-components = { path = "./components" }
+components = { path = "../circuits/components" }
