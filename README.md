@@ -29,6 +29,39 @@ All calculations are performed from raw daily returns, ensuring mathematical int
 
 ### Installation
 
+#### Option 1: Using the install script (Recommended)
+
+The project includes an installation script that will set up all required dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/inference-labs-inc/proof-of-portfolio
+cd proof-of-portfolio
+
+# Make the script executable
+chmod +x install.sh
+
+# Run the installation script (interactive mode)
+./install.sh
+```
+
+The script supports various options:
+
+```bash
+# Install all dependencies without prompts
+./install.sh --all
+
+# Install specific dependencies
+./install.sh --with-bignum --with-barretenberg
+
+# Show help
+./install.sh --help
+```
+
+#### Option 2: Manual Installation
+
+If you prefer to install dependencies manually:
+
 1. Install Noir:
 
 ```bash
