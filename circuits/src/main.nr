@@ -8,9 +8,19 @@ use components::utils::{
     variance::variance,
 };
 
+mod integration_tests;
+mod merkle_tests;
+mod returns_calculation_tests;
+mod edge_case_tests;
+mod extreme_value_tests;
+mod test_calmar;
+mod test_core_functions;
+mod test_utils_functions;
+mod test_merkle_functions;
+
 global MAX_SIGNALS: u32 = 256;
 
-fn calculate_simple_returns(
+pub fn calculate_simple_returns(
     signals: [TradingSignal; MAX_SIGNALS],
     actual_len: u32,
 ) -> ([i64; MAX_SIGNALS], u32) {
@@ -28,7 +38,6 @@ fn calculate_simple_returns(
 
             let type_u8 = signal.order_type as u8;
 
-            // Check for open signals (1 for Long, 3 for Short)
             if (type_u8 == 1) | (type_u8 == 3) {
                 if !position_open {
                     entry_price = signal.price_scaled as i64;
@@ -36,27 +45,23 @@ fn calculate_simple_returns(
                     position_is_short = type_u8 == 3;
                     position_open = true;
                 }
-            }
-            // Check for close signals (2 for Long, 4 for Short)
-            else if (type_u8 == 2) | (type_u8 == 4) {
+            } else if (type_u8 == 2) | (type_u8 == 4) {
                 if position_open {
                     let exit_price = signal.price_scaled as i64;
                     let safe_entry_price = if entry_price == 0 { 1 } else { entry_price };
                     let mut price_diff = exit_price - entry_price;
 
-                    // If it was a short position, profit is made when exit price is lower.
                     if position_is_short {
                         price_diff = -price_diff;
                     }
 
-                    // Taylor instead of log
                     let return_value = (price_diff * leverage * 100) / safe_entry_price;
 
                     if (return_count as u32) < MAX_SIGNALS {
                         returns[return_count] = return_value;
                         return_count = return_count + 1;
                     }
-                    position_open = false; // Reset for the next position
+                    position_open = false;
                 }
             }
         }

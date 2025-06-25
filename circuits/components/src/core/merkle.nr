@@ -52,3 +52,71 @@ pub fn merkle_inclusion_check(
 
     current_hash == merkle_root
 }
+
+#[test]
+fn test_hash_signal_consistency() {
+    let signal1 = TradingSignal {
+        miner_hotkey: [1, 2],
+        trade_pair_id: 10,
+        order_type: 1,
+        leverage_scaled: 1000,
+        price_scaled: 50000,
+        processed_ms: 1234567890,
+        order_uuid: [100, 200],
+        position_uuid: [300, 400],
+        src: 1,
+    };
+
+    let hash1 = hash_signal(signal1);
+    let hash2 = hash_signal(signal1);
+    assert(hash1 == hash2);
+}
+
+#[test]
+fn test_hash_signal_different_inputs() {
+    let signal1 = TradingSignal {
+        miner_hotkey: [1, 2],
+        trade_pair_id: 10,
+        order_type: 1,
+        leverage_scaled: 1000,
+        price_scaled: 50000,
+        processed_ms: 1234567890,
+        order_uuid: [100, 200],
+        position_uuid: [300, 400],
+        src: 1,
+    };
+
+    let signal2 = TradingSignal {
+        miner_hotkey: [1, 2],
+        trade_pair_id: 11,
+        order_type: 1,
+        leverage_scaled: 1000,
+        price_scaled: 50000,
+        processed_ms: 1234567890,
+        order_uuid: [100, 200],
+        position_uuid: [300, 400],
+        src: 1,
+    };
+
+    let hash1 = hash_signal(signal1);
+    let hash2 = hash_signal(signal2);
+    assert(hash1 != hash2);
+}
+
+#[test]
+fn test_signal_hash_with_zeros() {
+    let signal = TradingSignal {
+        miner_hotkey: [0, 0],
+        trade_pair_id: 0,
+        order_type: 0,
+        leverage_scaled: 0,
+        price_scaled: 0,
+        processed_ms: 0,
+        order_uuid: [0, 0],
+        position_uuid: [0, 0],
+        src: 0,
+    };
+
+    let hash = hash_signal(signal);
+    assert(hash != 0);
+}

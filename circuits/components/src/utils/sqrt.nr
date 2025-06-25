@@ -47,3 +47,47 @@ pub fn sqrt(n: u64) -> u64 {
     assert((sqrt_result + 1) * (sqrt_result + 1) > n);
     sqrt_result
 }
+
+#[test]
+fn test_sqrt_perfect_squares() {
+    assert(sqrt(0) == 0);
+    assert(sqrt(1) == 1);
+    assert(sqrt(4) == 2);
+    assert(sqrt(9) == 3);
+    assert(sqrt(16) == 4);
+    assert(sqrt(25) == 5);
+    assert(sqrt(36) == 6);
+    assert(sqrt(49) == 7);
+    assert(sqrt(64) == 8);
+    assert(sqrt(81) == 9);
+    assert(sqrt(100) == 10);
+}
+
+#[test]
+fn test_sqrt_non_perfect_squares() {
+    assert(sqrt(2) == 1);
+    assert(sqrt(3) == 1);
+    assert(sqrt(5) == 2);
+    assert(sqrt(8) == 2);
+    assert(sqrt(10) == 3);
+    assert(sqrt(15) == 3);
+    assert(sqrt(24) == 4);
+    assert(sqrt(35) == 5);
+    assert(sqrt(48) == 6);
+    assert(sqrt(63) == 7);
+}
+
+#[test]
+fn test_sqrt_large_numbers() {
+    assert(sqrt(10000) == 100);
+    assert(sqrt(40000) == 200);
+    assert(sqrt(1000000) == 1000);
+}
+
+#[test]
+fn test_sqrt_constraints() {
+    let n = 50;
+    let result = sqrt(n);
+    assert(result * result <= n);
+    assert((result + 1) * (result + 1) > n);
+}

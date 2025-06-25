@@ -15,3 +15,62 @@ pub fn calmar(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i
         }
     }
 }
+
+#[test]
+fn test_calmar_normal_case() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 1000;
+    returns[1] = -500;
+    returns[2] = 2000;
+    returns[3] = -1000;
+    returns[4] = 500;
+    for i in 5..40 {
+        returns[i] = if i % 2 == 0 { 200 } else { -150 };
+    }
+
+    let result = calmar(returns, 40, 100);
+    assert(result != 0);
+}
+
+#[test]
+fn test_calmar_insufficient_data() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 1000;
+    returns[1] = -500;
+
+    let result = calmar(returns, 2, 100);
+    assert(result == 0);
+}
+
+#[test]
+fn test_calmar_exactly_30_days() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..30 {
+        returns[i] = 100;
+    }
+
+    let result = calmar(returns, 30, 50);
+    assert(result != 0);
+}
+
+#[test]
+fn test_calmar_zero_drawdown() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..50 {
+        returns[i] = 100;
+    }
+
+    let result = calmar(returns, 50, 50);
+    assert(result == 0);
+}
+
+#[test]
+fn test_calmar_negative_returns() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..50 {
+        returns[i] = -100;
+    }
+
+    let result = calmar(returns, 50, 0);
+    assert(result != 0);
+}
