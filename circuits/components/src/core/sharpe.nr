@@ -7,23 +7,28 @@ use crate::utils::{
     },
 };
 
-pub fn sharpe(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64) -> i64 {
-    // Check minimum sample size for statistical confidence
-    if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+pub fn sharpe_ratio(
+    daily_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    risk_free_rate: i64,
+    use_weighting: bool,
+    bypass_confidence: bool,
+) -> i64 {
+    let result = if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SHARPE_NOCONFIDENCE_VALUE
     } else {
-        let excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE);
-        let volatility = ann_volatility(log_returns, actual_len, 1);
-
-        // Use minimum standard deviation to avoid division by zero/small numbers
-        let effective_volatility = if volatility > SHARPE_STDDEV_MINIMUM {
-            volatility
-        } else {
+        let excess_return =
+            annualized_excess_return(daily_returns, actual_len, risk_free_rate, use_weighting);
+        let volatility = annualized_volatility(daily_returns, actual_len, use_weighting);
+        let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {
             SHARPE_STDDEV_MINIMUM
+        } else {
+            volatility
         };
 
-        (excess_return * SHARPE_SCALE_FACTOR) / effective_volatility
-    }
+        (excess_return * VOLATILITY_SCALE) / effective_volatility
+    };
+    result
 }
 
 #[test]
