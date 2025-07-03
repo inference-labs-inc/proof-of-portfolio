@@ -1,5 +1,6 @@
 // Array size for returns data
 pub global ARRAY_SIZE: u32 = 256;
+pub global SCALE: i64 = 10_000_000;
 
 // Financial calculation constants (based on Python ValiConfig)
 pub global DAYS_IN_YEAR: i64 = 365;

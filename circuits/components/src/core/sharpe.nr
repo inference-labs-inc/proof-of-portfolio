@@ -1,19 +1,18 @@
 use crate::utils::{
-    ann_excess_return::ann_excess_return,
-    ann_volatility::ann_volatility,
+    ann_excess_return::annualized_excess_return,
+    ann_volatility::annualized_volatility,
     constants::{
-        ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_SCALE_FACTOR, SHARPE_STDDEV_MINIMUM,
-        STATISTICAL_CONFIDENCE_MINIMUM_N,
+        ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE
     },
 };
 
-pub fn sharpe_ratio(
+pub fn sharpe(
     daily_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     risk_free_rate: i64,
     use_weighting: bool,
     bypass_confidence: bool,
-) -> i64 {
+) -> pub i64 {
     let result = if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SHARPE_NOCONFIDENCE_VALUE
     } else {
@@ -26,7 +25,7 @@ pub fn sharpe_ratio(
             volatility
         };
 
-        (excess_return * VOLATILITY_SCALE) / effective_volatility
+        (excess_return * SCALE) / effective_volatility
     };
     result
 }
@@ -40,7 +39,7 @@ fn test_sharpe_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = sharpe(returns, 5, 100);
+    let result = sharpe(returns, 5, 100, false, false);
     assert(result != 0);
 }
 
@@ -51,7 +50,7 @@ fn test_sharpe_low_volatility() {
         returns[i] = 50;
     }
 
-    let result = sharpe(returns, 10, 10);
+    let result = sharpe(returns, 10, 10, false, false);
     assert(result == 0);
 }
 
@@ -64,6 +63,6 @@ fn test_sharpe_high_volatility() {
     returns[3] = -2000;
     returns[4] = 1000;
 
-    let result = sharpe(returns, 5, 200);
+    let result = sharpe(returns, 5, 200, false, false);
     assert(result != 0);
 }
