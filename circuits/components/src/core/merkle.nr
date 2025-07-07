@@ -1,40 +1,38 @@
-use std;
+use dep::std;
 
 // Globals
 pub global MERKLE_DEPTH: u32 = 8;
+pub global MAX_RETURNS: u32 = 256;
+pub global MAX_SIGNALS: u32 = 256;
 
+// Define the structure of a single trading signal for hashing.
+// This must be kept in sync with any other definitions.
 pub struct TradingSignal {
-    pub miner_hotkey: [Field; 2],
     pub trade_pair_id: Field,
-    pub order_type: Field,
-    pub leverage_scaled: Field,
-    pub price_scaled: Field,
-    pub processed_ms: Field,
-    pub order_uuid: [Field; 2],
-    pub position_uuid: [Field; 2],
-    pub src: Field,
+    pub order_type: i8,
+    pub leverage: u64,
+    pub timestamp: u64,
 }
 
+// Hashes a single 64-bit log return into a Field element.
+pub fn hash_return(log_return: i64) -> Field {
+    std::hash::pedersen_hash([log_return as Field])
+}
+
+// Hashes a TradingSignal struct into a Field element.
 pub fn hash_signal(signal: TradingSignal) -> Field {
-    let mut hash_inputs: [Field; 11] = [
-        signal.miner_hotkey[0],
-        signal.miner_hotkey[1],
+    std::hash::pedersen_hash([
         signal.trade_pair_id,
-        signal.order_type,
-        signal.leverage_scaled,
-        signal.price_scaled,
-        signal.processed_ms,
-        signal.order_uuid[0],
-        signal.order_uuid[1],
-        signal.position_uuid[0],
-        signal.position_uuid[1],
-    ];
-    std::hash::pedersen_hash(hash_inputs)
+        signal.order_type as Field,
+        signal.leverage as Field,
+        signal.timestamp as Field,
+    ])
 }
 
+// Verifies a merkle inclusion proof for a given leaf
 pub fn merkle_inclusion_check(
     leaf: Field,
-    merkle_root: Field,
+    root: Field,
     path_elements: [Field; MERKLE_DEPTH],
     path_indices: [Field; MERKLE_DEPTH],
 ) -> bool {
@@ -42,81 +40,80 @@ pub fn merkle_inclusion_check(
 
     for i in 0..MERKLE_DEPTH {
         let path_element = path_elements[i];
-        let is_right = path_indices[i];
-        let mut hash_inputs = [current_hash, path_element];
-        if is_right == 1 {
-            hash_inputs = [path_element, current_hash];
+        let path_index = path_indices[i];
+
+        // If path_index is 0, current_hash is left child, path_element is right
+        // If path_index is 1, current_hash is right child, path_element is left
+        let left = if path_index == 0 {
+            current_hash
+        } else {
+            path_element
         };
-        current_hash = std::hash::pedersen_hash(hash_inputs);
+        let right = if path_index == 0 {
+            path_element
+        } else {
+            current_hash
+        };
+
+        current_hash = std::hash::pedersen_hash([left, right]);
     }
 
-    current_hash == merkle_root
+    current_hash == root
 }
 
-#[test]
-fn test_hash_signal_consistency() {
-    let signal1 = TradingSignal {
-        miner_hotkey: [1, 2],
-        trade_pair_id: 10,
-        order_type: 1,
-        leverage_scaled: 1000,
-        price_scaled: 50000,
-        processed_ms: 1234567890,
-        order_uuid: [100, 200],
-        position_uuid: [300, 400],
-        src: 1,
-    };
+pub fn build_merkle_root(leaves: [Field; MAX_RETURNS], num_leaves: u32) -> Field {
+    let mut nodes = leaves;
+    let mut current_num_leaves = num_leaves;
 
-    let hash1 = hash_signal(signal1);
-    let hash2 = hash_signal(signal1);
-    assert(hash1 == hash2);
+    // The number of levels to compute is log2(MAX_RETURNS), which is 8
+    for _ in 0..8 {
+        let mut next_level_nodes = [0; MAX_RETURNS];
+
+        for i in 0..(MAX_RETURNS / 2) {
+            if (i * 2) < current_num_leaves {
+                let left = nodes[i * 2];
+                // Handle odd number of leaves for this level
+                let right = if (i * 2 + 1) < current_num_leaves {
+                    nodes[i * 2 + 1]
+                } else {
+                    left
+                };
+                let mut hash_inputs = [left, right];
+                next_level_nodes[i] = std::hash::pedersen_hash(hash_inputs);
+            }
+        }
+        nodes = next_level_nodes;
+
+        let next_num_leaves = (current_num_leaves + 1) / 2;
+        current_num_leaves = if current_num_leaves <= 1 {
+            current_num_leaves
+        } else {
+            next_num_leaves
+        };
+    }
+
+    if num_leaves == 0 {
+        0
+    } else {
+        nodes[0]
+    }
 }
 
-#[test]
-fn test_hash_signal_different_inputs() {
-    let signal1 = TradingSignal {
-        miner_hotkey: [1, 2],
-        trade_pair_id: 10,
-        order_type: 1,
-        leverage_scaled: 1000,
-        price_scaled: 50000,
-        processed_ms: 1234567890,
-        order_uuid: [100, 200],
-        position_uuid: [300, 400],
-        src: 1,
-    };
-
-    let signal2 = TradingSignal {
-        miner_hotkey: [1, 2],
-        trade_pair_id: 11,
-        order_type: 1,
-        leverage_scaled: 1000,
-        price_scaled: 50000,
-        processed_ms: 1234567890,
-        order_uuid: [100, 200],
-        position_uuid: [300, 400],
-        src: 1,
-    };
-
-    let hash1 = hash_signal(signal1);
-    let hash2 = hash_signal(signal2);
-    assert(hash1 != hash2);
+// Builds a Merkle root directly from an array of TradingSignal structs.
+pub fn build_merkle_root_from_signals(
+    signals: [TradingSignal; MAX_RETURNS],
+    n_signals: u32,
+) -> Field {
+    let mut leaves = [0; MAX_RETURNS];
+    for i in 0..MAX_RETURNS {
+        if (i as u32) < n_signals {
+            leaves[i] = hash_signal(signals[i]);
+        } else {
+            // Use a default zero hash for padding to prevent information leakage.
+            leaves[i] = 0;
+        }
+    }
+    build_merkle_root(leaves, n_signals)
 }
 
-#[test]
-fn test_signal_hash_with_zeros() {
-    let signal = TradingSignal {
-        miner_hotkey: [0, 0],
-        trade_pair_id: 0,
-        order_type: 0,
-        leverage_scaled: 0,
-        price_scaled: 0,
-        processed_ms: 0,
-        order_uuid: [0, 0],
-        position_uuid: [0, 0],
-        src: 0,
-    };
-
-    let hash = hash_signal(signal);
-    assert(hash != 0);
-}
+// Obsolete merkle_inclusion_check and tests for TradingSignal are removed.

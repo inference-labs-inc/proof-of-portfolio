@@ -1,4 +1,5 @@
 pub mod calmar;
+pub mod cps_to_log_returns;
 pub mod drawdown;
 pub mod merkle;
 pub mod omega;

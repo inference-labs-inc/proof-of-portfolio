@@ -1,11 +1,11 @@
 use crate::utils::{ann_excess_return::ann_excess_return, constants::ARRAY_SIZE};
 use super::drawdown::daily_max_drawdown;
 
-pub fn calmar(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64) -> i64 {
+pub fn calmar(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64, use_weighting: bool) -> i64 {
     if actual_len < 30 {
         0
     } else {
-        let ann_excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE);
+        let ann_excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, use_weighting);
         let max_drawdown = daily_max_drawdown(log_returns, actual_len);
 
         if max_drawdown == 0 {
@@ -28,7 +28,7 @@ fn test_calmar_normal_case() {
         returns[i] = if i % 2 == 0 { 200 } else { -150 };
     }
 
-    let result = calmar(returns, 40, 100);
+    let result = calmar(returns, 40, 100, false);
     assert(result != 0);
 }
 
@@ -38,7 +38,7 @@ fn test_calmar_insufficient_data() {
     returns[0] = 1000;
     returns[1] = -500;
 
-    let result = calmar(returns, 2, 100);
+    let result = calmar(returns, 2, 100, false);
     assert(result == 0);
 }
 
@@ -49,7 +49,7 @@ fn test_calmar_exactly_30_days() {
         returns[i] = 100;
     }
 
-    let result = calmar(returns, 30, 50);
+    let result = calmar(returns, 30, 50, false);
     assert(result != 0);
 }
 
@@ -60,7 +60,7 @@ fn test_calmar_zero_drawdown() {
         returns[i] = 100;
     }
 
-    let result = calmar(returns, 50, 50);
+    let result = calmar(returns, 50, 50, false);
     assert(result == 0);
 }
 
@@ -71,6 +71,6 @@ fn test_calmar_negative_returns() {
         returns[i] = -100;
     }
 
-    let result = calmar(returns, 50, 0);
+    let result = calmar(returns, 50, 0, false);
     assert(result != 0);
 }

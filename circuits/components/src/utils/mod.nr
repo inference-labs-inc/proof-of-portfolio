@@ -6,3 +6,5 @@ pub mod constants;
 pub mod sqrt;
 pub mod variance;
 pub mod weighting_distribution;
+pub mod simple_finance;
+pub mod simple_returns;

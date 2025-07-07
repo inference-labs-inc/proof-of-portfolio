@@ -7,12 +7,12 @@ use crate::utils::{
     sqrt::sqrt,
 };
 
-pub fn sortino(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64) -> i64 {
+pub fn sortino(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64, use_weighting: bool) -> i64 {
     // Check minimum sample size for statistical confidence
     if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
     } else {
-        let excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE);
+        let excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, use_weighting);
 
         let mut downside_variance_sum: u64 = 0;
         let mut negative_count: u32 = 0;
@@ -56,7 +56,7 @@ fn test_sortino_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = sortino(returns, 5, 100);
+    let result = sortino(returns, 5, 100, false);
     assert(result != 0);
 }
 
@@ -67,7 +67,7 @@ fn test_sortino_no_negative_returns() {
         returns[i] = 1000;
     }
 
-    let result = sortino(returns, 5, 100);
+    let result = sortino(returns, 5, 100, false);
     assert(result == 0);
 }
 
@@ -78,7 +78,7 @@ fn test_sortino_all_negative_returns() {
         returns[i] = -500;
     }
 
-    let result = sortino(returns, 5, 0);
+    let result = sortino(returns, 5, 0, false);
     assert(result != 0);
 }
 
@@ -91,6 +91,6 @@ fn test_sortino_high_downside_volatility() {
     returns[3] = -1200;
     returns[4] = 1600;
 
-    let result = sortino(returns, 5, 200);
+    let result = sortino(returns, 5, 200, false);
     assert(result != 0);
 }

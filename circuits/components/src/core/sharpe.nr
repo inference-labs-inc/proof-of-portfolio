@@ -1,6 +1,6 @@
 use crate::utils::{
-    ann_excess_return::annualized_excess_return,
-    ann_volatility::annualized_volatility,
+    ann_excess_return::ann_excess_return,
+    ann_volatility::ann_volatility,
     constants::{
         ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE
     },
@@ -12,13 +12,13 @@ pub fn sharpe(
     risk_free_rate: i64,
     use_weighting: bool,
     bypass_confidence: bool,
-) -> pub i64 {
+) -> i64 {
     let result = if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SHARPE_NOCONFIDENCE_VALUE
     } else {
         let excess_return =
-            annualized_excess_return(daily_returns, actual_len, risk_free_rate, use_weighting);
-        let volatility = annualized_volatility(daily_returns, actual_len, use_weighting);
+            ann_excess_return(daily_returns, actual_len, risk_free_rate, use_weighting);
+        let volatility = ann_volatility(daily_returns, actual_len, use_weighting);
         let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {
             SHARPE_STDDEV_MINIMUM
         } else {
