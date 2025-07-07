@@ -48,3 +48,4 @@ yarn.lock
 .Trashes
 ehthumbs.db
 Thumbs.db
+**venv**

@@ -1,0 +1,2 @@
+pub const ARRAY_SIZE: u32 = 365;
+pub const SCALE: i64 = 1000000000000000000;
