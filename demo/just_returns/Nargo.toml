@@ -1,0 +1,4 @@
+[package]
+name = "just_returns"
+type = "bin"
+authors = ["Inference Labs Inc"]

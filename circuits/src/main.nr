@@ -33,7 +33,7 @@ fn main(
     );
     let n_returns = valid_days;
 
-    // Verify signals merkle inclusion
+    // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
     for i in 0..MAX_SIGNALS {
         if (i as u32) < signals_count {
@@ -49,7 +49,7 @@ fn main(
     }
     assert(all_verified);
 
-    // Verify returns merkle root
+    // Build root from returns
     let mut leaves = [0; MAX_RETURNS];
     for i in 0..MAX_RETURNS {
         if (i as u32) < n_returns {
@@ -59,7 +59,7 @@ fn main(
     let computed_returns_root = build_merkle_root(leaves, n_returns);
     assert(computed_returns_root == returns_merkle_root);
 
-    // Calculate portfolio metrics
+    // Build array from returns
     let mut returns_array = [0; ARRAY_SIZE];
     for i in 0..MAX_DAYS {
         if (i as u32) < n_returns {
@@ -67,6 +67,7 @@ fn main(
         }
     }
 
+    // Calculate sharpe and daily max drawdown
     let sh = sharpe(returns_array, n_returns, RISK_FREE_RATE, false, false);
     let dmd = daily_max_drawdown(returns_array, n_returns);
 
