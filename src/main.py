@@ -1,386 +1,536 @@
-import os
+#!/usr/bin/env python3
+"""
+Proof of Portfolio (pop) CLI
+
+A command-line interface for the Proof of Portfolio system.
+
+This CLI provides three main commands:
+1. generate-tree - For miners to generate their own merkle tree using their data.json
+2. validate - For validators to generate a tree for a miner given their data.json
+3. validate-all - For validators to generate ALL miners' trees given a directory
+"""
+
+import argparse
 import json
-import math
-import numpy as np
+import os
+import sys
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional, Any
 
-from numpy import sort
+from .miner import Miner
+from .validator import score_child, score_all
+from .analyze_data import split_input_json
 
+def generate_tree(args):
+    """
+    Generate a merkle tree for a miner using their data.json file.
 
-class Main:
-    def __init__(self):
-        # Use a path relative to the script's location
-        script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-        self.children_dir = script_dir.parent / "data" / "children"
-        self.risk_free_rate = 0.05  # Annual risk-free rate (5%)
+    Args:
+        args: Command line arguments containing the data_file path, hotkey, and output_path
+    """
+    try:
+        # Check if data_file is provided
+        if not hasattr(args, 'data_file') or not args.data_file:
+            print("Warning: --path parameter was omitted, please provide a path to the data.json file.")
+            return 1
 
-    def get_miner_score(self, miner_hotkey: str) -> float:
-        """
-        Calculate the score for a specific miner based on their trading performance.
+        path = Path(args.data_file)
 
-        Args:
-            miner_hotkey (str): The hotkey identifier for the miner
+        if not path.exists():
+            print(f"Error: Path not found at {path}")
+            return 1
 
-        Returns:
-            float: The calculated score for the miner
-        """
-        # Check if miner data exists
-        miner_file = self.children_dir / f"{miner_hotkey}.json"
-        if not miner_file.exists():
-            print(f"No data found for miner: {miner_hotkey}")
-            return 0.0
+        # Check if the path is a directory or a file
+        if path.is_dir():
+            # If it's a directory, look for data.json inside it
+            data_file = path / 'data.json'
+            parent_dir = path
+        else:
+            # If it's a file, assume it's the data.json file
+            data_file = path
+            parent_dir = path.parent
 
-        # Load miner data
+        if not data_file.exists():
+            print(f"Error: Data file not found at {data_file}")
+            return 1
+
+        # If hotkey is not provided, try to extract it from the parent directory name
+        hotkey = args.hotkey
+        if not hotkey:
+            if parent_dir.name != "." and parent_dir.name != "":
+                hotkey = parent_dir.name
+            else:
+                print("Error: Hotkey not provided and could not be determined from directory structure.")
+                print("Please provide a hotkey using the --hotkey option.")
+                return 1
+
+        print(f"Generating merkle tree for miner {hotkey} using data from {data_file}")
+
+        # Create a Miner instance
+        miner = Miner(hotkey, f"Miner-{hotkey[:8] if len(hotkey) > 8 else hotkey}")
+
+        # Generate the tree with optional output path
+        output_path = args.output_path if hasattr(args, 'output_path') and args.output_path else None
+        if output_path is None:
+            print("Note: --output parameter was omitted, tree will be saved in the same directory as the data file.")
+
+        tree_data = miner.generate_tree(str(data_file), output_path)
+
+        if not tree_data:
+            print(f"Error: Failed to generate tree for {hotkey}")
+            return 1
+
+        print(f"Successfully generated merkle tree for {hotkey}")
+
+        # Generate score
+        parent_dir = data_file.parent
+        score_data = score_child(str(parent_dir))
+
+        if score_data:
+            print(f"Score data saved to {parent_dir / 'score.json'}")
+            print(f"Merkle root: {score_data['merkle_root']}")
+            print(f"Actual length: {score_data['actual_len']}")
+
+        return 0
+    except Exception as e:
+        print(f"Error generating tree: {str(e)}")
+        return 1
+
+def validate_miner(args):
+    """
+    Generate a merkle tree for a miner as a validator.
+
+    Args:
+        args: Command line arguments containing the data_file path
+    """
+    try:
+        # Check if data_file is provided
+        if not hasattr(args, 'data_file') or not args.data_file:
+            print("Warning: --path parameter was omitted, please provide a path to the data.json file.")
+            return 1
+
+        path = Path(args.data_file)
+
+        if not path.exists():
+            print(f"Error: Path not found at {path}")
+            return 1
+
+        # Check if the path is a directory or a file
+        if path.is_dir():
+            # If it's a directory, look for data.json inside it
+            data_file = path / 'data.json'
+            parent_dir = path
+        else:
+            # If it's a file, assume it's the data.json file
+            data_file = path
+            parent_dir = path.parent
+
+        if not data_file.exists():
+            print(f"Error: Data file not found at {data_file}")
+            return 1
+
+        print(f"Validating miner using data from {data_file}")
+
+        # Score the child
+        score_data = score_child(str(parent_dir))
+
+        if not score_data:
+            print(f"Error: Failed to validate miner")
+            return 1
+
+        print(f"Successfully validated miner")
+        print(f"Hotkey: {score_data['hotkey']}")
+
+        print(f"Merkle root: {score_data['merkle_root']}")
+        print(f"Actual length: {score_data['actual_len']}")
+
+        print(f"Score data saved to {parent_dir / 'score.json'}")
+
+        return 0
+    except Exception as e:
+        print(f"Error validating miner: {str(e)}")
+        return 1
+
+def validate_all_miners(args):
+    """
+    Generate merkle trees for all miners in a directory.
+
+    Args:
+        args: Command line arguments containing the input_path path
+    """
+    try:
+        # Check if input_path is provided, if not use the default from score_all
+        if not hasattr(args, 'input_path') or not args.input_path:
+            default_path = "data/input_data.json"
+            print(f"Warning: --path parameter was omitted, attempting with default path: {default_path}")
+            input_path = Path(default_path)
+        else:
+            input_path = Path(args.input_path)
+
+        if not input_path.exists():
+            print(f"Error: Path not found at {input_path}")
+            return 1
+
+        print(f"Validating all miners using data from {input_path}")
+
+        # Determine if the input path is a directory or a file
+        if input_path.is_dir():
+            # If it's a directory, assume it's the children directory
+            children_dir = input_path
+
+            # Score all children directly from the directory
+            scores = {}
+            child_dirs = [d for d in children_dir.iterdir() if d.is_dir()]
+
+            if not child_dirs:
+                print("No child directories found.")
+                return 1
+
+            for child_dir in child_dirs:
+                hotkey = child_dir.name
+                print(f"\nScoring child: {hotkey}")
+
+                score_data = score_child(str(child_dir))
+                if score_data:
+                    scores[hotkey] = score_data
+
+            # Save all scores to a summary file
+            summary_file = input_path.parent / "scores_summary.json"
+            try:
+                with open(summary_file, 'w') as f:
+                    json.dump(scores, f, indent=2)
+                print(f"\nAll scores saved to {summary_file}")
+            except Exception as e:
+                print(f"Error saving scores summary: {e}")
+        else:
+            # If it's a file, use the existing score_all function
+            scores = score_all(str(input_path))
+
+        if not scores:
+            print("Error: Failed to validate miners")
+            return 1
+
+        print(f"Successfully validated {len(scores)} miners")
+        print(f"Scores saved to {input_path.parent / 'scores_summary.json'}")
+
+        # Print summary
+        print("\nValidation Summary:")
+        for hotkey, score_data in scores.items():
+            print(f"Hotkey: {hotkey[:8]}... - Signals: {score_data['actual_len']}")
+
+        return 0
+    except Exception as e:
+        print(f"Error validating all miners: {str(e)}")
+        return 1
+
+def analyse_data(args):
+    """
+    Analyze input data and split it into separate files for each hotkey.
+
+    Args:
+        args: Command line arguments containing the path to the input JSON file
+    """
+    try:
+        # Check if input_file is provided, if not use the default from split_input_json
+        if not hasattr(args, 'input_file') or not args.input_file:
+            default_input = "../data/input_data.json"
+            print(f"Warning: --path parameter was omitted, attempting with default path: {default_input}")
+            input_file = Path(default_input)
+        else:
+            input_file = Path(args.input_file)
+
+        if not input_file.exists():
+            print(f"Error: Input file not found at {input_file}")
+            return 1
+
+        print(f"Analyzing data from {input_file}...")
+
+        # Call the split_input_json function from analyze_data module
+        if not hasattr(args, 'output_dir') or not args.output_dir:
+            default_output = "../data/children"
+            print(f"Note: --output parameter was omitted, using default output directory: {default_output}")
+            output_dir = default_output
+        else:
+            output_dir = args.output_dir
+
+        count = split_input_json(str(input_file), output_dir)
+
+        if count == 0:
+            print("No data was processed. Check the input file format.")
+            return 1
+
+        print(f"Successfully analyzed data and split it into {count} files.")
+        return 0
+    except Exception as e:
+        print(f"Error analyzing data: {str(e)}")
+        return 1
+
+def save_tree(args):
+    """
+    Save a merkle tree from a tree.json file or a hotkey directory to a specified output path.
+
+    Args:
+        args: Command line arguments containing the path to the tree.json file or hotkey directory
+              and the output path
+    """
+    try:
+        # Check if path is provided
+        if not hasattr(args, 'path') or not args.path:
+            print("Warning: --path parameter was omitted, please provide a path to the tree.json file or hotkey directory.")
+            return 1
+
+        path = Path(args.path)
+
+        # Check if the path exists
+        if not path.exists():
+            print(f"Error: Path not found: {path}")
+            return 1
+
+        # Determine if the path is a file or directory
+        if path.is_file():
+            # If it's a file, assume it's a tree.json file
+            tree_file = path
+            # Try to extract hotkey from parent directory
+            hotkey = path.parent.name
+        else:
+            # If it's a directory, look for tree.json in the directory
+            tree_file = path / 'tree.json'
+            # Use the directory name as the hotkey
+            hotkey = path.name
+
+        # Check if tree.json exists
+        if not tree_file.exists():
+            print(f"Error: Tree file not found at {tree_file}")
+            return 1
+
+        # Load the tree data
         try:
-            with open(miner_file, 'r') as f:
-                positions = json.load(f)
+            with open(tree_file, 'r') as f:
+                tree_data = json.load(f)
         except Exception as e:
-            print(f"Error loading data for miner {miner_hotkey}: {e}")
-            return 0.0
+            print(f"Error loading tree data: {e}")
+            return 1
 
-        # Calculate daily returns
-        daily_returns = self._calculate_daily_returns(positions)
+        # Check if output_path is provided
+        if not hasattr(args, 'output_path') or not args.output_path:
+            print("Warning: --output parameter was omitted, please provide an output path.")
+            return 1
 
-        if not daily_returns:
-            print(f"No valid daily returns found for miner: {miner_hotkey}")
-            return 0.0
+        # Save the tree data to the specified location
+        output_path = args.output_path
 
-        # Calculate metrics
-        calmar_ratio = self._calculate_calmar_ratio(daily_returns)
-        sharpe_ratio = self._calculate_sharpe_ratio(daily_returns)
-        omega_ratio = self._calculate_omega_ratio(daily_returns)
-        sortino_ratio = self._calculate_sortino_ratio(daily_returns)
-        statistical_confidence = self._calculate_statistical_confidence(daily_returns)
+        # If output_path is a directory, append tree.json to it
+        if os.path.isdir(output_path):
+            output_file = os.path.join(output_path, "tree.json")
+        else:
+            # Otherwise use the provided path directly
+            output_file = output_path
 
-        # Apply penalties
-        max_drawdown = self._calculate_max_drawdown(daily_returns)
-        risk_profile_penalty = self._calculate_risk_profile_penalty(positions)
+        try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
 
-        # If max drawdown exceeds 10%, return 0 score
-        if max_drawdown > 0.10:
-            print(f"Miner {miner_hotkey} exceeded 10% max drawdown: {max_drawdown:.2%}")
-            return 0.0
+            with open(output_file, 'w') as f:
+                json.dump(tree_data, f, indent=2)
+            print(f"Tree data saved to {output_file}")
+        except Exception as e:
+            print(f"Error saving tree data: {e}")
+            return 1
 
-        # Calculate final score with weights
-        score = (
-            0.20 * calmar_ratio +
-            0.20 * sharpe_ratio +
-            0.20 * omega_ratio +
-            0.20 * sortino_ratio +
-            0.20 * statistical_confidence
+        return 0
+    except Exception as e:
+        print(f"Error saving tree: {str(e)}")
+        return 1
+
+def print_header():
+    """
+    Prints the ASCII art header for the CLI.
+    """
+    # Check if the terminal supports colors
+    import os
+    import platform
+
+    # Default to colored output
+    use_colors = True
+
+    # Check if NO_COLOR environment variable is set (standard way to disable color)
+    if os.environ.get('NO_COLOR') is not None:
+        use_colors = False
+    # Check if we're running on Windows without proper ANSI support
+    elif platform.system() == 'Windows' and not os.environ.get('ANSICON'):
+        try:
+            import colorama
+            colorama.init()
+        except ImportError:
+            use_colors = False
+
+    # Version information
+    VERSION = "1.0.0"
+
+    # ANSI color codes
+    if use_colors:
+        BLUE = "\033[34m"
+        GREEN = "\033[32m"
+        YELLOW = "\033[33m"
+        CYAN = "\033[36m"
+        RESET = "\033[0m"
+    else:
+        BLUE = GREEN = YELLOW = CYAN = RESET = ""
+
+    header = f"""
+    {CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{RESET}
+    {CYAN}║{RESET}                                                                                {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}██████╗ ██████╗  ██████╗  ██████╗ ███████╗{RESET}                                   {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}██╔══██╗██╔══██╗██╔═══██╗██╔═══██╗██╔════╝{RESET}                                   {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}██████╔╝██████╔╝██║   ██║██║   ██║█████╗{RESET}                                     {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}██╔═══╝ ██╔══██╗██║   ██║██║   ██║██╔══╝{RESET}                                     {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}██║     ██║  ██║╚██████╔╝╚██████╔╝██║{RESET}                                        {CYAN}║{RESET}
+    {CYAN}║{RESET}   {BLUE}╚═╝     ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝{RESET}                                        {CYAN}║{RESET}
+    {CYAN}║{RESET}                                                                                {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW} ██████╗  ███████╗{RESET}                                                           {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW}██╔═══██╗╗██╔════╝{RESET}                                                           {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW}██║   ██║║█████╗{RESET}                                                             {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW}██║   ██║║██╔══╝{RESET}                                                             {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW}╚██████╔╝╝██║{RESET}                                                                {CYAN}║{RESET}
+    {CYAN}║{RESET}   {YELLOW} ╚═════╝ ╚═╝{RESET}                                                                 {CYAN}║{RESET}
+    {CYAN}║{RESET}                                                                                {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}██████╗  ██████╗ ██████╗ ████████╗███████╗ ██████╗ ██╗     ██╗ ██████╗{RESET}       {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}██╔══██╗██╔═══██╗██╔══██╗╚══██╔══╝██╔════╝██╔═══██╗██║     ██║██╔═══██╗{RESET}      {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}██████╔╝██║   ██║██████╔╝   ██║   █████╗  ██║   ██║██║     ██║██║   ██║{RESET}      {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}██╔═══╝ ██║   ██║██╔══██╗   ██║   ██╔══╝  ██║   ██║██║     ██║██║   ██║{RESET}      {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}██║     ╚██████╔╝██║  ██║   ██║   ██║     ╚██████╔╝███████╗██║╚██████╔╝{RESET}      {CYAN}║{RESET}
+    {CYAN}║{RESET}   {GREEN}╚═╝      ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝{RESET}       {CYAN}║{RESET}
+    {CYAN}║{RESET}                                                                                {CYAN}║{RESET}
+    {CYAN}║{RESET}                          {BLUE}ZK Proof Generation Tool{RESET}                              {CYAN}║{RESET}
+    {CYAN}║{RESET}                                 {YELLOW}v{VERSION}{RESET}                                         {CYAN}║{RESET}
+    {CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{RESET}
+    """
+    print(header)
+
+
+
+def main():
+    """
+    Main entry point for the CLI.
+    """
+    try:
+        # Print the header
+        print_header()
+
+        parser = argparse.ArgumentParser(
+            prog="pop",
+            description="Proof of Portfolio CLI",
+            epilog="For more information, visit https://github.com/inference-labs-inc/proof-of-portfolio"
         )
 
-        # Apply risk profile penalty
-        score *= (1 - risk_profile_penalty)
-
-        return max(0.0, score)
-
-    def get_all_scores(self) -> Dict[str, float]:
-        """
-        Calculate scores for all miners in the data/children directory.
-
-        Returns:
-            Dict[str, float]: Dictionary mapping miner hotkeys to their scores
-        """
-        scores = {}
-
-        # Check if children directory exists
-        if not self.children_dir.exists():
-            print(f"Children directory not found: {self.children_dir}")
-            return scores
-
-        # Process each miner file
-        for miner_file in self.children_dir.glob("*.json"):
-            miner_hotkey = miner_file.stem
-            score = self.get_miner_score(miner_hotkey)
-            scores[miner_hotkey] = score
-
-        return scores
-
-    def _calculate_daily_returns(self, positions: List[Dict]) -> List[float]:
-        """
-        Calculate daily returns from position data.
-
-        Args:
-            positions (List[Dict]): List of position objects
-
-        Returns:
-            List[float]: List of daily returns
-        """
-        # Group positions by day
-        daily_positions = {}
-
-        for position in positions:
-            if position.get("is_closed_position", False):
-                # Use close_ms for closed positions
-                close_time = position.get("close_ms", 0)
-                if close_time > 0:
-                    # Convert milliseconds to date string (YYYY-MM-DD)
-                    close_date = datetime.fromtimestamp(close_time / 1000).strftime('%Y-%m-%d')
-
-                    if close_date not in daily_positions:
-                        daily_positions[close_date] = []
-
-                    daily_positions[close_date].append(position)
-
-        # Calculate daily returns
-        daily_returns = []
-
-        for date, day_positions in sorted(daily_positions.items()):
-            # Calculate return for the day based on closed positions
-            day_return = 1.0
-            for position in day_positions:
-                position_return = position.get("return_at_close", 1.0)
-                day_return *= position_return
-
-            # Convert to percentage return
-            daily_returns.append(day_return - 1.0)
-
-        return daily_returns
-
-    def _calculate_calmar_ratio(self, daily_returns: List[float]) -> float:
-        """
-        Calculate the Calmar Ratio: Annualized Return / Max Drawdown
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Calmar Ratio
-        """
-        if not daily_returns:
-            return 0.0
-
-        # Calculate annualized return
-        n = len(daily_returns)
-        if n == 0:
-            return 0.0
-
-        annualized_return = (365 / n) * sum(daily_returns) - self.risk_free_rate
-
-        # Calculate max drawdown
-        max_drawdown = self._calculate_max_drawdown(daily_returns)
-
-        # Avoid division by zero
-        if max_drawdown <= 0.01:
-            max_drawdown = 0.01
-
-        return annualized_return / max_drawdown
-
-    def _calculate_sharpe_ratio(self, daily_returns: List[float]) -> float:
-        """
-        Calculate the Sharpe Ratio: (Annualized Return - Risk Free Rate) / Annualized Volatility
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Sharpe Ratio
-        """
-        if not daily_returns:
-            return 0.0
-
-        n = len(daily_returns)
-        if n < 2:
-            return 0.0
-
-        # Calculate annualized return
-        annualized_return = (365 / n) * sum(daily_returns) - self.risk_free_rate
-
-        # Calculate annualized volatility
-        volatility = np.std(daily_returns, ddof=1)
-        annualized_volatility = volatility * math.sqrt(365 / n)
-
-        # Use minimum volatility of 1%
-        if annualized_volatility < 0.01:
-            annualized_volatility = 0.01
-
-        return annualized_return / annualized_volatility
-
-    def _calculate_omega_ratio(self, daily_returns: List[float]) -> float:
-        """
-        Calculate the Omega Ratio: Sum of positive returns / Absolute sum of negative returns
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Omega Ratio
-        """
-        if not daily_returns:
-            return 0.0
-
-        positive_returns = sum(max(r, 0) for r in daily_returns)
-        negative_returns = abs(sum(min(r, 0) for r in daily_returns))
-
-        # Use minimum denominator of 1%
-        if negative_returns < 0.01:
-            negative_returns = 0.01
-
-        return positive_returns / negative_returns
-
-    def _calculate_sortino_ratio(self, daily_returns: List[float]) -> float:
-        """
-        Calculate the Sortino Ratio: (Annualized Return - Risk Free Rate) / Annualized Downside Deviation
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Sortino Ratio
-        """
-        if not daily_returns:
-            return 0.0
-
-        n = len(daily_returns)
-        if n < 2:
-            return 0.0
-
-        # Calculate annualized return
-        annualized_return = (365 / n) * sum(daily_returns) - self.risk_free_rate
-
-        # Calculate downside deviation (only negative returns)
-        negative_returns = [r for r in daily_returns if r < 0]
-
-        if not negative_returns:
-            return annualized_return / 0.01  # Use minimum downside deviation of 1%
-
-        downside_deviation = np.std(negative_returns, ddof=1)
-        annualized_downside_deviation = downside_deviation * math.sqrt(365 / n)
-
-        # Use minimum downside deviation of 1%
-        if annualized_downside_deviation < 0.01:
-            annualized_downside_deviation = 0.01
-
-        return annualized_return / annualized_downside_deviation
-
-    def _calculate_statistical_confidence(self, daily_returns: List[float]) -> float:
-        """
-        Calculate Statistical Confidence using t-statistic
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Statistical Confidence score
-        """
-        if not daily_returns:
-            return 0.0
-
-        n = len(daily_returns)
-        if n < 2:
-            return 0.0
-
-        mean_return = np.mean(daily_returns)
-        std_dev = np.std(daily_returns, ddof=1)
-
-        if std_dev == 0:
-            return 0.0
-
-        # Calculate t-statistic
-        t_stat = abs(mean_return / (std_dev / math.sqrt(n)))
-
-        # Normalize t-statistic to a score between 0 and 1
-        # Higher t-statistic means higher confidence
-        confidence_score = min(1.0, t_stat / 10.0)
-
-        return confidence_score
-
-    def _calculate_max_drawdown(self, daily_returns: List[float]) -> float:
-        """
-        Calculate the maximum drawdown from daily returns
-
-        Args:
-            daily_returns (List[float]): List of daily returns
-
-        Returns:
-            float: Maximum drawdown as a decimal (0.10 = 10%)
-        """
-        if not daily_returns:
-            return 0.0
-
-        # Convert returns to cumulative returns
-        cumulative = [1.0]
-        for r in daily_returns:
-            cumulative.append(cumulative[-1] * (1 + r))
-
-        # Calculate running maximum
-        running_max = np.maximum.accumulate(cumulative)
-
-        # Calculate drawdowns
-        drawdowns = (running_max - cumulative) / running_max
-
-        return float(np.max(drawdowns))
-
-    def _calculate_risk_profile_penalty(self, positions: List[Dict]) -> float:
-        """
-        Calculate risk profile penalty based on trading behavior
-
-        Args:
-            positions (List[Dict]): List of position objects
-
-        Returns:
-            float: Risk profile penalty as a decimal (0.0 to 1.0)
-        """
-        penalty = 0.0
-
-        # Check for risky behaviors in positions
-        for position in positions:
-            orders = position.get("orders", [])
-
-            # Check for stepping into positions multiple times
-            if len(orders) >= 3:
-                # Count how many times leverage was increased on a losing position
-                leverage_increases = 0
-                max_leverage = 0
-                entry_leverage = 0
-
-                for i, order in enumerate(orders):
-                    if i == 0:
-                        # First order establishes the position
-                        entry_leverage = abs(order.get("leverage", 0))
-                        max_leverage = entry_leverage
-                    else:
-                        current_leverage = abs(order.get("leverage", 0))
-
-                        # Check if leverage increased
-                        if current_leverage > max_leverage:
-                            max_leverage = current_leverage
-
-                            # Check if position is losing
-                            current_return = position.get("current_return", 1.0)
-                            if current_return < 1.0:
-                                leverage_increases += 1
-
-                # Penalty for increasing leverage twice on a losing position
-                if leverage_increases >= 2:
-                    penalty += 0.1
-
-                # Penalty for using more than 50% of available leverage or increasing by 150%
-                trade_pair = position.get("trade_pair", [])
-                if len(trade_pair) >= 5:
-                    # Check if it's forex or crypto
-                    pair_name = trade_pair[0] if len(trade_pair) > 0 else ""
-
-                    # Determine max allowed leverage based on asset type
-                    max_allowed = 5.0  # Default for forex
-                    if len(pair_name) >= 3 and pair_name[-3:] != "JPY" and pair_name[:3] != "USD":
-                        max_allowed = 0.5  # For crypto
-
-                    # Check if leverage exceeds 50% of max allowed
-                    if max_leverage > (0.5 * max_allowed):
-                        penalty += 0.05
-
-                    # Check if leverage increased by 150% relative to entry
-                    if entry_leverage > 0 and max_leverage > (1.5 * entry_leverage):
-                        penalty += 0.05
-
-        # Cap penalty at 1.0
-        return min(1.0, penalty)
-
+        parser.add_argument(
+            "--version",
+            action="version",
+            version="%(prog)s 1.0.0"
+        )
+
+        subparsers = parser.add_subparsers(
+            title="commands",
+            dest="command",
+            help="Command to execute"
+        )
+
+        # Generate tree command
+        generate_parser = subparsers.add_parser(
+            "generate-tree",
+            help="Generate a merkle tree for a miner using their data.json file",
+            description="Generate a merkle tree, scores, and print the tree for a miner using their data.json file"
+        )
+        generate_parser.add_argument(
+            "--path",
+            dest="data_file",
+            help="Path to the data.json file"
+        )
+        generate_parser.add_argument(
+            "--hotkey",
+            help="Miner's hotkey (if not provided, will try to extract from parent directory name)"
+        )
+        generate_parser.add_argument(
+            "--output",
+            dest="output_path",
+            help="Path where the tree.json file will be saved (if not provided, saves to the same directory as the data.json file)"
+        )
+        generate_parser.set_defaults(func=generate_tree)
+
+        # Validate command
+        validate_parser = subparsers.add_parser(
+            "validate",
+            help="Generate a merkle tree for a miner as a validator",
+            description="Generate a merkle tree for a miner as a validator and score their data"
+        )
+        validate_parser.add_argument(
+            "--path",
+            dest="data_file",
+            help="Path to the miner's data.json file"
+        )
+        validate_parser.set_defaults(func=validate_miner)
+
+        # Validate-all command
+        validate_all_parser = subparsers.add_parser(
+            "validate-all",
+            help="Generate merkle trees for all miners in a directory",
+            description="Process input JSON file or directory containing miner data, and generate a Merkle tree for each miner"
+        )
+        validate_all_parser.add_argument(
+            "--path",
+            dest="input_path",
+            help="Path to the input JSON file or directory containing miners' data (default: data/input_data.json)"
+        )
+        validate_all_parser.set_defaults(func=validate_all_miners)
+
+        # Save-tree command
+        save_tree_parser = subparsers.add_parser(
+            "save-tree",
+            help="Save a merkle tree from a tree.json file or a hotkey directory to a specified output path",
+            description="Load a merkle tree and save it to a specified location"
+        )
+        save_tree_parser.add_argument(
+            "--path",
+            dest="path",
+            help="Path to the tree.json file or the directory containing the tree.json file"
+        )
+        save_tree_parser.add_argument(
+            "--output",
+            dest="output_path",
+            help="Path where the tree.json file will be saved"
+        )
+        save_tree_parser.set_defaults(func=save_tree)
+
+        # Analyse-data command
+        analyse_data_parser = subparsers.add_parser(
+            "analyse-data",
+            help="Analyze input data and split it into separate files for each hotkey",
+            description="Process input JSON file and split it into subdirectories for each hotkey"
+        )
+        analyse_data_parser.add_argument(
+            "--path",
+            dest="input_file",
+            help="Path to the input JSON file (default: ../data/input_data.json)"
+        )
+        analyse_data_parser.add_argument(
+            "--output",
+            dest="output_dir",
+            help="Directory where the split files will be saved (default: ../data/children)"
+        )
+        analyse_data_parser.set_defaults(func=analyse_data)
+
+        # Parse arguments
+        args = parser.parse_args()
+
+        # If no command is provided, show help
+        if not args.command:
+            parser.print_help()
+            return 0
+
+        # Execute the appropriate function
+        return args.func(args)
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
-    main = Main()
-    print(main.get_all_scores())
+    sys.exit(main())

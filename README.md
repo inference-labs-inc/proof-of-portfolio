@@ -1,170 +1,139 @@
-# Proof of Portfolio
+# Proof of Portfolio (PoP)
 
-A zero-knowledge proof system for privacy-preserving trading performance verification. This project enables miners to prove their trading performance using sophisticated financial metrics without revealing sensitive trading data. It also allows validators to publish records of miners' performance without revealing the miners' identities or their trading data.
+A command-line interface for the Proof of Portfolio system.
 
-## Features
+## Installation
 
-- **Privacy-Preserving Verification**: Prove trading performance without revealing individual trades
-- **Sophisticated Financial Metrics**: 5 industry-standard performance calculations
-- **Merkle Tree Inclusion Proofs**: Cryptographic verification of trading signal authenticity
+### Recommended: Using the installer script
 
-## Financial Metrics
-
-The system calculates 5 sophisticated trading performance metrics:
-
-1. **Calmar Ratio**: Risk-adjusted return considering maximum drawdown
-2. **Sharpe Ratio**: Return per unit of volatility risk
-3. **Omega Ratio**: Probability-weighted ratio of gains vs losses
-4. **Sortino Ratio**: Downside deviation-adjusted returns
-5. **Statistical Confidence**: T-statistic based confidence measure
-
-All calculations are performed from raw daily returns, ensuring mathematical integrity.
-
-## Getting Started
-
-### Prerequisites
-
-- [Noir](https://noir-lang.org/) - Zero-knowledge proof framework
-- Python 3.7+ (for input generation)
-
-### Installation
-
-#### Option 1: Using the install script (Recommended)
-
-The project includes an installation script that will set up all required dependencies:
+The easiest way to install the Proof of Portfolio CLI and all its dependencies is to use the provided installer script:
 
 ```bash
 # Clone the repository
-git clone https://github.com/inference-labs-inc/proof-of-portfolio
+git clone https://github.com/yourusername/proof-of-portfolio.git
 cd proof-of-portfolio
 
-# Make the script executable
-chmod +x install.sh
-
-# Run the installation script (interactive mode)
+# Run the installer script
 ./install.sh
 ```
 
-The script supports various options:
+This will install all required dependencies and the `pop` command-line tool automatically.
+
+For advanced installation options, run `./install.sh --help`.
+
+### Alternative: Manual installation using pip
+
+If you prefer, you can also install the package manually using pip:
 
 ```bash
-# Install all dependencies without prompts
-./install.sh --all
+# Clone the repository
+git clone https://github.com/yourusername/proof-of-portfolio.git
+cd proof-of-portfolio
 
-# Install specific dependencies
-./install.sh --with-bignum --with-barretenberg
-
-# Show help
-./install.sh --help
+# Install the package
+pip install -e .
 ```
 
-#### Option 2: Manual Installation
-
-If you prefer to install dependencies manually:
-
-1. Install Noir:
-
-```bash
-curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-noirup
-```
-
-2. Clone and navigate to the project:
-
-```bash
-git clone https://github.com/inference-labs-inc/proof-of-portfolio
-cd proof-of-portfolio/circuits
-```
+This will install the `pop` command-line tool, but you'll need to install other dependencies manually.
 
 ## Usage
 
-### 1. Generate Test Inputs
+The Proof of Portfolio CLI provides five main commands:
+
+### 1. Generate a Merkle Tree (for Miners)
+
+As a miner, you can generate your own Merkle tree and scores using your data.json file:
 
 ```bash
-python3 generate_inputs.py
+pop generate-tree --path path/to/data.json [--hotkey YOUR_HOTKEY] [--output path/to/output/tree.json]
+# OR
+pop generate-tree --path path/to/hotkey/directory [--hotkey YOUR_HOTKEY] [--output path/to/output/tree.json]
 ```
 
-This creates `Prover.toml` with test trading signals and proper Merkle tree data.
+If the `--hotkey` option is not provided, the CLI will try to extract it from the parent directory name.
 
-### 2. Execute the Circuit
+If the `--output` option is not provided, the tree.json file will be saved to the same directory as the data.json file.
+
+### 2. Validate a Miner (for Validators)
+
+As a validator, you can generate a tree for a miner given their data.json file or directory:
 
 ```bash
-nargo execute
+pop validate --path path/to/miner/data.json
+# OR
+pop validate --path path/to/miner/directory
 ```
 
-This runs the circuit and outputs:
+### 3. Validate All Miners (for Validators)
 
-- Trading performance score
-- Merkle verification status (true/false)
-
-### 3. Run Tests
+As a validator, you can generate trees for ALL miners given a directory or input JSON file:
 
 ```bash
-nargo test
+pop validate-all --path path/to/children/directory
+# OR
+pop validate-all --path path/to/input_data.json
 ```
 
-### 4. Generate Proof
+If you provide a directory path, it will process all miner directories directly. If you provide a JSON file path, it will split the file into subdirectories for each miner, and then generate a Merkle tree for each one.
 
-For proving, the Barretenberg backend is used:
+### 4. Save a Merkle Tree
+
+You can save a merkle tree from an existing tree.json file or a hotkey directory to a specified location:
 
 ```bash
-# Compile to ACIR first
-nargo compile
-
-# Generate proof using Barretenberg (requires additional setup)
-bb prove -b ./target/miner_scoring.json -w ./target/miner_scoring.gz -o ./proof
-bb write_vk -b ./target/miner_scoring.json -o ./vk
-bb verify -k ./vk -p ./proof
+pop save-tree --path path/to/tree.json --output path/to/output/tree.json
+# OR
+pop save-tree --path path/to/hotkey/directory --output path/to/output/tree.json
 ```
 
-> [!NOTE]
-> Proof generation requires the Barretenberg proving system to be installed separately.
+This will load the merkle tree and save it to the specified location.
 
-## Circuit Architecture
+### 5. Analyze Data
 
-### Input Structure
+You can analyze input data and split it into separate files for each hotkey:
 
-| Name              | Type                 | Description                                                      |
-| ----------------- | -------------------- | ---------------------------------------------------------------- |
-| `trading_signals` | `Vec<TradingSignal>` | Array of trading data (miner_hotkey, trade_pair_id, price, etc.) |
-| `merkle_proofs`   | `Vec<MerkleProof>`   | Inclusion paths and indices for signal verification              |
-| `parameters`      | `Parameters`         | Risk thresholds and penalty factors                              |
-
-### Output
-
-| Name       | Type   | Description                                 |
-| ---------- | ------ | ------------------------------------------- |
-| `score`    | `u64`  | Composite performance score (0-1000+ range) |
-| `verified` | `bool` | Boolean indicating Merkle proof validity    |
-
-### Privacy Model
-
-- **Private Inputs**: Individual trading signals (sensitive trading data)
-- **Public Inputs**: Merkle paths, root, risk parameters (structural verification data)
-- **Public Outputs**: Aggregated score and verification status
-
-## Project Structure
-
-```
-circuits/
-├── src/main.nr              # Main circuit implementation
-├── Nargo.toml              # Noir project configuration
-├── generate_inputs.py      # Test input generator
-├── Prover.toml            # Generated test inputs (ignored by git)
-└── target/                # Build artifacts (ignored by git)
+```bash
+pop analyse-data --path path/to/input_data.json [--output path/to/output/directory]
 ```
 
-## Contributing
+This will process the input JSON file and create a subdirectory for each hotkey, containing their respective data.json files. If the `--output` option is not provided, the files will be saved to a 'children' directory in the same location as the input file.
 
-1. Ensure all tests pass before submitting changes
-2. Add safety comments to any `unsafe` blocks
-3. Update test cases for new functionality
-4. Maintain backward compatibility for input formats
+### Help
 
-## License
+You can get help for any command using the `--help` option:
 
-MIT
+```bash
+pop --help
+pop generate-tree --help
+pop validate --help
+pop validate-all --help
+pop save-tree --help
+pop analyse-data --help
+```
 
-## Acknowledgments
+### Version
 
-Built with [Noir](https://noir-lang.org/) - A domain-specific language for zero-knowledge proofs.
+You can check the version of the CLI using the `--version` option:
+
+```bash
+pop --version
+```
+
+## File Structure
+
+The Proof of Portfolio system uses the following file structure:
+
+```
+data/
+├── input_data.json           # Input data containing all miners' data
+├── scores_summary.json       # Summary of all miners' scores
+└── children/                 # Directory containing subdirectories for each miner
+    ├── MINER_HOTKEY_1/       # Subdirectory for miner 1
+    │   ├── data.json         # Miner 1's data
+    │   ├── tree.json         # Miner 1's Merkle tree
+    │   └── score.json        # Miner 1's score
+    └── MINER_HOTKEY_2/       # Subdirectory for miner 2
+        ├── data.json         # Miner 2's data
+        ├── tree.json         # Miner 2's Merkle tree
+        └── score.json        # Miner 2's score
+```

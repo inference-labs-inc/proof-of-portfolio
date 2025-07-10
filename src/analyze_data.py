@@ -62,6 +62,11 @@ def split_input_json(input_file_path: str = "../data/input_data.json", output_di
             if 'positions' in user_data and isinstance(user_data['positions'], list):
                 user_trades = user_data['positions']
 
+                # Check if this hotkey has performance ledger data
+                perf_data = None
+                if 'perf_ledgers' in data and hotkey in data['perf_ledgers']:
+                    perf_data = data['perf_ledgers'][hotkey]
+
                 # Create a directory for this user
                 user_dir = children_dir / hotkey
                 if not user_dir.exists():
@@ -71,9 +76,19 @@ def split_input_json(input_file_path: str = "../data/input_data.json", output_di
                 user_file = user_dir / "data.json"
 
                 try:
-                    with open(user_file, 'w') as f:
-                        # Save the user's trades as JSON
-                        json.dump(user_trades, f, indent=2)
+                    # If we have performance ledger data, include it with the trades
+                    if perf_data:
+                        # Create a dictionary with both positions and perf_ledger data
+                        output_data = {
+                            "positions": user_trades,
+                            "perf_ledger": perf_data
+                        }
+                        with open(user_file, 'w') as f:
+                            json.dump(output_data, f, indent=2)
+                    else:
+                        # Just save the trades as before if no perf_ledger data
+                        with open(user_file, 'w') as f:
+                            json.dump(user_trades, f, indent=2)
                     count += 1
                 except Exception as e:
                     print(f"Error saving trades for hotkey {hotkey}: {e}")

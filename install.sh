@@ -447,6 +447,27 @@ if [ "$INSTALL_BARRETENBERG" = true ]; then
     fi
 fi
 
+echo "Installing the Proof of Portfolio CLI..."
+
+# Check if pip is installed
+if command -v pip &> /dev/null; then
+    echo "Installing the pop CLI using pip..."
+    pip install -e .
+
+    # Verify installation
+    if command -v pop &> /dev/null; then
+        echo "✓ Proof of Portfolio CLI (pop) successfully installed!"
+        pop --version
+    else
+        echo "! The pop CLI was not found in PATH after installation."
+        echo "  You may need to restart your terminal or add the installation directory to your PATH."
+        echo "  Alternatively, you can install it manually with: pip install -e ."
+    fi
+else
+    echo "! pip not found. Cannot install the pop CLI automatically."
+    echo "  Please install pip and then run: pip install -e ."
+fi
+
 echo "Installation complete!"
 
 # Provide a summary of the installation status
@@ -471,4 +492,4 @@ if [ "$INSTALL_BARRETENBERG" = true ]; then
 fi
 
 echo ""
-echo "You can now run the project by following the instructions in the README.md"
+echo "You can now run the project using the 'pop' command. For more information, see the README.md"

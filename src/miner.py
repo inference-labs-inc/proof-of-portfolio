@@ -11,7 +11,9 @@ class Miner:
     def __init__(self, ss58_address, name):
         self.name = name
         self.ss58_address = ss58_address
-        self.TREE_GEN_DIR = "../tree_generator"
+        # Use absolute path based on the location of this file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.TREE_GEN_DIR = os.path.abspath(os.path.join(current_dir, "..", "tree_generator"))
         self.TREE_GEN_PROVER_TOML = os.path.join(self.TREE_GEN_DIR, "Prover.toml")
         self.MAX_SIGNALS = 256
 
@@ -42,7 +44,20 @@ class Miner:
             return [], 0
 
         orders = []
-        for position in positions:
+        # Handle different data structures from analyze_data.py
+        if isinstance(positions, dict):
+            # If positions is a dict, it might have a "positions" key
+            if "positions" in positions:
+                position_list = positions["positions"]
+            else:
+                print(f"Warning: Unexpected data structure for {data_json_path}")
+                return [], 0
+        else:
+            # If positions is already a list, use it directly
+            position_list = positions
+
+        orders = []
+        for position in position_list:
             orders.extend(position.get("orders", []))
 
         # Sort orders by timestamp to ensure correct open/close pairing
@@ -85,11 +100,11 @@ class Miner:
                     "miner_hotkey": ["0", "0"],
                     "trade_pair_id": "0",
                     "order_type": open_order_type,
-                    "leverage_scaled": str(
+                    "leverage": str(
                         int(abs(open_order["leverage"]) * 100)  # SCALING_FACTOR = 100
                     ),
                     "price_scaled": str(int(open_order["price"] * 100)),  # SCALING_FACTOR = 100
-                    "processed_ms": str(open_order["processed_ms"]),
+                    "timestamp": str(open_order["processed_ms"]),
                     "order_uuid": [f"0x{open_uuid_hex[:16]}", f"0x{open_uuid_hex[16:]}"],
                     "position_uuid": [f"0x{pos_uuid_hex[:16]}", f"0x{pos_uuid_hex[16:]}"],
                     "src": str(open_order["src"]),
@@ -102,11 +117,11 @@ class Miner:
                     "miner_hotkey": ["0", "0"],
                     "trade_pair_id": "0",
                     "order_type": close_order_type,
-                    "leverage_scaled": str(
+                    "leverage": str(
                         int(abs(open_order["leverage"]) * 100)  # SCALING_FACTOR = 100
                     ),  # Leverage is same for the pair
                     "price_scaled": str(int(close_order["price"] * 100)),  # SCALING_FACTOR = 100
-                    "processed_ms": str(close_order["processed_ms"]),
+                    "timestamp": str(close_order["processed_ms"]),
                     "order_uuid": [f"0x{close_uuid_hex[:16]}", f"0x{close_uuid_hex[16:]}"],
                     "position_uuid": [f"0x{pos_uuid_hex[:16]}", f"0x{pos_uuid_hex[16:]}"],
                     "src": str(close_order["src"]),
@@ -124,9 +139,9 @@ class Miner:
                 "miner_hotkey": ["0", "0"],
                 "trade_pair_id": "0",
                 "order_type": "0",
-                "leverage_scaled": "0",
+                "leverage": "0",
                 "price_scaled": "0",
-                "processed_ms": "0",
+                "timestamp": "0",
                 "order_uuid": ["0", "0"],
                 "position_uuid": ["0", "0"],
                 "src": "0",
@@ -243,12 +258,14 @@ class Miner:
             print("Raw output:", result.stdout)
             return None
 
-    def generate_tree(self, input_json_path: str):
+    def generate_tree(self, input_json_path: str, output_path: str = None):
         """
-        Generates a Merkle tree from a child hotkey data.json file and saves it to the child's subdirectory.
+        Generates a Merkle tree from a child hotkey data.json file and saves it to the specified path.
 
         Args:
             input_json_path (str): Path to the child hotkey data.json file
+            output_path (str, optional): Path where the tree.json file will be saved.
+                                    If not provided, saves to the same directory as the input file.
 
         Returns:
             dict: Tree data containing merkle_root, path_elements, and path_indices, or None if failed
@@ -275,11 +292,23 @@ class Miner:
             "actual_len": actual_len
         }
 
-        # Save tree data to the child's subdirectory
-        output_dir = os.path.dirname(input_json_path)
-        tree_file = os.path.join(output_dir, "tree.json")
+        # Determine where to save the tree data
+        if output_path:
+            # If output_path is a directory, append tree.json to it
+            if os.path.isdir(output_path):
+                tree_file = os.path.join(output_path, "tree.json")
+            else:
+                # Otherwise use the provided path directly
+                tree_file = output_path
+        else:
+            # Default: save to the same directory as the input file
+            output_dir = os.path.dirname(input_json_path)
+            tree_file = os.path.join(output_dir, "tree.json")
 
         try:
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(os.path.abspath(tree_file)), exist_ok=True)
+
             with open(tree_file, 'w') as f:
                 json.dump(tree_data, f, indent=2)
             print(f"Tree data saved to {tree_file}")
@@ -296,6 +325,117 @@ class Miner:
             os.remove(merkle_witness_path)
 
         return tree_data
+
+    def visualize_tree(self, tree_data):
+        """
+        Visualizes the merkle tree in a user-friendly format with ASCII art.
+        Only shows the first "actual_len" path elements, ignoring filler paths.
+
+        Args:
+            tree_data (dict): Tree data containing merkle_root, path_elements, and path_indices
+
+        Returns:
+            str: A string representation of the tree with ASCII art
+        """
+        if not tree_data:
+            return "No tree data available."
+
+        # Extract data from tree_data
+        merkle_root = tree_data["merkle_root"]
+        path_elements = tree_data["path_elements"]
+        path_indices = tree_data.get("path_indices", [])
+        actual_len = tree_data.get("actual_len", 0)
+
+        # Box width - adjust as needed
+        box_width = 70
+        content_width = box_width - 2  # Account for borders
+
+        # Helper function to shorten hash strings
+        def shorten_hash(hash_str):
+            hash_str = str(hash_str)
+            if len(hash_str) <= 14:
+                return hash_str
+            return f"{hash_str[:6]}...{hash_str[-6:]}"
+
+        # Start building the tree visualization
+        tree_str = []
+        title = f"🌳 Merkle Tree (Signals: {actual_len}) 🌳"
+        tree_str.append(title)
+        tree_str.append("═" * box_width)
+
+        # Create a shortened version of the merkle root for display
+        if isinstance(merkle_root, str):
+            merkle_root_str = merkle_root
+        else:
+            merkle_root_str = str(merkle_root)
+        short_root = shorten_hash(merkle_root_str)
+
+        tree_str.append(f"Root: {short_root}")
+        tree_str.append("╔" + "═" * (box_width - 2) + "╗")
+
+        # Determine how many paths to show - only show up to actual_len paths
+        max_paths_to_show = min(actual_len, len(path_elements))
+
+        # Create a more tree-like visualization
+        for i in range(max_paths_to_show):
+            # Get the path elements and indices for this path
+            elements = path_elements[i]
+            indices = path_indices[i] if i < len(path_indices) else []
+
+            # Add path header
+            path_header = f"║ Path {i+1}:"
+            if i == 0:
+                tree_str.append(path_header + " " * (content_width - len(path_header)) + "║")
+            else:
+                tree_str.append("║" + "─" * (box_width - 2) + "║")
+                tree_str.append(path_header + " " * (content_width - len(path_header)) + "║")
+
+            # Display each level of the path with ASCII art
+            for level, element in enumerate(elements):
+                # Create a shortened version of the element for display
+                short_element = shorten_hash(element)
+
+                # Get the direction (left/right) if available
+                direction = ""
+                if level < len(indices):
+                    direction = "→ Right" if indices[level] == "1" else "→ Left"
+
+                # Create tree-like structure with ASCII art
+                # Limit the depth of visualization to prevent excessive indentation
+                max_visible_depth = 4
+                if level == 0:
+                    prefix = "║ ├── "
+                elif level < max_visible_depth:
+                    prefix = "║ │   " * level + "├── "
+                else:
+                    # For deeper levels, use a more compact representation
+                    prefix = "║ │   " * (max_visible_depth - 1) + "├─" + "─" * (level - max_visible_depth + 1) + " "
+
+                # Add the line to the tree
+                node_info = f"Level {level+1}: {short_element} {direction}"
+                line = f"{prefix}{node_info}"
+
+                # Ensure the line fits within the box
+                if len(line) > box_width - 1:
+                    # Calculate available space for node_info
+                    available_space = box_width - 1 - len(prefix) - 3  # -3 for "..."
+                    # Truncate node_info to fit
+                    truncated_node_info = node_info[:available_space] + "..."
+                    line = f"{prefix}{truncated_node_info}"
+
+                # Pad the line to fill the box width
+                tree_str.append(line + " " * (box_width - 1 - len(line)) + "║")
+
+        # If there are more paths, indicate that
+        if len(path_elements) > max_paths_to_show:
+            tree_str.append("║" + "─" * (box_width - 2) + "║")
+            more_paths_msg = f"║ ... {len(path_elements) - max_paths_to_show} more paths ..."
+            tree_str.append(more_paths_msg + " " * (box_width - 1 - len(more_paths_msg)) + "║")
+
+        # Close the box
+        tree_str.append("╚" + "═" * (box_width - 2) + "╝")
+
+        return "\n".join(tree_str)
 
     def __str__(self):
         return self.name
