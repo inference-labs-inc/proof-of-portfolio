@@ -24,7 +24,7 @@ from src.demos import returns as demo_returns
 from src.demos import sharpe as demo_sharpe
 from src.demos import drawdown as demo_drawdown
 from src.demos import main as demo_main
-from src.demos import generate_input_data as demo_generate_input_data
+from src.demos import generate_input_data
 
 
 def generate_tree(args):
@@ -542,6 +542,30 @@ def main():
         )
         analyse_data_parser.set_defaults(func=analyse_data)
 
+        # Generate-test-data command (top-level)
+        generate_test_data_parser = subparsers.add_parser(
+            "generate-test-data", help="Generate a randomized validator checkpoint file"
+        )
+        generate_test_data_parser.add_argument(
+            "--num-miners", type=int, default=10, help="Number of miners to generate."
+        )
+        generate_test_data_parser.add_argument(
+            "--num-cps", type=int, default=200, help="Number of checkpoints per miner."
+        )
+        generate_test_data_parser.add_argument(
+            "--num-positions",
+            type=int,
+            default=10,
+            help="Number of positions per miner.",
+        )
+        generate_test_data_parser.add_argument(
+            "--num-orders", type=int, default=5, help="Number of orders per position."
+        )
+        generate_test_data_parser.add_argument(
+            "--output-file", type=str, help="Path to save the generated file."
+        )
+        generate_test_data_parser.set_defaults(func=generate_input_data.main)
+
         # Demo command
         demo_parser = subparsers.add_parser(
             "demo",
@@ -624,39 +648,14 @@ def main():
         )
         drawdown_parser.set_defaults(func=demo_drawdown.main)
 
-        # Main demo
+        # Main end-to-end demo
         main_demo_parser = demo_subparsers.add_parser(
-            "main", help="Run the main end-to-end demo"
+            "main", help="Run the comprehensive end-to-end demo with proof generation"
         )
         main_demo_parser.add_argument(
             "--hotkey", type=str, help="Specific miner ID to test"
         )
         main_demo_parser.set_defaults(func=demo_main.main)
-
-        # Generate-input-data command
-        generate_input_data_parser = subparsers.add_parser(
-            "generate-input-data",
-            help="Generate a randomized validator checkpoint file",
-        )
-        generate_input_data_parser.add_argument(
-            "--num-miners", type=int, default=10, help="Number of miners to generate."
-        )
-        generate_input_data_parser.add_argument(
-            "--num-cps", type=int, default=200, help="Number of checkpoints per miner."
-        )
-        generate_input_data_parser.add_argument(
-            "--num-positions",
-            type=int,
-            default=10,
-            help="Number of positions per miner.",
-        )
-        generate_input_data_parser.add_argument(
-            "--num-orders", type=int, default=5, help="Number of orders per position."
-        )
-        generate_input_data_parser.add_argument(
-            "--output-file", type=str, help="Path to save the generated file."
-        )
-        generate_input_data_parser.set_defaults(func=demo_generate_input_data.main)
 
         # Parse arguments
         args = parser.parse_args()

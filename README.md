@@ -1,139 +1,154 @@
-# Proof of Portfolio (PoP)
+# Proof of Portfolio
 
-A command-line interface for the Proof of Portfolio system.
+**A decentralized framework for verifiable, private performance metrics using Zero-Knowledge Proofs.**
+
+Proof of Portfolio (PoP) is a framework that enables **Validators** to generate verifiable attestations of private portfolio performance. The system provides tooling for the original data owners (**Miners**) and consumers (**Signal Purchasers**) to cryptographically verify these attestations—ensuring both data inclusion and correctness of calculated metrics—all without the validator ever exposing the underlying private data.
+
+This is achieved by combining Merkle trees to commit to a history of portfolio data and [Noir](https://noir-lang.org/), a DSL for creating and verifying zero-knowledge proofs.
+
+---
+
+## Table of Contents
+
+- [Proof of Portfolio](#proof-of-portfolio)
+  - [Table of Contents](#table-of-contents)
+  - [Core Concepts](#core-concepts)
+  - [Project Structure](#project-structure)
+  - [Installation](#installation)
+    - [1. Prerequisites](#1-prerequisites)
+    - [2. Standard Installation](#2-standard-installation)
+    - [3. Installer Script (Optional)](#3-installer-script-optional)
+  - [Usage Workflow](#usage-workflow)
+    - [1. Validator: Generating Proofs](#1-validator-generating-proofs)
+    - [2. Miner: Verifying Inclusion](#2-miner-verifying-inclusion)
+    - [Utility Commands](#utility-commands)
+  - [Demos](#demos)
+  - [Development](#development)
+
+---
+
+## Core Concepts
+
+The PoP system establishes trust through a validator-centric attestation model. It assumes a validator already has access to a set of private miner data. The tooling then facilitates a cryptographic process built on two key principles:
+
+1.  **Merkle Trees**: A validator takes a miner's private portfolio history (checkpoints, positions, orders) and builds a Merkle tree from it. The resulting **Merkle Root** is made public. This root acts as a secure, tamper-proof fingerprint of the miner's entire dataset.
+
+2.  **Zero-Knowledge Proofs (ZKPs)**: Using circuits written in Noir, the validator generates a proof that specific performance metrics were calculated correctly over the private data corresponding to the public Merkle root.
+
+This combination allows for **verifiable, private computation**. Miners and signal purchasers can trust the publicly-stated performance metrics because:
+
+- They can cryptographically verify their data was included in the calculation (by comparing their own data's Merkle root to the one the validator published).
+- They can cryptographically verify the calculation itself was performed correctly (via the ZK proof).
+
+The miner's sensitive financial data remains confidential throughout the entire process.
+
+---
+
+## Project Structure
+
+The repository is organized into two main directories:
+
+- `circuits/`: Contains all the Noir source code. The core logic for financial calculations (Sharpe ratio, returns, etc.) and the main circuit for verifying a miner's data against their Merkle root are defined here.
+- `src/`: Contains the Python source code for the CLI, miner and validator logic, and demonstration scripts.
+
+---
 
 ## Installation
 
-### Recommended: Using the installer script
+The project is managed with Python and requires the `nargo` toolchain for interacting with Noir circuits.
 
-The easiest way to install the Proof of Portfolio CLI and all its dependencies is to use the provided installer script:
+### 1. Prerequisites
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/proof-of-portfolio.git
-cd proof-of-portfolio
+Ensure you have [Noir/Nargo](https://noir-lang.org/docs/getting_started/installation) installed.
 
-# Run the installer script
-./install.sh
-```
+### 2. Standard Installation
 
-This will install all required dependencies and the `pop` command-line tool automatically.
-
-For advanced installation options, run `./install.sh --help`.
-
-### Alternative: Manual installation using pip
-
-If you prefer, you can also install the package manually using pip:
+Clone the repository and install the package in editable mode. This will install the `pop` command-line tool and all necessary Python dependencies.
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/proof-of-portfolio.git
+git clone https://github.com/inference-labs-inc/proof-of-portfolio.git
 cd proof-of-portfolio
-
-# Install the package
 pip install -e .
 ```
 
-This will install the `pop` command-line tool, but you'll need to install other dependencies manually.
+### 3. Installer Script (Optional)
 
-## Usage
-
-The Proof of Portfolio CLI provides five main commands:
-
-### 1. Generate a Merkle Tree (for Miners)
-
-As a miner, you can generate your own Merkle tree and scores using your data.json file:
+An `install.sh` script is provided for convenience, which can help automate dependency setup.
 
 ```bash
-pop generate-tree --path path/to/data.json [--hotkey YOUR_HOTKEY] [--output path/to/output/tree.json]
-# OR
-pop generate-tree --path path/to/hotkey/directory [--hotkey YOUR_HOTKEY] [--output path/to/output/tree.json]
+./install.sh
 ```
 
-If the `--hotkey` option is not provided, the CLI will try to extract it from the parent directory name.
+---
 
-If the `--output` option is not provided, the tree.json file will be saved to the same directory as the data.json file.
+## Usage Workflow
 
-### 2. Validate a Miner (for Validators)
+The `pop` command-line interface provides tools for all participants in the ecosystem. The primary workflow is validator-driven.
 
-As a validator, you can generate a tree for a miner given their data.json file or directory:
+### 1. Validator: Generating Proofs
+
+Validators use the PoP toolkit to attest to the performance of miner data they possess.
+
+First, a validator might use `analyse-data` to split a large file of all miner data into a standardized directory structure.
 
 ```bash
-pop validate --path path/to/miner/data.json
-# OR
-pop validate --path path/to/miner/directory
+pop analyse-data --path validator_checkpoint.json --output ./miner_data/
 ```
 
-### 3. Validate All Miners (for Validators)
-
-As a validator, you can generate trees for ALL miners given a directory or input JSON file:
+Next, the validator processes each miner's data to generate a score and a Merkle root.
 
 ```bash
-pop validate-all --path path/to/children/directory
-# OR
-pop validate-all --path path/to/input_data.json
+# Process a single miner's data
+pop validate --path ./miner_data/5H.../data.json
+
+# Process all miners in a directory
+pop validate-all --path ./miner_data/
 ```
 
-If you provide a directory path, it will process all miner directories directly. If you provide a JSON file path, it will split the file into subdirectories for each miner, and then generate a Merkle tree for each one.
+This produces a `score.json` file for each miner, containing the calculated metrics and the public Merkle root that commits to the data used.
 
-### 4. Save a Merkle Tree
+### 2. Miner: Verifying Inclusion
 
-You can save a merkle tree from an existing tree.json file or a hotkey directory to a specified location:
+After a validator publishes a Merkle root, a miner can independently verify that their data was included and processed correctly without tampering.
+
+The miner runs the `generate-tree` command on their own private data.
 
 ```bash
-pop save-tree --path path/to/tree.json --output path/to/output/tree.json
-# OR
-pop save-tree --path path/to/hotkey/directory --output path/to/output/tree.json
+# Miner provides the path to their own data file
+pop generate-tree --path ./path/to/my_private_data.json
 ```
 
-This will load the merkle tree and save it to the specified location.
+This command outputs a Merkle root. The miner can then compare this root to the one published by the validator. If they match, the miner has cryptographic proof that the validator used their exact data.
 
-### 5. Analyze Data
+### Utility Commands
 
-You can analyze input data and split it into separate files for each hotkey:
+- **`generate-test-data`**: Creates a randomized `validator_checkpoint.json`-style file for testing.
+  ```bash
+  pop generate-test-data --num-miners 5 --output-file test_data.json
+  ```
+- **`save-tree`**: A helper utility to save a `tree.json` file to a different location.
+
+---
+
+## Demos
+
+The CLI includes several demos to test and compare the Python and Noir circuit implementations.
 
 ```bash
-pop analyse-data --path path/to/input_data.json [--output path/to/output/directory]
+pop demo --help
 ```
 
-This will process the input JSON file and create a subdirectory for each hotkey, containing their respective data.json files. If the `--output` option is not provided, the files will be saved to a 'children' directory in the same location as the input file.
+- **`main`**: Runs a comprehensive end-to-end test, including ZKP generation and verification with Barretenberg.
+- **Other demos**: `log-returns`, `returns`, `sharpe`, `drawdown`.
 
-### Help
-
-You can get help for any command using the `--help` option:
+**Example:**
 
 ```bash
-pop --help
-pop generate-tree --help
-pop validate --help
-pop validate-all --help
-pop save-tree --help
-pop analyse-data --help
+pop demo main --hotkey 5H...
 ```
 
-### Version
+---
 
-You can check the version of the CLI using the `--version` option:
+## Development
 
-```bash
-pop --version
-```
-
-## File Structure
-
-The Proof of Portfolio system uses the following file structure:
-
-```
-data/
-├── input_data.json           # Input data containing all miners' data
-├── scores_summary.json       # Summary of all miners' scores
-└── children/                 # Directory containing subdirectories for each miner
-    ├── MINER_HOTKEY_1/       # Subdirectory for miner 1
-    │   ├── data.json         # Miner 1's data
-    │   ├── tree.json         # Miner 1's Merkle tree
-    │   └── score.json        # Miner 1's score
-    └── MINER_HOTKEY_2/       # Subdirectory for miner 2
-        ├── data.json         # Miner 2's data
-        ├── tree.json         # Miner 2's Merkle tree
-        └── score.json        # Miner 2's score
-```
+The project is under active development. Contributions are welcome. Please refer to the source code and circuits for detailed implementation information.
