@@ -1,7 +1,6 @@
 use components::core::merkle::{hash_signal, MERKLE_DEPTH, TradingSignal};
 use std::hash::pedersen_hash;
 
-// Re-declaring this constant from main.nr. In a real project, you'd share this.
 global MAX_SIGNALS: u32 = 256;
 
 // A struct to hold all the Merkle tree data
@@ -13,16 +12,9 @@ struct MerkleTree {
 }
 
 // Builds a Merkle tree and returns all necessary components.
-// Note: This is a simplified implementation for a fixed-size power-of-two tree.
-// The number of signals must be a power of two.
 fn build_merkle_tree(signals: [TradingSignal; MAX_SIGNALS], actual_len: u32) -> MerkleTree {
-    // This implementation requires the number of signals to be a power of two.
-    // We are proceeding with the assumption that MAX_SIGNALS is a power of 2.
     assert(MAX_SIGNALS > 0);
     assert((MAX_SIGNALS & (MAX_SIGNALS - 1)) == 0);
-
-    // A 2D array to hold all nodes of the tree.
-    // tree[0] is the leaf layer, tree[MERKLE_DEPTH] is the root layer.
     let mut tree: [[Field; MAX_SIGNALS]; MERKLE_DEPTH + 1] = [[0; MAX_SIGNALS]; MERKLE_DEPTH + 1];
 
     // 1. Create the leaf layer (level 0)
