@@ -19,6 +19,13 @@ from pathlib import Path
 from .miner import Miner
 from .validator import score_child, score_all
 from .analyze_data import split_input_json
+from src.demos import log_returns as demo_log_returns
+from src.demos import returns as demo_returns
+from src.demos import sharpe as demo_sharpe
+from src.demos import drawdown as demo_drawdown
+from src.demos import main as demo_main
+from src.demos import generate_input_data as demo_generate_input_data
+
 
 def generate_tree(args):
     """
@@ -29,8 +36,10 @@ def generate_tree(args):
     """
     try:
         # Check if data_file is provided
-        if not hasattr(args, 'data_file') or not args.data_file:
-            print("Warning: --path parameter was omitted, please provide a path to the data.json file.")
+        if not hasattr(args, "data_file") or not args.data_file:
+            print(
+                "Warning: --path parameter was omitted, please provide a path to the data.json file."
+            )
             return 1
 
         path = Path(args.data_file)
@@ -42,7 +51,7 @@ def generate_tree(args):
         # Check if the path is a directory or a file
         if path.is_dir():
             # If it's a directory, look for data.json inside it
-            data_file = path / 'data.json'
+            data_file = path / "data.json"
             parent_dir = path
         else:
             # If it's a file, assume it's the data.json file
@@ -59,7 +68,9 @@ def generate_tree(args):
             if parent_dir.name != "." and parent_dir.name != "":
                 hotkey = parent_dir.name
             else:
-                print("Error: Hotkey not provided and could not be determined from directory structure.")
+                print(
+                    "Error: Hotkey not provided and could not be determined from directory structure."
+                )
                 print("Please provide a hotkey using the --hotkey option.")
                 return 1
 
@@ -69,9 +80,15 @@ def generate_tree(args):
         miner = Miner(hotkey, f"Miner-{hotkey[:8] if len(hotkey) > 8 else hotkey}")
 
         # Generate the tree with optional output path
-        output_path = args.output_path if hasattr(args, 'output_path') and args.output_path else None
+        output_path = (
+            args.output_path
+            if hasattr(args, "output_path") and args.output_path
+            else None
+        )
         if output_path is None:
-            print("Note: --output parameter was omitted, tree will be saved in the same directory as the data file.")
+            print(
+                "Note: --output parameter was omitted, tree will be saved in the same directory as the data file."
+            )
 
         tree_data = miner.generate_tree(str(data_file), output_path)
 
@@ -95,6 +112,7 @@ def generate_tree(args):
         print(f"Error generating tree: {str(e)}")
         return 1
 
+
 def validate_miner(args):
     """
     Generate a merkle tree for a miner as a validator.
@@ -104,8 +122,10 @@ def validate_miner(args):
     """
     try:
         # Check if data_file is provided
-        if not hasattr(args, 'data_file') or not args.data_file:
-            print("Warning: --path parameter was omitted, please provide a path to the data.json file.")
+        if not hasattr(args, "data_file") or not args.data_file:
+            print(
+                "Warning: --path parameter was omitted, please provide a path to the data.json file."
+            )
             return 1
 
         path = Path(args.data_file)
@@ -117,7 +137,7 @@ def validate_miner(args):
         # Check if the path is a directory or a file
         if path.is_dir():
             # If it's a directory, look for data.json inside it
-            data_file = path / 'data.json'
+            data_file = path / "data.json"
             parent_dir = path
         else:
             # If it's a file, assume it's the data.json file
@@ -150,6 +170,7 @@ def validate_miner(args):
         print(f"Error validating miner: {str(e)}")
         return 1
 
+
 def validate_all_miners(args):
     """
     Generate merkle trees for all miners in a directory.
@@ -159,9 +180,11 @@ def validate_all_miners(args):
     """
     try:
         # Check if input_path is provided, if not use the default from score_all
-        if not hasattr(args, 'input_path') or not args.input_path:
+        if not hasattr(args, "input_path") or not args.input_path:
             default_path = "data/input_data.json"
-            print(f"Warning: --path parameter was omitted, attempting with default path: {default_path}")
+            print(
+                f"Warning: --path parameter was omitted, attempting with default path: {default_path}"
+            )
             input_path = Path(default_path)
         else:
             input_path = Path(args.input_path)
@@ -196,7 +219,7 @@ def validate_all_miners(args):
             # Save all scores to a summary file
             summary_file = input_path.parent / "scores_summary.json"
             try:
-                with open(summary_file, 'w') as f:
+                with open(summary_file, "w") as f:
                     json.dump(scores, f, indent=2)
                 print(f"\nAll scores saved to {summary_file}")
             except Exception as e:
@@ -222,6 +245,7 @@ def validate_all_miners(args):
         print(f"Error validating all miners: {str(e)}")
         return 1
 
+
 def analyse_data(args):
     """
     Analyze input data and split it into separate files for each hotkey.
@@ -231,9 +255,11 @@ def analyse_data(args):
     """
     try:
         # Check if input_file is provided, if not use the default from split_input_json
-        if not hasattr(args, 'input_file') or not args.input_file:
+        if not hasattr(args, "input_file") or not args.input_file:
             default_input = "../data/input_data.json"
-            print(f"Warning: --path parameter was omitted, attempting with default path: {default_input}")
+            print(
+                f"Warning: --path parameter was omitted, attempting with default path: {default_input}"
+            )
             input_file = Path(default_input)
         else:
             input_file = Path(args.input_file)
@@ -245,9 +271,11 @@ def analyse_data(args):
         print(f"Analyzing data from {input_file}...")
 
         # Call the split_input_json function from analyze_data module
-        if not hasattr(args, 'output_dir') or not args.output_dir:
+        if not hasattr(args, "output_dir") or not args.output_dir:
             default_output = "../data/children"
-            print(f"Note: --output parameter was omitted, using default output directory: {default_output}")
+            print(
+                f"Note: --output parameter was omitted, using default output directory: {default_output}"
+            )
             output_dir = default_output
         else:
             output_dir = args.output_dir
@@ -264,6 +292,7 @@ def analyse_data(args):
         print(f"Error analyzing data: {str(e)}")
         return 1
 
+
 def save_tree(args):
     """
     Save a merkle tree from a tree.json file or a hotkey directory to a specified output path.
@@ -274,8 +303,10 @@ def save_tree(args):
     """
     try:
         # Check if path is provided
-        if not hasattr(args, 'path') or not args.path:
-            print("Warning: --path parameter was omitted, please provide a path to the tree.json file or hotkey directory.")
+        if not hasattr(args, "path") or not args.path:
+            print(
+                "Warning: --path parameter was omitted, please provide a path to the tree.json file or hotkey directory."
+            )
             return 1
 
         path = Path(args.path)
@@ -293,7 +324,7 @@ def save_tree(args):
             hotkey = path.parent.name
         else:
             # If it's a directory, look for tree.json in the directory
-            tree_file = path / 'tree.json'
+            tree_file = path / "tree.json"
             # Use the directory name as the hotkey
             hotkey = path.name
 
@@ -304,15 +335,17 @@ def save_tree(args):
 
         # Load the tree data
         try:
-            with open(tree_file, 'r') as f:
+            with open(tree_file, "r") as f:
                 tree_data = json.load(f)
         except Exception as e:
             print(f"Error loading tree data: {e}")
             return 1
 
         # Check if output_path is provided
-        if not hasattr(args, 'output_path') or not args.output_path:
-            print("Warning: --output parameter was omitted, please provide an output path.")
+        if not hasattr(args, "output_path") or not args.output_path:
+            print(
+                "Warning: --output parameter was omitted, please provide an output path."
+            )
             return 1
 
         # Save the tree data to the specified location
@@ -329,7 +362,7 @@ def save_tree(args):
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(tree_data, f, indent=2)
             print(f"Tree data saved to {output_file}")
         except Exception as e:
@@ -340,6 +373,7 @@ def save_tree(args):
     except Exception as e:
         print(f"Error saving tree: {str(e)}")
         return 1
+
 
 def print_header():
     """
@@ -353,12 +387,13 @@ def print_header():
     use_colors = True
 
     # Check if NO_COLOR environment variable is set (standard way to disable color)
-    if os.environ.get('NO_COLOR') is not None:
+    if os.environ.get("NO_COLOR") is not None:
         use_colors = False
     # Check if we're running on Windows without proper ANSI support
-    elif platform.system() == 'Windows' and not os.environ.get('ANSICON'):
+    elif platform.system() == "Windows" and not os.environ.get("ANSICON"):
         try:
             import colorama
+
             colorama.init()
         except ImportError:
             use_colors = False
@@ -407,7 +442,6 @@ def print_header():
     print(header)
 
 
-
 def main():
     """
     Main entry point for the CLI.
@@ -419,40 +453,32 @@ def main():
         parser = argparse.ArgumentParser(
             prog="pop",
             description="Proof of Portfolio CLI",
-            epilog="For more information, visit https://github.com/inference-labs-inc/proof-of-portfolio"
+            epilog="For more information, visit https://github.com/inference-labs-inc/proof-of-portfolio",
         )
 
-        parser.add_argument(
-            "--version",
-            action="version",
-            version="%(prog)s 1.0.0"
-        )
+        parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
 
         subparsers = parser.add_subparsers(
-            title="commands",
-            dest="command",
-            help="Command to execute"
+            title="commands", dest="command", help="Command to execute"
         )
 
         # Generate tree command
         generate_parser = subparsers.add_parser(
             "generate-tree",
             help="Generate a merkle tree for a miner using their data.json file",
-            description="Generate a merkle tree, scores, and print the tree for a miner using their data.json file"
+            description="Generate a merkle tree, scores, and print the tree for a miner using their data.json file",
         )
         generate_parser.add_argument(
-            "--path",
-            dest="data_file",
-            help="Path to the data.json file"
+            "--path", dest="data_file", help="Path to the data.json file"
         )
         generate_parser.add_argument(
             "--hotkey",
-            help="Miner's hotkey (if not provided, will try to extract from parent directory name)"
+            help="Miner's hotkey (if not provided, will try to extract from parent directory name)",
         )
         generate_parser.add_argument(
             "--output",
             dest="output_path",
-            help="Path where the tree.json file will be saved (if not provided, saves to the same directory as the data.json file)"
+            help="Path where the tree.json file will be saved (if not provided, saves to the same directory as the data.json file)",
         )
         generate_parser.set_defaults(func=generate_tree)
 
@@ -460,12 +486,10 @@ def main():
         validate_parser = subparsers.add_parser(
             "validate",
             help="Generate a merkle tree for a miner as a validator",
-            description="Generate a merkle tree for a miner as a validator and score their data"
+            description="Generate a merkle tree for a miner as a validator and score their data",
         )
         validate_parser.add_argument(
-            "--path",
-            dest="data_file",
-            help="Path to the miner's data.json file"
+            "--path", dest="data_file", help="Path to the miner's data.json file"
         )
         validate_parser.set_defaults(func=validate_miner)
 
@@ -473,12 +497,12 @@ def main():
         validate_all_parser = subparsers.add_parser(
             "validate-all",
             help="Generate merkle trees for all miners in a directory",
-            description="Process input JSON file or directory containing miner data, and generate a Merkle tree for each miner"
+            description="Process input JSON file or directory containing miner data, and generate a Merkle tree for each miner",
         )
         validate_all_parser.add_argument(
             "--path",
             dest="input_path",
-            help="Path to the input JSON file or directory containing miners' data (default: data/input_data.json)"
+            help="Path to the input JSON file or directory containing miners' data (default: data/input_data.json)",
         )
         validate_all_parser.set_defaults(func=validate_all_miners)
 
@@ -486,17 +510,17 @@ def main():
         save_tree_parser = subparsers.add_parser(
             "save-tree",
             help="Save a merkle tree from a tree.json file or a hotkey directory to a specified output path",
-            description="Load a merkle tree and save it to a specified location"
+            description="Load a merkle tree and save it to a specified location",
         )
         save_tree_parser.add_argument(
             "--path",
             dest="path",
-            help="Path to the tree.json file or the directory containing the tree.json file"
+            help="Path to the tree.json file or the directory containing the tree.json file",
         )
         save_tree_parser.add_argument(
             "--output",
             dest="output_path",
-            help="Path where the tree.json file will be saved"
+            help="Path where the tree.json file will be saved",
         )
         save_tree_parser.set_defaults(func=save_tree)
 
@@ -504,19 +528,135 @@ def main():
         analyse_data_parser = subparsers.add_parser(
             "analyse-data",
             help="Analyze input data and split it into separate files for each hotkey",
-            description="Process input JSON file and split it into subdirectories for each hotkey"
+            description="Process input JSON file and split it into subdirectories for each hotkey",
         )
         analyse_data_parser.add_argument(
             "--path",
             dest="input_file",
-            help="Path to the input JSON file (default: ../data/input_data.json)"
+            help="Path to the input JSON file (default: ../data/input_data.json)",
         )
         analyse_data_parser.add_argument(
             "--output",
             dest="output_dir",
-            help="Directory where the split files will be saved (default: ../data/children)"
+            help="Directory where the split files will be saved (default: ../data/children)",
         )
         analyse_data_parser.set_defaults(func=analyse_data)
+
+        # Demo command
+        demo_parser = subparsers.add_parser(
+            "demo",
+            help="Run demo scripts",
+            description="Run various demo scripts to test circuit implementations",
+        )
+        demo_subparsers = demo_parser.add_subparsers(
+            title="demos", dest="demo_command", help="Demo to execute"
+        )
+
+        # Log-returns demo
+        log_returns_parser = demo_subparsers.add_parser(
+            "log-returns", help="Run the log-returns demo"
+        )
+        log_returns_parser.add_argument(
+            "--miner-id", type=str, help="Specific miner ID to test"
+        )
+        log_returns_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        log_returns_parser.add_argument(
+            "--max-checkpoints",
+            type=int,
+            default=200,
+            help="Maximum checkpoints to test per miner",
+        )
+        log_returns_parser.set_defaults(func=demo_log_returns.main)
+
+        # Returns demo
+        returns_parser = demo_subparsers.add_parser(
+            "returns", help="Run the returns demo"
+        )
+        returns_parser.add_argument(
+            "--miner-id", type=str, help="Specific miner ID to test"
+        )
+        returns_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        returns_parser.add_argument(
+            "--max-checkpoints",
+            type=int,
+            default=200,
+            help="Maximum checkpoints to test per miner",
+        )
+        returns_parser.set_defaults(func=demo_returns.main)
+
+        # Sharpe demo
+        sharpe_parser = demo_subparsers.add_parser("sharpe", help="Run the sharpe demo")
+        sharpe_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        sharpe_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        sharpe_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        sharpe_parser.set_defaults(func=demo_sharpe.main)
+
+        # Drawdown demo
+        drawdown_parser = demo_subparsers.add_parser(
+            "drawdown", help="Run the drawdown demo"
+        )
+        drawdown_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        drawdown_parser.set_defaults(func=demo_drawdown.main)
+
+        # Main demo
+        main_demo_parser = demo_subparsers.add_parser(
+            "main", help="Run the main end-to-end demo"
+        )
+        main_demo_parser.add_argument(
+            "--hotkey", type=str, help="Specific miner ID to test"
+        )
+        main_demo_parser.set_defaults(func=demo_main.main)
+
+        # Generate-input-data command
+        generate_input_data_parser = subparsers.add_parser(
+            "generate-input-data",
+            help="Generate a randomized validator checkpoint file",
+        )
+        generate_input_data_parser.add_argument(
+            "--num-miners", type=int, default=10, help="Number of miners to generate."
+        )
+        generate_input_data_parser.add_argument(
+            "--num-cps", type=int, default=200, help="Number of checkpoints per miner."
+        )
+        generate_input_data_parser.add_argument(
+            "--num-positions",
+            type=int,
+            default=10,
+            help="Number of positions per miner.",
+        )
+        generate_input_data_parser.add_argument(
+            "--num-orders", type=int, default=5, help="Number of orders per position."
+        )
+        generate_input_data_parser.add_argument(
+            "--output-file", type=str, help="Path to save the generated file."
+        )
+        generate_input_data_parser.set_defaults(func=demo_generate_input_data.main)
 
         # Parse arguments
         args = parser.parse_args()
@@ -531,6 +671,7 @@ def main():
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

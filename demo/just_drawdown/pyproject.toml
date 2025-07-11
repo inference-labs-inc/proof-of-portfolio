@@ -1,6 +1,0 @@
-[project]
-name = "just_drawdown"
-version = "0.1.0"
-description = "Drawdown calculator"
-authors = [{ name = "Inference Labs Inc" }]
-dependencies = ["argparse>=1.4.0", "matplotlib>=3.10.3", "numpy>=1.24.0"]
