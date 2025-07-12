@@ -1,7 +1,5 @@
-import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 import subprocess
 from src.demos import utils
 

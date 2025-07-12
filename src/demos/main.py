@@ -3,7 +3,6 @@ import subprocess
 import toml
 import re
 import os
-import sys
 import time
 
 # Constants for the circuit

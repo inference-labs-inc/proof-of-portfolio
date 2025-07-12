@@ -1,7 +1,6 @@
 import json
 import subprocess
 from datetime import datetime, timezone, date
-from typing import Dict, List
 
 SCALE = 10_000_000
 DAILY_CHECKPOINTS = 2
