@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 def generate_random_data(num_miners=10, num_cps=200, num_positions=10, num_orders=5):
     """
-    Generates a randomized dataset with the same structure as validator_checkpoint.json.
+    Generates a randomized dataset which would typically be saved as the validator_checkpoint.json file.
     """
     data = {
         "version": "6.1.0",
