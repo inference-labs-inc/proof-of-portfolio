@@ -4,10 +4,20 @@ Proof of Portfolio (pop) CLI
 
 A command-line interface for the Proof of Portfolio system.
 
-This CLI provides three main commands:
-1. generate-tree - For miners to generate their own merkle tree using their data.json
-2. validate - For validators to generate a tree for a miner given their data.json
-3. validate-all - For validators to generate ALL miners' trees given a directory
+This CLI provides commands for both Miners and Validators.
+
+Miner Commands:
+  - generate-tree: Generate a Merkle tree for a miner's portfolio data.
+
+Validator Commands:
+  - validate: Validate a single miner's data and generate their Merkle tree.
+  - validate-all: Validate all miners' data from an input file or directory.
+  - analyse-data: Pre-process a large data file, splitting it by miner.
+
+Utility Commands:
+  - generate-test-data: Create a randomized test data file for validation.
+  - save-tree: Save a generated Merkle tree to a specified output file.
+  - demo: Run demonstration scripts for various system components.
 """
 
 import argparse
@@ -15,16 +25,76 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Tuple, Optional
 
 from .miner import Miner
 from .validator import score_child, score_all
 from .analyze_data import split_input_json
 from src.demos import log_returns as demo_log_returns
-from src.demos import returns as demo_returns
 from src.demos import sharpe as demo_sharpe
 from src.demos import drawdown as demo_drawdown
 from src.demos import main as demo_main
 from src.demos import generate_input_data
+
+
+def _handle_data_file_path(
+    data_file_path: Optional[str],
+) -> Tuple[Optional[Path], Optional[Path]]:
+    """Handles path logic for finding data.json."""
+    if not data_file_path:
+        print(
+            "Warning: --path parameter was omitted, please provide a path to the data.json file."
+        )
+        return None, None
+
+    path = Path(data_file_path)
+
+    if not path.exists():
+        print(f"Error: Path not found at {path}")
+        return None, None
+
+    if path.is_dir():
+        data_file = path / "data.json"
+        parent_dir = path
+    else:
+        data_file = path
+        parent_dir = path.parent
+
+    if not data_file.exists():
+        print(f"Error: Data file not found at {data_file}")
+        return None, None
+
+    return data_file, parent_dir
+
+
+def _handle_tree_file_path(
+    path_str: Optional[str],
+) -> Tuple[Optional[Path], Optional[str]]:
+    """Handles path logic for finding tree.json and determining hotkey."""
+    if not path_str:
+        print(
+            "Warning: --path parameter was omitted, please provide a path to the tree.json file or hotkey directory."
+        )
+        return None, None
+
+    path = Path(path_str)
+
+    if not path.exists():
+        print(f"Error: Path not found: {path}")
+        return None, None
+
+    if path.is_file():
+        tree_file = path
+        hotkey = path.parent.name
+    else:
+        tree_file = path / "tree.json"
+        hotkey = path.name
+
+    if not tree_file.exists():
+        print(f"Error: Tree file not found at {tree_file}")
+        return None, None
+
+    return tree_file, hotkey
 
 
 def generate_tree(args):
@@ -35,31 +105,8 @@ def generate_tree(args):
         args: Command line arguments containing the data_file path, hotkey, and output_path
     """
     try:
-        # Check if data_file is provided
-        if not hasattr(args, "data_file") or not args.data_file:
-            print(
-                "Warning: --path parameter was omitted, please provide a path to the data.json file."
-            )
-            return 1
-
-        path = Path(args.data_file)
-
-        if not path.exists():
-            print(f"Error: Path not found at {path}")
-            return 1
-
-        # Check if the path is a directory or a file
-        if path.is_dir():
-            # If it's a directory, look for data.json inside it
-            data_file = path / "data.json"
-            parent_dir = path
-        else:
-            # If it's a file, assume it's the data.json file
-            data_file = path
-            parent_dir = path.parent
-
-        if not data_file.exists():
-            print(f"Error: Data file not found at {data_file}")
+        data_file, parent_dir = _handle_data_file_path(getattr(args, "data_file", None))
+        if not data_file or not parent_dir:
             return 1
 
         # If hotkey is not provided, try to extract it from the parent directory name
@@ -121,31 +168,8 @@ def validate_miner(args):
         args: Command line arguments containing the data_file path
     """
     try:
-        # Check if data_file is provided
-        if not hasattr(args, "data_file") or not args.data_file:
-            print(
-                "Warning: --path parameter was omitted, please provide a path to the data.json file."
-            )
-            return 1
-
-        path = Path(args.data_file)
-
-        if not path.exists():
-            print(f"Error: Path not found at {path}")
-            return 1
-
-        # Check if the path is a directory or a file
-        if path.is_dir():
-            # If it's a directory, look for data.json inside it
-            data_file = path / "data.json"
-            parent_dir = path
-        else:
-            # If it's a file, assume it's the data.json file
-            data_file = path
-            parent_dir = path.parent
-
-        if not data_file.exists():
-            print(f"Error: Data file not found at {data_file}")
+        data_file, parent_dir = _handle_data_file_path(getattr(args, "data_file", None))
+        if not data_file or not parent_dir:
             return 1
 
         print(f"Validating miner using data from {data_file}")
@@ -180,14 +204,15 @@ def validate_all_miners(args):
     """
     try:
         # Check if input_path is provided, if not use the default from score_all
-        if not hasattr(args, "input_path") or not args.input_path:
+        input_path_str = getattr(args, "input_path", None)
+        if not input_path_str:
             default_path = "data/input_data.json"
             print(
                 f"Warning: --path parameter was omitted, attempting with default path: {default_path}"
             )
             input_path = Path(default_path)
         else:
-            input_path = Path(args.input_path)
+            input_path = Path(input_path_str)
 
         if not input_path.exists():
             print(f"Error: Path not found at {input_path}")
@@ -255,14 +280,15 @@ def analyse_data(args):
     """
     try:
         # Check if input_file is provided, if not use the default from split_input_json
-        if not hasattr(args, "input_file") or not args.input_file:
+        input_file_str = getattr(args, "input_file", None)
+        if not input_file_str:
             default_input = "../data/input_data.json"
             print(
                 f"Warning: --path parameter was omitted, attempting with default path: {default_input}"
             )
             input_file = Path(default_input)
         else:
-            input_file = Path(args.input_file)
+            input_file = Path(input_file_str)
 
         if not input_file.exists():
             print(f"Error: Input file not found at {input_file}")
@@ -271,14 +297,15 @@ def analyse_data(args):
         print(f"Analyzing data from {input_file}...")
 
         # Call the split_input_json function from analyze_data module
-        if not hasattr(args, "output_dir") or not args.output_dir:
+        output_dir_str = getattr(args, "output_dir", None)
+        if not output_dir_str:
             default_output = "../data/children"
             print(
                 f"Note: --output parameter was omitted, using default output directory: {default_output}"
             )
             output_dir = default_output
         else:
-            output_dir = args.output_dir
+            output_dir = output_dir_str
 
         count = split_input_json(str(input_file), output_dir)
 
@@ -302,35 +329,8 @@ def save_tree(args):
               and the output path
     """
     try:
-        # Check if path is provided
-        if not hasattr(args, "path") or not args.path:
-            print(
-                "Warning: --path parameter was omitted, please provide a path to the tree.json file or hotkey directory."
-            )
-            return 1
-
-        path = Path(args.path)
-
-        # Check if the path exists
-        if not path.exists():
-            print(f"Error: Path not found: {path}")
-            return 1
-
-        # Determine if the path is a file or directory
-        if path.is_file():
-            # If it's a file, assume it's a tree.json file
-            tree_file = path
-            # Try to extract hotkey from parent directory
-            hotkey = path.parent.name
-        else:
-            # If it's a directory, look for tree.json in the directory
-            tree_file = path / "tree.json"
-            # Use the directory name as the hotkey
-            hotkey = path.name
-
-        # Check if tree.json exists
-        if not tree_file.exists():
-            print(f"Error: Tree file not found at {tree_file}")
+        tree_file, _ = _handle_tree_file_path(getattr(args, "path", None))
+        if not tree_file:
             return 1
 
         # Load the tree data
@@ -342,25 +342,26 @@ def save_tree(args):
             return 1
 
         # Check if output_path is provided
-        if not hasattr(args, "output_path") or not args.output_path:
+        output_path_str = getattr(args, "output_path", None)
+        if not output_path_str:
             print(
                 "Warning: --output parameter was omitted, please provide an output path."
             )
             return 1
 
         # Save the tree data to the specified location
-        output_path = args.output_path
+        output_path = Path(output_path_str)
 
         # If output_path is a directory, append tree.json to it
-        if os.path.isdir(output_path):
-            output_file = os.path.join(output_path, "tree.json")
+        if output_path.is_dir():
+            output_file = output_path / "tree.json"
         else:
             # Otherwise use the provided path directly
             output_file = output_path
 
         try:
             # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+            output_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(output_file, "w") as f:
                 json.dump(tree_data, f, indent=2)
@@ -596,27 +597,6 @@ def main():
             help="Maximum checkpoints to test per miner",
         )
         log_returns_parser.set_defaults(func=demo_log_returns.main)
-
-        # Returns demo
-        returns_parser = demo_subparsers.add_parser(
-            "returns", help="Run the returns demo"
-        )
-        returns_parser.add_argument(
-            "--miner-id", type=str, help="Specific miner ID to test"
-        )
-        returns_parser.add_argument(
-            "--batch-tests",
-            type=int,
-            default=10,
-            help="Number of miners to test in batch mode",
-        )
-        returns_parser.add_argument(
-            "--max-checkpoints",
-            type=int,
-            default=200,
-            help="Maximum checkpoints to test per miner",
-        )
-        returns_parser.set_defaults(func=demo_returns.main)
 
         # Sharpe demo
         sharpe_parser = demo_subparsers.add_parser("sharpe", help="Run the sharpe demo")
