@@ -20,6 +20,11 @@ def generate_random_data(num_miners=10, num_cps=200, num_positions=10, num_order
 
     hotkeys = [f"5{i:063d}" for i in range(num_miners)]
 
+    # Start time for the first checkpoint, e.g., N days ago, so we have a history
+    # num_cps is 200, at 2 per day, this is 100 days of data.
+    start_timestamp_ms = int(time.time() * 1000) - (num_cps // 2) * 24 * 60 * 60 * 1000
+    checkpoint_duration_ms = 43200000  # 12 hours
+
     for hotkey in hotkeys:
         # Challenge period
         data["challengeperiod"]["testing"][hotkey] = int(
@@ -28,21 +33,24 @@ def generate_random_data(num_miners=10, num_cps=200, num_positions=10, num_order
 
         # Perf ledger
         cps = []
+        current_timestamp_ms = start_timestamp_ms
         for _ in range(num_cps):
             gain = random.uniform(-0.01, 0.01)
             loss = random.uniform(-0.01, 0) if gain > 0 else random.uniform(-0.01, 0.01)
+
+            current_timestamp_ms += checkpoint_duration_ms
             cp = {
                 "gain": gain,
                 "loss": loss,
                 "prev_ms": random.randint(1000, 100000),
-                "accum_ms": 43200000,
-                "last_update_ms": int(time.time() * 1000) - random.randint(0, 1000000),
+                "accum_ms": checkpoint_duration_ms,
+                "last_update_ms": current_timestamp_ms,
             }
             cps.append(cp)
 
         data["perf_ledgers"][hotkey] = {
             "cps": cps,
-            "target_cp_duration_ms": 43200000,
+            "target_cp_duration_ms": checkpoint_duration_ms,
             "target_dca_duration_ms": 0,
         }
 
