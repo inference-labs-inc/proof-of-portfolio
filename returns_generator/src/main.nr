@@ -1,6 +1,6 @@
 use dep::std;
 
-// Globals from component files
+
 pub global MAX_CHECKPOINTS: u32 = 200;
 pub global MAX_DAYS: u32 = 120;
 pub global MERKLE_DEPTH: u32 = 8;
