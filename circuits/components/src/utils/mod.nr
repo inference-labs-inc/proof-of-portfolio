@@ -1,4 +1,3 @@
-pub mod ann_downside_volatility;
 pub mod ann_excess_return;
 pub mod ann_volatility;
 pub mod average;
@@ -6,5 +5,3 @@ pub mod constants;
 pub mod sqrt;
 pub mod variance;
 pub mod weighting_distribution;
-pub mod simple_finance;
-pub mod simple_returns;
