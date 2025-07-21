@@ -16,7 +16,6 @@ MAX_DAYS = 120
 
 def run_command(command, cwd):
     """Executes a command in a given directory and returns the output."""
-    print(f"Running command: {' '.join(command)} in {cwd}")
     result = subprocess.run(command, capture_output=True, text=True, cwd=cwd)
     print("--- nargo stdout ---")
     print(result.stdout)
@@ -128,10 +127,11 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
     print("Writing vk...")
     vk_dir = os.path.join(circuit_dir, "verification_key")
     os.makedirs(vk_dir, exist_ok=True)
+    vk_path = os.path.join(vk_dir, "vk")
 
     vk_start = time.time()
     vk_result = subprocess.run(
-        ["bb", "write_vk", "-b", f"target/{circuit_json}", "-o", "verification_key"],
+        ["bb", "write_vk", "-b", f"target/{circuit_json}", "-o", vk_dir],
         cwd=circuit_dir,
         capture_output=True,
         text=True,
@@ -149,7 +149,16 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
     print("Verifying proof...")
     verify_start = time.time()
     verify_result = subprocess.run(
-        ["bb", "verify", "-k", "verification_key/vk", "-p", "proof/proof"],
+        [
+            "bb",
+            "verify",
+            "-p",
+            "proof/proof",
+            "-k",
+            vk_path,
+            "-i",
+            "proof/public_inputs",
+        ],
         cwd=circuit_dir,
         capture_output=True,
         text=True,
@@ -273,7 +282,7 @@ def main(args):
     print(f"Prepared {checkpoint_count} checkpoints and {signals_count} signals.")
 
     print("Running tree_generator circuit...")
-    tree_generator_dir = "tree_generator"
+    tree_generator_dir = os.path.abspath("tree_generator")
 
     tree_prover_input = {"signals": signals, "actual_len": str(signals_count)}
     with open(os.path.join(tree_generator_dir, "Prover.toml"), "w") as f:
@@ -309,7 +318,7 @@ def main(args):
 
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     print("Running returns_generator circuit...")
-    returns_generator_dir = "returns_generator"
+    returns_generator_dir = os.path.abspath("returns_generator")
 
     returns_prover_input = {
         "gains": [str(g) for g in gains],
@@ -337,7 +346,7 @@ def main(args):
     print(f"Number of valid daily returns: {valid_days}")
 
     print("Running main proof of portfolio circuit...")
-    main_circuit_dir = "circuits"
+    main_circuit_dir = os.path.abspath("circuits")
 
     # Finally, LFG
     main_prover_input = {
