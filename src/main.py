@@ -32,6 +32,7 @@ from .validator import score_child, score_all
 from .analyze_data import split_input_json
 from src.demos import log_returns as demo_log_returns
 from src.demos import sharpe as demo_sharpe
+from src.demos import omega as demo_omega
 from src.demos import drawdown as demo_drawdown
 from src.demos import main as demo_main
 from src.demos import generate_input_data
@@ -615,6 +616,24 @@ def main():
             "--weighting", action="store_true", help="Whether to use weighted average"
         )
         sharpe_parser.set_defaults(func=demo_sharpe.main)
+
+        # Omega demo
+        omega_parser = demo_subparsers.add_parser("omega", help="Run the omega demo")
+        omega_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        omega_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        omega_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        omega_parser.set_defaults(func=demo_omega.main)
 
         # Drawdown demo
         drawdown_parser = demo_subparsers.add_parser(
