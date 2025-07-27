@@ -33,6 +33,10 @@ from .analyze_data import split_input_json
 from src.demos import log_returns as demo_log_returns
 from src.demos import sharpe as demo_sharpe
 from src.demos import omega as demo_omega
+from src.demos import sortino as demo_sortino
+from src.demos import calmar as demo_calmar
+from src.demos import tstat as demo_tstat
+from src.demos import all as demo_all
 from src.demos import drawdown as demo_drawdown
 from src.demos import main as demo_main
 from src.demos import generate_input_data
@@ -599,6 +603,26 @@ def main():
         )
         log_returns_parser.set_defaults(func=demo_log_returns.main)
 
+        # All demos
+        all_parser = demo_subparsers.add_parser(
+            "all", help="Run all demos sequentially"
+        )
+        all_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        all_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        all_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        all_parser.set_defaults(func=demo_all.main)
+
         # Sharpe demo
         sharpe_parser = demo_subparsers.add_parser("sharpe", help="Run the sharpe demo")
         sharpe_parser.add_argument(
@@ -634,6 +658,64 @@ def main():
             "--weighting", action="store_true", help="Whether to use weighted average"
         )
         omega_parser.set_defaults(func=demo_omega.main)
+
+        # Sortino demo
+        sortino_parser = demo_subparsers.add_parser(
+            "sortino", help="Run the sortino demo"
+        )
+        sortino_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        sortino_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        sortino_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        sortino_parser.set_defaults(func=demo_sortino.main)
+
+        # Calmar demo
+        calmar_parser = demo_subparsers.add_parser("calmar", help="Run the calmar demo")
+        calmar_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        calmar_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        calmar_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        calmar_parser.set_defaults(func=demo_calmar.main)
+
+        # T-stat demo
+        tstat_parser = demo_subparsers.add_parser(
+            "tstat", help="Run the t-statistic demo"
+        )
+        tstat_parser.add_argument(
+            "--batch-tests",
+            type=int,
+            default=10,
+            help="Number of miners to test in batch mode",
+        )
+        tstat_parser.add_argument(
+            "--bypass-confidence",
+            action="store_true",
+            help="Whether to bypass confidence check",
+        )
+        tstat_parser.add_argument(
+            "--weighting", action="store_true", help="Whether to use weighted average"
+        )
+        tstat_parser.set_defaults(func=demo_tstat.main)
 
         # Drawdown demo
         drawdown_parser = demo_subparsers.add_parser(
