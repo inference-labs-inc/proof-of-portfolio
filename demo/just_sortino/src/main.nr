@@ -3,6 +3,7 @@ global SORTINO_NOCONFIDENCE_VALUE: i64 = -100;
 global SORTINO_DOWNSIDE_MINIMUM: i64 = 100000;
 global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 60;
 global DAYS_IN_YEAR: u64 = 365;
+global DAILY_LOG_RISK_FREE_RATE: i64 = 1124;
 
 global SCALE: i64 = 10_000_000;
 
@@ -139,20 +140,32 @@ pub fn annualized_downside_volatility(
 
     if use_weighting {
         let weights = weighting_distribution(actual_len);
-        let mut weighted_sum_sq_diff: i64 = 0;
+        let mut weighted_sum: i64 = 0;
         let mut sum_of_weights: i64 = 0;
 
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                if log_returns[i] < 0 {
-                    let sq_diff = (log_returns[i] / 1000) * (log_returns[i] / 1000);
-                    weighted_sum_sq_diff += sq_diff * weights[i];
+                if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                    weighted_sum += log_returns[i] * weights[i];
                     sum_of_weights += weights[i];
                 }
             }
         }
 
         if sum_of_weights > 0 {
+            let weighted_mean = weighted_sum / sum_of_weights;
+            let mut weighted_sum_sq_diff: i64 = 0;
+
+            for i in 0..ARRAY_SIZE {
+                if (i as u32) < actual_len {
+                    if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                        let diff = log_returns[i] - weighted_mean;
+                        let sq_diff = (diff / 1000) * (diff / 1000);
+                        weighted_sum_sq_diff += sq_diff * weights[i];
+                    }
+                }
+            }
+
             let downside_variance = weighted_sum_sq_diff / sum_of_weights;
             let annualized_variance = downside_variance * (DAYS_IN_YEAR as i64);
             sqrt(annualized_variance as u64) as i64 * 1000
@@ -160,19 +173,30 @@ pub fn annualized_downside_volatility(
             SCALE
         }
     } else {
+        let mut downside_returns_sum: i64 = 0;
+
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                if log_returns[i] < 0 {
-                    let neg_return = log_returns[i];
-                    downside_variance_sum =
-                        downside_variance_sum + ((neg_return * neg_return) as u64);
+                if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                    downside_returns_sum += log_returns[i];
                     negative_count = negative_count + 1;
                 }
             }
         }
 
-        if negative_count > 0 {
-            let downside_variance = downside_variance_sum / (negative_count as u64);
+        if negative_count > 1 {
+            let downside_mean = downside_returns_sum / (negative_count as i64);
+
+            for i in 0..ARRAY_SIZE {
+                if (i as u32) < actual_len {
+                    if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                        let diff = log_returns[i] - downside_mean;
+                        downside_variance_sum += ((diff * diff) as u64);
+                    }
+                }
+            }
+
+            let downside_variance = downside_variance_sum / ((negative_count - 1) as u64);
             let downside_volatility = sqrt(downside_variance * DAYS_IN_YEAR) as i64;
             downside_volatility
         } else {

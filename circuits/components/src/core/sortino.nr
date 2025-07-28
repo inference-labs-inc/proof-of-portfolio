@@ -1,35 +1,51 @@
 use crate::utils::{
     ann_excess_return::ann_excess_return,
     constants::{
-        ARRAY_SIZE, DAYS_IN_YEAR, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
-        STATISTICAL_CONFIDENCE_MINIMUM_N,
+        ARRAY_SIZE, DAILY_LOG_RISK_FREE_RATE, DAYS_IN_YEAR, SORTINO_DOWNSIDE_MINIMUM,
+        SORTINO_NOCONFIDENCE_VALUE, STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     sqrt::sqrt,
 };
 
-pub fn sortino(log_returns: [i64; ARRAY_SIZE], actual_len: u32, RISK_FREE_RATE: i64, use_weighting: bool) -> i64 {
+pub fn sortino(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    RISK_FREE_RATE: i64,
+    use_weighting: bool,
+) -> i64 {
     // Check minimum sample size for statistical confidence
     if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
     } else {
-        let excess_return = ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, use_weighting);
+        let excess_return =
+            ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, use_weighting);
 
         let mut downside_variance_sum: u64 = 0;
         let mut negative_count: u32 = 0;
+        let mut downside_returns_sum: i64 = 0;
 
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                if log_returns[i] < 0 {
-                    let neg_return = log_returns[i];
-                    downside_variance_sum =
-                        downside_variance_sum + ((neg_return * neg_return) as u64);
+                if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                    downside_returns_sum += log_returns[i];
                     negative_count = negative_count + 1;
                 }
             }
         }
 
-        if negative_count > 0 {
-            let downside_variance = downside_variance_sum / (negative_count as u64);
+        if negative_count > 1 {
+            let downside_mean = downside_returns_sum / (negative_count as i64);
+
+            for i in 0..ARRAY_SIZE {
+                if (i as u32) < actual_len {
+                    if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                        let diff = log_returns[i] - downside_mean;
+                        downside_variance_sum += ((diff * diff) as u64);
+                    }
+                }
+            }
+
+            let downside_variance = downside_variance_sum / ((negative_count - 1) as u64);
             let downside_volatility = sqrt(downside_variance * (DAYS_IN_YEAR as u64)) as i64;
 
             // Use minimum downside volatility to avoid division by zero/small numbers
