@@ -139,7 +139,7 @@ pub fn variance(
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = log_returns[i] - mean;
-                    let sq_diff = (diff / 1000) * (diff / 1000);
+                    let sq_diff = diff * diff;
                     weighted_sum_sq_diff += sq_diff * weights[i];
                     sum_of_weights += weights[i];
                 }
@@ -154,7 +154,7 @@ pub fn variance(
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = log_returns[i] - mean;
-                    let sq_diff = (diff / 1000) * (diff / 1000);
+                    let sq_diff = diff * diff;
                     sum_sq_diff += sq_diff;
                 }
             }
@@ -164,7 +164,11 @@ pub fn variance(
     variance
 }
 
-fn compute_t_statistic(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+fn compute_t_statistic(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    use_weighting: bool,
+) -> i64 {
     let avg = average(log_returns, actual_len, use_weighting);
     let var = variance(log_returns, actual_len, 1, use_weighting);
 
@@ -172,22 +176,23 @@ fn compute_t_statistic(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weig
         STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
     } else {
         let std_dev = sqrt(var as u64) as i64;
-        let standard_error = (std_dev * 1000000) / sqrt(actual_len as u64) as i64;
+        let n_sqrt = sqrt(actual_len as u64) as i64;
+        let standard_error = std_dev / n_sqrt;
 
         if standard_error == 0 {
+            // Effectively infinite t-statistic, return a large number
             1000000
         } else {
-            let t_statistic = (avg * 1000000) / standard_error;
-            if t_statistic > 10000000 {
-                1000000
-            } else {
-                t_statistic / 10
-            }
+            (avg * SCALE) / standard_error
         }
     }
 }
 
-pub fn statistical_confidence(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+pub fn statistical_confidence(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    use_weighting: bool,
+) -> i64 {
     if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         if actual_len < 2 {
             STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE

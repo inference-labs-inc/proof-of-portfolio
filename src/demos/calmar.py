@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import subprocess
+import os
+import time
 from src.demos import utils
 
 SCALE = 10_000_000
@@ -90,6 +92,7 @@ def run_calmar_nargo(
     prover_path = "demo/just_calmar/Prover.toml"
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
+    print(f"DEBUG: Writing to Prover.toml - first 5 returns: {log_returns[:5]}")
 
     with open(prover_path, "w") as f:
         f.write(f'actual_len = "{len(log_returns)}"\n')
@@ -98,6 +101,16 @@ def run_calmar_nargo(
         f.write(f"log_returns = {scaled_returns}\n")
         f.write(f'risk_free_rate = "{int(ANNUAL_RISK_FREE_DECIMAL * SCALE)}"\n')
         f.write(f'use_weighting = "{int(weighting)}"\n')
+        f.flush()
+        os.fsync(f.fileno())
+
+    # Add small delay to ensure file is fully written
+    time.sleep(0.1)
+
+    # Debug: Show absolute path and verify file exists
+    abs_path = os.path.abspath(prover_path)
+    print(f"DEBUG: Using absolute path: {abs_path}")
+    print(f"DEBUG: File exists: {os.path.exists(abs_path)}")
 
     result = subprocess.run(
         ["nargo", "execute"],
@@ -105,6 +118,14 @@ def run_calmar_nargo(
         text=True,
         cwd=prover_path.rsplit("/", 1)[0],
     )
+
+    # Debug: Check what's in Prover.toml after nargo execute
+    with open(prover_path, "r") as f:
+        content = f.read()
+        print(
+            f"DEBUG: Prover.toml after nargo execute - first line of log_returns: {content.split('log_returns = [')[1].split(',')[0] if 'log_returns = [' in content else 'NOT_FOUND'}"
+        )
+
     fp = 0
     if "Field" in result.stdout:
         unsigned_i = int(result.stdout.split("Field(")[1].split(")")[0])
@@ -119,6 +140,14 @@ def run_calmar_nargo(
     if result.returncode != 0:
         print(result.stderr)
         raise RuntimeError("nargo execute failed")
+
+    # Debug: Final check of Prover.toml at end of function
+    with open(prover_path, "r") as f:
+        content = f.read()
+        print(
+            f"DEBUG: Prover.toml at end of function - first line of log_returns: {content.split('log_returns = [')[1].split(',')[0] if 'log_returns = [' in content else 'NOT_FOUND'}"
+        )
+
     return fp
 
 
@@ -136,9 +165,23 @@ def compare_implementations(test_data: dict, bypass_confidence: bool, weighting:
         )
         return None
 
+    print(
+        f"DEBUG: Miner {test_data['miner_id']} log_returns[:5]: {baseline_daily_returns[:5]}"
+    )
+
     baseline_calmar = MinMetrics.calmar(
         baseline_daily_returns, bypass_confidence, weighting
     )
+
+    # Debug: Calculate individual components
+    baseline_excess_return = MinMetrics.ann_excess_return(
+        baseline_daily_returns, weighting=weighting
+    )
+    baseline_max_drawdown = MinMetrics.daily_max_drawdown(baseline_daily_returns)
+    print(
+        f"DEBUG: Baseline excess_return={baseline_excess_return:.6f}, max_drawdown={baseline_max_drawdown:.6f}"
+    )
+
     circuit_calmar = run_calmar_nargo(
         baseline_daily_returns, bypass_confidence, weighting
     )
@@ -216,6 +259,3 @@ def main(args):
     run_batch_test(
         validator_data, args.batch_tests, args.bypass_confidence, args.weighting
     )
-
-
-
