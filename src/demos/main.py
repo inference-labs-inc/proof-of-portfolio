@@ -422,3 +422,29 @@ def main(args):
         )
     else:
         print("Unable to prove or verify due to an error.")
+
+    # Return structured results for programmatic access
+    return {
+        "merkle_roots": {
+            "signals": signals_merkle_root,
+            "returns": returns_merkle_root
+        },
+        "portfolio_metrics": {
+            "sharpe_ratio_raw": sharpe_ratio_raw,
+            "sharpe_ratio_scaled": sharpe_ratio_scaled,
+            "max_drawdown_raw": max_drawdown_raw,
+            "max_drawdown_scaled": max_drawdown_scaled,
+            "max_drawdown_percentage": max_drawdown_scaled * 100
+        },
+        "data_summary": {
+            "checkpoints_processed": checkpoint_count,
+            "signals_processed": signals_count,
+            "valid_daily_returns": int(valid_days)
+        },
+        "proof_results": {
+            "witness_generation_time": witness_time,
+            "proof_generation_time": prove_time,
+            "verification_success": verification_success,
+            "proof_generated": prove_time is not None
+        }
+    }

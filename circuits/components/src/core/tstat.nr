@@ -1,7 +1,7 @@
 use crate::utils::{
     average::average,
     constants::{
-        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
     variance::variance,
