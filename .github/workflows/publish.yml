@@ -25,7 +25,9 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Verify tag matches project version
         shell: bash
@@ -40,7 +42,7 @@ jobs:
         run: rm -rf dist
 
       - name: Build distributions
-        run: uv build --python-platform linux
+        run: uv build
 
       - name: Verify package metadata
         run: uvx twine check dist/*
@@ -49,4 +51,4 @@ jobs:
         run: uv run --no-project --with "dist/*.whl" -- python -c "import importlib.metadata as m; print(m.version('proof-of-portfolio'))"
 
       - name: Publish to PyPI
-        run: uv publish
+        run: uv publish --trusted-publishing always
