@@ -40,7 +40,7 @@ jobs:
         run: rm -rf dist
 
       - name: Build distributions
-        run: uv build
+        run: uv build --python-platform linux
 
       - name: Verify package metadata
         run: uvx twine check dist/*
