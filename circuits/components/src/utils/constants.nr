@@ -5,6 +5,7 @@ pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 30;
 
 // Risk-free rate (as basis points, e.g., 200 = 2%)
 pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 200;
+pub global DAILY_LOG_RISK_FREE_RATE: i64 = 1124;
 
 // Minimum values for ratio calculations (scaled for integer math)
 pub global SHARPE_STDDEV_MINIMUM: i64 = 100; // Minimum volatility for Sharpe

@@ -1,4 +1,6 @@
-use crate::utils::{average::average, constants::{ARRAY_SIZE}, weighting_distribution::weighting_distribution};
+use crate::utils::{
+    average::average, constants::ARRAY_SIZE, weighting_distribution::weighting_distribution,
+};
 
 pub fn variance(
     daily_returns: [i64; ARRAY_SIZE],
@@ -28,7 +30,7 @@ pub fn variance(
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
-                    let sq_diff = (diff / 1000) * (diff / 1000);
+                    let sq_diff = diff * diff;
                     weighted_sum_sq_diff += sq_diff * weights[i];
                     sum_of_weights += weights[i];
                 }
@@ -43,7 +45,7 @@ pub fn variance(
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
-                    let sq_diff = (diff / 1000) * (diff / 1000);
+                    let sq_diff = diff * diff;
                     sum_sq_diff += sq_diff;
                 }
             }
