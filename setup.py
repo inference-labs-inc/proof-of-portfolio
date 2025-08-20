@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 setup(
     name="proof-of-portfolio",
     version="1.0.0",
-    description="Proof of Portfolio CLI",
+    description="Zero-Knowledge Proof framework for verifiable, private portfolio performance metrics",
     author="Inference Labs, Inc.",
     author_email="info@inferencelabs.com",
     packages=find_packages(),
@@ -20,6 +20,8 @@ setup(
     install_requires=[
         "numpy",
         "colorama",
+        "matplotlib",
+        "toml",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.10",
 )

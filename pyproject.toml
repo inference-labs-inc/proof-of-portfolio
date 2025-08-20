@@ -6,9 +6,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "proof-of-portfolio"
 version = "1.0.0"
-description = "Proof of Portfolio CLI"
+description = "Zero-Knowledge Proof framework for verifiable, private portfolio performance metrics"
 authors = [{ name = "Inference Labs, Inc.", email = "info@inferencelabs.com" }]
-requires-python = ">=3.6"
+requires-python = ">=3.10"
 dependencies = ["numpy", "colorama", "matplotlib", "toml"]
 
 [project.scripts]

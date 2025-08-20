@@ -1,13 +1,17 @@
 use crate::utils::{
     average::average,
     constants::{
-        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
     variance::variance,
 };
 
-pub fn statistical_confidence(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+pub fn statistical_confidence(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    use_weighting: bool,
+) -> i64 {
     // Check minimum sample size for statistical confidence
     if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         if actual_len < 2 {
@@ -21,7 +25,11 @@ pub fn statistical_confidence(log_returns: [i64; ARRAY_SIZE], actual_len: u32, u
     }
 }
 
-fn compute_t_statistic(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+fn compute_t_statistic(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    use_weighting: bool,
+) -> i64 {
     let avg = average(log_returns, actual_len, use_weighting);
     let var = variance(log_returns, actual_len, 1, use_weighting);
 
@@ -29,17 +37,14 @@ fn compute_t_statistic(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weig
         STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
     } else {
         let std_dev = sqrt(var as u64) as i64;
-        let standard_error = (std_dev * 1000000) / sqrt(actual_len as u64) as i64;
+        let n_sqrt = sqrt(actual_len as u64) as i64;
+        let standard_error = std_dev / n_sqrt;
 
         if standard_error == 0 {
+            // Effectively infinite t-statistic, return a large number
             1000000
         } else {
-            let t_statistic = (avg * 1000000) / standard_error;
-            if t_statistic > 10000000 {
-                1000000
-            } else {
-                t_statistic / 10
-            }
+            (avg * SCALE) / standard_error
         }
     }
 }
