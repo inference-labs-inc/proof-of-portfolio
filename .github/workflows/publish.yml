@@ -19,10 +19,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+
+      - name: Create virtual environment
+        run: uv venv
 
       - name: Verify tag matches project version
         shell: bash
@@ -37,7 +45,9 @@ jobs:
         run: rm -rf dist
 
       - name: Build distributions
-        run: uv build
+        run: |
+          source .venv/bin/activate
+          uv build
 
       - name: Verify package metadata
         run: uvx twine check dist/*
