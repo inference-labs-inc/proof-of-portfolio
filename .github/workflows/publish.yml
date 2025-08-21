@@ -30,7 +30,7 @@ jobs:
           enable-cache: true
 
       - name: Create virtual environment
-        run: uv venv
+        run: uv venv --python python3
 
       - name: Verify tag matches project version
         shell: bash
