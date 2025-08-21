@@ -45,8 +45,8 @@ jobs:
       - name: Generate version file
         run: |
           VERSION=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
-          echo "# This file is auto-generated during build" > proof-of-portfolio/_version.py
-          echo "__version__ = \"$VERSION\"" >> proof-of-portfolio/_version.py
+          echo "# This file is auto-generated during build" > proof_of_portfolio/_version.py
+          echo "__version__ = \"$VERSION\"" >> proof_of_portfolio/_version.py
 
       - name: Build distributions
         run: uv build
