@@ -29,9 +29,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Clear uv cache
-        run: uv cache clean
-
       - name: Verify tag matches project version
         shell: bash
         run: |
@@ -51,7 +48,7 @@ jobs:
         run: uvx twine check dist/*
 
       - name: Smoke install wheel (no network)
-        run: uv run --no-project --with "dist/*.whl" -- python -c "import importlib.metadata as m; print(m.version('proof-of-portfolio'))"
+        run: uv run --no-project --with "$(ls dist/*.whl)" -- python -c "import importlib.metadata as m; print(m.version('proof-of-portfolio'))"
 
       - name: Publish to PyPI
         run: uv publish --trusted-publishing always
