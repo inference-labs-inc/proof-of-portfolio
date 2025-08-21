@@ -28,4 +28,4 @@ include = ["src*"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-"*" = ["*.sh"]
+"*" = ["*.sh", "install.sh"]

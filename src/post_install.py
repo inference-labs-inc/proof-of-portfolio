@@ -2,42 +2,196 @@
 import os
 import sys
 import subprocess
-import tempfile
-import urllib.request
+import shutil
+from pathlib import Path
+
+
+def install_noirup():
+    """Install noirup if not present"""
+    if shutil.which("noirup"):
+        print("noirup already installed")
+        return True
+
+    print("Installing noirup...")
+    try:
+        result = subprocess.run(
+            [
+                "curl",
+                "-L",
+                "https://raw.githubusercontent.com/noir-lang/noirup/main/install",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print(f"Failed to download noirup installer: {result.stderr}")
+            return False
+
+        process = subprocess.Popen(
+            ["bash"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        stdout, stderr = process.communicate(input=result.stdout)
+
+        if process.returncode != 0:
+            print(f"Failed to install noirup: {stderr}")
+            return False
+
+        home = Path.home()
+        noirup_bin = home / ".noirup" / "bin"
+        if noirup_bin.exists():
+            os.environ["PATH"] = f"{noirup_bin}:{os.environ['PATH']}"
+
+        return True
+    except Exception as e:
+        print(f"Error installing noirup: {e}")
+        return False
+
+
+def install_nargo():
+    """Install nargo using noirup"""
+    if shutil.which("nargo"):
+        print("nargo already installed")
+        return True
+
+    print("Installing nargo...")
+    try:
+
+        noirup_cmd = shutil.which("noirup")
+        if not noirup_cmd:
+
+            home = Path.home()
+            potential_paths = [
+                home / ".noirup" / "bin" / "noirup",
+                home / ".nargo" / "bin" / "noirup",
+                home / ".cargo" / "bin" / "noirup",
+            ]
+            for path in potential_paths:
+                if path.exists():
+                    noirup_cmd = str(path)
+                    break
+
+        if not noirup_cmd:
+            print("noirup not found")
+            return False
+
+        result = subprocess.run([noirup_cmd], capture_output=True, text=True)
+        return result.returncode == 0
+    except Exception as e:
+        print(f"Error installing nargo: {e}")
+        return False
+
+
+def install_bbup():
+    """Install bbup if not present"""
+    if shutil.which("bbup"):
+        print("bbup already installed")
+        return True
+
+    print("Installing bbup...")
+    try:
+        result = subprocess.run(
+            [
+                "curl",
+                "-L",
+                "https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print(f"Failed to download bbup installer: {result.stderr}")
+            return False
+
+        process = subprocess.Popen(
+            ["bash"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        stdout, stderr = process.communicate(input=result.stdout)
+
+        if process.returncode != 0:
+            print(f"Failed to install bbup: {stderr}")
+            return False
+
+        home = Path.home()
+        for bin_dir in [".bbup/bin", "bin", ".local/bin"]:
+            bbup_bin = home / bin_dir
+            if bbup_bin.exists():
+                os.environ["PATH"] = f"{bbup_bin}:{os.environ['PATH']}"
+
+        return True
+    except Exception as e:
+        print(f"Error installing bbup: {e}")
+        return False
+
+
+def install_bb():
+    """Install bb using bbup"""
+    if shutil.which("bb"):
+        print("bb already installed")
+        return True
+
+    print("Installing bb...")
+    try:
+
+        bbup_cmd = shutil.which("bbup")
+        if not bbup_cmd:
+
+            home = Path.home()
+            potential_paths = [
+                home / ".bbup" / "bin" / "bbup",
+                home / ".local" / "bin" / "bbup",
+                home / "bin" / "bbup",
+            ]
+            for path in potential_paths:
+                if path.exists():
+                    bbup_cmd = str(path)
+                    break
+
+        if not bbup_cmd:
+            print("bbup not found")
+            return False
+
+        result = subprocess.run([bbup_cmd], capture_output=True, text=True)
+        return result.returncode == 0
+    except Exception as e:
+        print(f"Error installing bb: {e}")
+        return False
+
 
 def main():
-    if os.environ.get('CI') or os.environ.get('POP_SKIP_INSTALL'):
+    if os.environ.get("CI") or os.environ.get("POP_SKIP_INSTALL"):
         return
-    
-    url = "https://raw.githubusercontent.com/inference-labs-inc/proof-of-portfolio/main/install.sh"
-    
-    try:
-        with urllib.request.urlopen(url) as response:
-            script_content = response.read().decode('utf-8')
-    except Exception as e:
-        print(f"Failed to download install script: {e}")
-        sys.exit(1)
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
-        f.write(script_content)
-        script_path = f.name
-    
-    try:
-        os.chmod(script_path, 0o755)
-        result = subprocess.run(['/bin/bash', script_path, '--all'], 
-                              capture_output=True, text=True)
-        
-        if result.returncode != 0:
-            print("Installation failed:")
-            print(result.stderr)
-            sys.exit(1)
-            
-    except Exception as e:
-        print(f"Failed to run install script: {e}")
-        sys.exit(1)
-    finally:
-        if os.path.exists(script_path):
-            os.unlink(script_path)
 
-if __name__ == '__main__':
+    success = True
+
+    if not install_noirup():
+        success = False
+    elif not install_nargo():
+        success = False
+
+    if not install_bbup():
+        success = False
+    elif not install_bb():
+        success = False
+
+    if not success:
+        print(
+            "Some dependencies failed to install. You may need to install them manually."
+        )
+        print("See install.sh for manual installation steps.")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
     main()
