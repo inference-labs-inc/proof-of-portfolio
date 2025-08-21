@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
-from src.demos import utils
+from . import utils
 
 SCALE = 10**18
 

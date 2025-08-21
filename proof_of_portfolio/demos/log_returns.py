@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from src.demos import utils
+from . import utils
 
 
 def compare_implementations(test_data: dict):

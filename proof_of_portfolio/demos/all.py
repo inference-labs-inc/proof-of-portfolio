@@ -1,12 +1,5 @@
 import time
-from src.demos import utils
-from src.demos import sharpe
-from src.demos import omega
-from src.demos import sortino
-from src.demos import calmar
-from src.demos import tstat
-from src.demos import drawdown
-from src.demos import log_returns
+from . import utils, sharpe, omega, sortino, calmar, tstat, drawdown, log_returns
 
 
 def run_all_demos(

@@ -10,8 +10,8 @@ import json
 import os
 import sys
 
-from src.analyze_data import split_input_json
-from src.miner import Miner
+from .analyze_data import split_input_json
+from .miner import Miner
 from . import requires_dependencies
 
 

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 import subprocess
-from src.demos import utils
+from . import utils
 
 SCALE = 10_000_000
 WEIGHTED_AVERAGE_DECAY_RATE = 0.08
