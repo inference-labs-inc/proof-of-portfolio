@@ -43,6 +43,8 @@ jobs:
 
       - name: Build distributions
         run: uv build
+        env:
+          UV_PYTHON_DOWNLOADS: never
 
       - name: Verify package metadata
         run: uvx twine check dist/*
