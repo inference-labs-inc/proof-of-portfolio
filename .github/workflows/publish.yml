@@ -42,6 +42,12 @@ jobs:
       - name: Clean dist
         run: rm -rf dist
 
+      - name: Generate version file
+        run: |
+          VERSION=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "# This file is auto-generated during build" > src/_version.py
+          echo "__version__ = \"$VERSION\"" >> src/_version.py
+
       - name: Build distributions
         run: uv build
         env:

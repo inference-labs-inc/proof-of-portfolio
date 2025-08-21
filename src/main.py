@@ -22,7 +22,6 @@ Utility Commands:
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Tuple, Optional
@@ -405,14 +404,10 @@ def print_header():
             use_colors = False
 
     try:
-        import tomllib
+        from ._version import __version__
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pyproject_path = os.path.join(current_dir, "..", "pyproject.toml")
-        with open(pyproject_path, "rb") as f:
-            pyproject = tomllib.load(f)
-        VERSION = pyproject["project"]["version"]
-    except Exception:
+        VERSION = __version__
+    except ImportError:
         VERSION = "1.0.0"
 
     # ANSI color codes
@@ -518,14 +513,10 @@ def main():
         )
 
         try:
-            import tomllib
+            from ._version import __version__
 
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            pyproject_path = os.path.join(current_dir, "..", "pyproject.toml")
-            with open(pyproject_path, "rb") as f:
-                pyproject = tomllib.load(f)
-            version = pyproject["project"]["version"]
-        except Exception:
+            version = __version__
+        except ImportError:
             version = "1.0.0"
 
         parser.add_argument(

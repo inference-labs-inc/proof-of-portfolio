@@ -161,7 +161,9 @@ def install_bb():
             print(f"bbup not found at {bbup_cmd}")
             return False
 
-        result = subprocess.run([bbup_cmd], capture_output=True, text=True)
+        result = subprocess.run(
+            [bbup_cmd, "--version", "0.87.0"], capture_output=True, text=True
+        )
         if result.returncode != 0:
             print(f"bbup failed: {result.stderr}")
         return result.returncode == 0
