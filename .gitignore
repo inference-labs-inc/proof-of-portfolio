@@ -19,7 +19,6 @@ circuits/Prover.toml
 *.proof
 *.vk
 vk_*/**
-proof_*
 
 # Node.js
 node_modules/
@@ -52,4 +51,5 @@ Thumbs.db
 **Prover.toml
 **vk**
 **.json
-*.code-workspace
+proof-of-portfolio.code-workspace
+*.egg-info
