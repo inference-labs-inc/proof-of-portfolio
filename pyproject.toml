@@ -13,3 +13,10 @@ dependencies = ["numpy", "colorama", "matplotlib", "toml"]
 
 [project.scripts]
 pop = "src.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-dir]
+"" = "."
