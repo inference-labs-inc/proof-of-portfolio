@@ -87,23 +87,8 @@ def install_nargo():
     print("Installing nargo...")
     try:
 
-        noirup_cmd = shutil.which("noirup")
-        if not noirup_cmd:
-
-            home = Path.home()
-            potential_paths = [
-                home / ".noirup" / "bin" / "noirup",
-                home / ".nargo" / "bin" / "noirup",
-                home / ".cargo" / "bin" / "noirup",
-            ]
-            for path in potential_paths:
-                if path.exists():
-                    noirup_cmd = str(path)
-                    break
-
-        if not noirup_cmd:
-            print("noirup not found")
-            return False
+        home = Path.home()
+        noirup_cmd = str(home / ".nargo" / "bin" / "noirup")
 
         result = subprocess.run([noirup_cmd], capture_output=True, text=True)
         return result.returncode == 0
@@ -169,23 +154,8 @@ def install_bb():
     print("Installing bb...")
     try:
 
-        bbup_cmd = shutil.which("bbup")
-        if not bbup_cmd:
-
-            home = Path.home()
-            potential_paths = [
-                home / ".bbup" / "bin" / "bbup",
-                home / ".local" / "bin" / "bbup",
-                home / "bin" / "bbup",
-            ]
-            for path in potential_paths:
-                if path.exists():
-                    bbup_cmd = str(path)
-                    break
-
-        if not bbup_cmd:
-            print("bbup not found")
-            return False
+        home = Path.home()
+        bbup_cmd = str(home / ".bb" / "bbup")
 
         result = subprocess.run([bbup_cmd], capture_output=True, text=True)
         return result.returncode == 0
