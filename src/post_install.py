@@ -6,6 +6,31 @@ import shutil
 from pathlib import Path
 
 
+def refresh_shell_environment():
+    """Refresh shell environment by sourcing profile files"""
+    home = Path.home()
+    shell_profiles = [home / ".bashrc", home / ".zshrc", home / ".profile"]
+
+    for profile in shell_profiles:
+        if profile.exists():
+            try:
+                result = subprocess.run(
+                    f"source {profile} && echo $PATH",
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    executable="/bin/bash",
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    new_path = result.stdout.strip()
+                    if new_path != os.environ.get("PATH", ""):
+                        os.environ["PATH"] = new_path
+                        print(f"Updated PATH from {profile}")
+                        break
+            except Exception as e:
+                print(f"Failed to source {profile}: {e}")
+
+
 def install_noirup():
     """Install noirup if not present"""
     if shutil.which("noirup"):
@@ -177,13 +202,17 @@ def main():
 
     if not install_noirup():
         success = False
-    elif not install_nargo():
-        success = False
+    else:
+        refresh_shell_environment()
+        if not install_nargo():
+            success = False
 
     if not install_bbup():
         success = False
-    elif not install_bb():
-        success = False
+    else:
+        refresh_shell_environment()
+        if not install_bb():
+            success = False
 
     if not success:
         print(
