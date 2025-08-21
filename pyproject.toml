@@ -15,13 +15,11 @@ dependencies = ["numpy", "colorama", "matplotlib", "toml", "scipy"]
 dev = ["black", "flake8", "pre-commit"]
 
 [project.scripts]
-pop = "src.main:main"
+pop = "proof_of_portfolio.main:main"
 
 [tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-dir]
-proof_of_portfolio = "src"
+where = ["."]
+include = ["proof_of_portfolio*"]
 
 [tool.setuptools]
 include-package-data = true
