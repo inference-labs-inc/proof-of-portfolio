@@ -183,10 +183,10 @@ def validate_miner(args):
         score_data = score_child(str(parent_dir))
 
         if not score_data:
-            print(f"Error: Failed to validate miner")
+            print("Error: Failed to validate miner")
             return 1
 
-        print(f"Successfully validated miner")
+        print("Successfully validated miner")
         print(f"Hotkey: {score_data['hotkey']}")
 
         print(f"Merkle root: {score_data['merkle_root']}")
@@ -404,8 +404,16 @@ def print_header():
         except ImportError:
             use_colors = False
 
-    # Version information
-    VERSION = "1.0.0"
+    try:
+        import tomllib
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        pyproject_path = os.path.join(current_dir, "..", "pyproject.toml")
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomllib.load(f)
+        VERSION = pyproject["project"]["version"]
+    except Exception:
+        VERSION = "1.0.0"
 
     # ANSI color codes
     if use_colors:
@@ -453,39 +461,43 @@ def check_dependencies():
     Check if required dependencies (bb, nargo) are available.
     If not, install them automatically.
     """
-    import subprocess
     import shutil
     import os
-    
+
     # Skip in CI environments
-    if os.environ.get('CI') or os.environ.get('POP_SKIP_INSTALL'):
+    if os.environ.get("CI") or os.environ.get("POP_SKIP_INSTALL"):
         return
-    
+
     missing_deps = []
-    
+
     # Check for bb (Barretenberg)
-    if not shutil.which('bb'):
-        missing_deps.append('bb')
-    
+    if not shutil.which("bb"):
+        missing_deps.append("bb")
+
     # Check for nargo (Noir)
-    if not shutil.which('nargo'):
-        missing_deps.append('nargo')
-    
+    if not shutil.which("nargo"):
+        missing_deps.append("nargo")
+
     if missing_deps:
         print(f"Installing required dependencies: {', '.join(missing_deps)}...")
         print("This may take a few minutes on first run.")
-        
+
         try:
             from .post_install import main as post_install_main
+
             post_install_main()
             print("Dependencies installed successfully!")
         except Exception as e:
             print(f"Warning: Failed to install dependencies: {e}")
             print("You may need to install them manually:")
-            if 'bb' in missing_deps:
-                print("  - Barretenberg: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash && bbup")
-            if 'nargo' in missing_deps:
-                print("  - Noir: curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash && noirup")
+            if "bb" in missing_deps:
+                print(
+                    "  - Barretenberg: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash && bbup"
+                )
+            if "nargo" in missing_deps:
+                print(
+                    "  - Noir: curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash && noirup"
+                )
 
 
 def main():
@@ -495,7 +507,7 @@ def main():
     try:
         # Check and install dependencies if needed
         check_dependencies()
-        
+
         # Print the header
         print_header()
 
@@ -505,7 +517,20 @@ def main():
             epilog="For more information, visit https://github.com/inference-labs-inc/proof-of-portfolio",
         )
 
-        parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
+        try:
+            import tomllib
+
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            pyproject_path = os.path.join(current_dir, "..", "pyproject.toml")
+            with open(pyproject_path, "rb") as f:
+                pyproject = tomllib.load(f)
+            version = pyproject["project"]["version"]
+        except Exception:
+            version = "1.0.0"
+
+        parser.add_argument(
+            "--version", action="version", version=f"%(prog)s {version}"
+        )
 
         subparsers = parser.add_subparsers(
             title="commands", dest="command", help="Command to execute"

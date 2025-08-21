@@ -157,7 +157,13 @@ def install_bb():
         home = Path.home()
         bbup_cmd = str(home / ".bb" / "bbup")
 
+        if not Path(bbup_cmd).exists():
+            print(f"bbup not found at {bbup_cmd}")
+            return False
+
         result = subprocess.run([bbup_cmd], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"bbup failed: {result.stderr}")
         return result.returncode == 0
     except Exception as e:
         print(f"Error installing bb: {e}")
