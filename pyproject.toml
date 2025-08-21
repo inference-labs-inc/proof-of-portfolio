@@ -18,11 +18,10 @@ dev = ["black", "flake8", "pre-commit"]
 pop = "src.main:main"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
+where = ["src"]
 
 [tool.setuptools.package-dir]
-"" = "."
+proof_of_portfolio = "src"
 
 [tool.setuptools]
 include-package-data = true
