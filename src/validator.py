@@ -12,7 +12,9 @@ import sys
 
 from src.analyze_data import split_input_json
 from src.miner import Miner
+from . import requires_dependencies
 
+@requires_dependencies
 def score_child(hotkey_dir: str):
     """
     Scores a single child by generating a Merkle tree for their data.
@@ -61,6 +63,7 @@ def score_child(hotkey_dir: str):
 
     return score_data
 
+@requires_dependencies
 def score_all(input_json_path: str = "data/input_data.json"):
     """
     Processes input.json, splits it into subdirectories for each hotkey,

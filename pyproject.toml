@@ -11,6 +11,9 @@ authors = [{ name = "Inference Labs, Inc.", email = "info@inferencelabs.com" }]
 requires-python = ">=3.10"
 dependencies = ["numpy", "colorama", "matplotlib", "toml", "scipy"]
 
+[project.optional-dependencies]
+dev = ["black", "flake8", "pre-commit"]
+
 [project.scripts]
 pop = "src.main:main"
 

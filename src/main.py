@@ -448,11 +448,54 @@ def print_header():
     print(header)
 
 
+def check_dependencies():
+    """
+    Check if required dependencies (bb, nargo) are available.
+    If not, install them automatically.
+    """
+    import subprocess
+    import shutil
+    import os
+    
+    # Skip in CI environments
+    if os.environ.get('CI') or os.environ.get('POP_SKIP_INSTALL'):
+        return
+    
+    missing_deps = []
+    
+    # Check for bb (Barretenberg)
+    if not shutil.which('bb'):
+        missing_deps.append('bb')
+    
+    # Check for nargo (Noir)
+    if not shutil.which('nargo'):
+        missing_deps.append('nargo')
+    
+    if missing_deps:
+        print(f"Installing required dependencies: {', '.join(missing_deps)}...")
+        print("This may take a few minutes on first run.")
+        
+        try:
+            from .post_install import main as post_install_main
+            post_install_main()
+            print("Dependencies installed successfully!")
+        except Exception as e:
+            print(f"Warning: Failed to install dependencies: {e}")
+            print("You may need to install them manually:")
+            if 'bb' in missing_deps:
+                print("  - Barretenberg: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash && bbup")
+            if 'nargo' in missing_deps:
+                print("  - Noir: curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash && noirup")
+
+
 def main():
     """
     Main entry point for the CLI.
     """
     try:
+        # Check and install dependencies if needed
+        check_dependencies()
+        
         # Print the header
         print_header()
 

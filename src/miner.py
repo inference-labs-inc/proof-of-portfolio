@@ -6,6 +6,7 @@ import subprocess
 import toml
 import re
 import gzip
+from . import requires_dependencies
 
 class Miner:
     def __init__(self, ss58_address, name):
@@ -258,6 +259,7 @@ class Miner:
             print("Raw output:", result.stdout)
             return None
 
+    @requires_dependencies
     def generate_tree(self, input_json_path: str, output_path: str = None):
         """
         Generates a Merkle tree from a child hotkey data.json file and saves it to the specified path.
