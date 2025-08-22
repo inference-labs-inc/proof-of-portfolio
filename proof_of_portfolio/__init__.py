@@ -2,6 +2,10 @@
 
 import os
 import shutil
+import tempfile
+import json
+import asyncio
+from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
 
 _dependencies_checked = False
@@ -48,3 +52,91 @@ def requires_dependencies(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def _prove_worker(miner_data, hotkey):
+    """
+    Worker function to run proof generation in a separate process.
+    """
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            checkpoint_path = os.path.join(temp_dir, "validator_checkpoint.json")
+
+            with open(checkpoint_path, "w") as f:
+                json.dump(miner_data, f)
+
+            original_cwd = os.getcwd()
+            os.chdir(temp_dir)
+
+            try:
+                from .demos.main import main
+
+                class Args:
+                    def __init__(self, hotkey):
+                        self.hotkey = hotkey
+
+                args = Args(hotkey)
+                result = main(args)
+
+                return {
+                    "status": "success",
+                    "portfolio_metrics": result.get("portfolio_metrics", {}),
+                    "merkle_roots": result.get("merkle_roots", {}),
+                    "data_summary": result.get("data_summary", {}),
+                    "proof_results": result.get("proof_results", {}),
+                    "proof_generated": result.get("proof_results", {}).get(
+                        "proof_generated", False
+                    ),
+                }
+
+            finally:
+                os.chdir(original_cwd)
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "proof_generated": False,
+        }
+
+
+@requires_dependencies
+async def prove(miner_data, hotkey):
+    """
+    Generate zero-knowledge proof for miner portfolio data asynchronously.
+
+    Args:
+        miner_data: Dictionary containing perf_ledgers and positions for the miner
+        hotkey: Miner's hotkey
+
+    Returns:
+        Dictionary with proof results including status, portfolio_metrics, etc.
+    """
+    loop = asyncio.get_event_loop()
+
+    with ProcessPoolExecutor(max_workers=1) as executor:
+        try:
+            result = await loop.run_in_executor(
+                executor, _prove_worker, miner_data, hotkey
+            )
+            return result
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "proof_generated": False,
+            }
+
+
+def prove_sync(miner_data, hotkey):
+    """
+    Synchronous wrapper for the prove function for backward compatibility.
+
+    Args:
+        miner_data: Dictionary containing perf_ledgers and positions for the miner
+        hotkey: Miner's hotkey
+
+    Returns:
+        Dictionary with proof results including status, portfolio_metrics, etc.
+    """
+    return _prove_worker(miner_data, hotkey)

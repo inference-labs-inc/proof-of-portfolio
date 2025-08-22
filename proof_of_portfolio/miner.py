@@ -75,73 +75,40 @@ class Miner:
             close_order = orders[i + 1]
 
             # Map string order types to numeric codes for the circuit
-            # LONG -> 1 (Open Long), SHORT -> 3 (Open Short), FLAT -> 2/4 (Close)
-            if open_order["order_type"] == "LONG":
-                open_order_type = "1"  # Open Long
-                close_order_type = "2"  # Close Long
-            elif open_order["order_type"] == "SHORT":
-                open_order_type = "3"  # Open Short
-                close_order_type = "4"  # Close Short
-            else:
-                # Fallback to leverage-based detection
-                is_long = open_order["leverage"] > 0
-                open_order_type = "1" if is_long else "3"
-                close_order_type = "2" if is_long else "4"
+            # LONG -> 1, SHORT -> -1, FLAT -> 0 (as per main circuit)
+            order_type_map = {"SHORT": -1, "LONG": 1, "FLAT": 0}
+            order_type_code = order_type_map.get(open_order["order_type"], 0)
 
-            # Convert UUIDs to two Fields. We split the hex string in half.
+            # Convert UUIDs to single Field (as per main circuit)
             open_uuid_hex = open_order["order_uuid"].replace("-", "")
             close_uuid_hex = close_order["order_uuid"].replace("-", "")
-
-            # Position UUID should be the same for the pair, use the first one.
-            pos_uuid_hex = open_order["order_uuid"].replace("-", "")
-
-            # Create open signal
+            # Create open signal using main circuit structure
             signals.append(
                 {
-                    "miner_hotkey": ["0", "0"],
-                    "trade_pair_id": "0",
-                    "order_type": open_order_type,
-                    "leverage": str(
-                        int(abs(open_order["leverage"]) * 100)  # SCALING_FACTOR = 100
-                    ),
-                    "price_scaled": str(
-                        int(open_order["price"] * 100)
-                    ),  # SCALING_FACTOR = 100
-                    "timestamp": str(open_order["processed_ms"]),
-                    "order_uuid": [
-                        f"0x{open_uuid_hex[:16]}",
-                        f"0x{open_uuid_hex[16:]}",
-                    ],
-                    "position_uuid": [
-                        f"0x{pos_uuid_hex[:16]}",
-                        f"0x{pos_uuid_hex[16:]}",
-                    ],
-                    "src": str(open_order["src"]),
+                    "trade_pair": "0",  # Use 0 for now, could map trade pairs later
+                    "order_type": str(order_type_code),
+                    "leverage": str(int(abs(open_order["leverage"]) * 100)),
+                    "price": str(int(open_order["price"] * 100)),
+                    "processed_ms": str(open_order["processed_ms"]),
+                    "order_uuid": f"0x{open_uuid_hex}",
+                    "bid": str(int(open_order.get("bid", 0) * 100)),
+                    "ask": str(int(open_order.get("ask", 0) * 100)),
                 }
             )
 
-            # Create close signal
+            # Create close signal using main circuit structure
             signals.append(
                 {
-                    "miner_hotkey": ["0", "0"],
-                    "trade_pair_id": "0",
-                    "order_type": close_order_type,
+                    "trade_pair": "0",  # Use 0 for now, could map trade pairs later
+                    "order_type": "0",  # Close orders are FLAT = 0
                     "leverage": str(
-                        int(abs(open_order["leverage"]) * 100)  # SCALING_FACTOR = 100
-                    ),  # Leverage is same for the pair
-                    "price_scaled": str(
-                        int(close_order["price"] * 100)
-                    ),  # SCALING_FACTOR = 100
-                    "timestamp": str(close_order["processed_ms"]),
-                    "order_uuid": [
-                        f"0x{close_uuid_hex[:16]}",
-                        f"0x{close_uuid_hex[16:]}",
-                    ],
-                    "position_uuid": [
-                        f"0x{pos_uuid_hex[:16]}",
-                        f"0x{pos_uuid_hex[16:]}",
-                    ],
-                    "src": str(close_order["src"]),
+                        int(abs(open_order["leverage"]) * 100)
+                    ),  # Same leverage as open
+                    "price": str(int(close_order["price"] * 100)),
+                    "processed_ms": str(close_order["processed_ms"]),
+                    "order_uuid": f"0x{close_uuid_hex}",
+                    "bid": str(int(close_order.get("bid", 0) * 100)),
+                    "ask": str(int(close_order.get("ask", 0) * 100)),
                 }
             )
 
@@ -150,18 +117,17 @@ class Miner:
             print(f"Warning: No valid order pairs found in {data_json_path}")
             return [], 0
 
-        # Pad signals if we have fewer than MAX_SIGNALS
+        # Pad signals if we have fewer than MAX_SIGNALS using main circuit structure
         padded_signals = signals + [
             {
-                "miner_hotkey": ["0", "0"],
-                "trade_pair_id": "0",
+                "trade_pair": "0",
                 "order_type": "0",
                 "leverage": "0",
-                "price_scaled": "0",
-                "timestamp": "0",
-                "order_uuid": ["0", "0"],
-                "position_uuid": ["0", "0"],
-                "src": "0",
+                "price": "0",
+                "processed_ms": "0",
+                "order_uuid": "0x0",
+                "bid": "0",
+                "ask": "0",
             }
         ] * (self.MAX_SIGNALS - actual_len)
 
