@@ -1,8 +1,44 @@
 import json
 import sys
+import ast
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 from .miner import Miner
+
+
+def parse_order_string(order_str: str) -> Optional[Dict[str, Any]]:
+    """
+    Brutal hack to avoid running into ast errors due to the price sources field containing
+    classes 🙃
+    """
+    try:
+        if "'price_sources':" in order_str:
+            start = order_str.find("'price_sources':")
+            if start != -1:
+                bracket_count = 0
+                i = order_str.find("[", start)
+                if i != -1:
+                    for j in range(i, len(order_str)):
+                        if order_str[j] == "[":
+                            bracket_count += 1
+                        elif order_str[j] == "]":
+                            bracket_count -= 1
+                            if bracket_count == 0:
+                                before = order_str[:start]
+                                after = order_str[j + 1 :]
+                                if before.rstrip().endswith(","):
+                                    before = before.rstrip()[:-1]
+                                if after.strip().startswith(","):
+                                    after = after.strip()[1:]
+                                order_str = before + after
+                                break
+
+        order_data = ast.literal_eval(order_str)
+        return order_data
+
+    except Exception as e:
+        print(f"Failed to parse order string: {e}", file=sys.stderr)
+        return None
 
 
 def load_processed_signals(signals_path: Path) -> List[Dict[str, Any]]:
@@ -39,14 +75,14 @@ def extract_validator_orders(
                 validator_orders[validator_key] = []
 
             try:
-                order_data = (
-                    eval(order_str) if isinstance(order_str, str) else order_str
-                )
-                order_data["signal_timestamp"] = signal.get("processing_timestamp")
-                validator_orders[validator_key].append(order_data)
+                order_data = parse_order_string(order_str)
+
+                if order_data:
+                    order_data["signal_timestamp"] = signal.get("processing_timestamp")
+                    validator_orders[validator_key].append(order_data)
             except Exception as e:
                 print(
-                    f"Warning: Could not parse order for validator {validator_key}: {e}",
+                    f"Could not parse order for validator {validator_key}: {e}",
                     file=sys.stderr,
                 )
 
@@ -111,11 +147,7 @@ def generate_validator_trees(
                 f"Generating tree for validator {validator_key[:8]}... ({len(orders)} orders)"
             )
 
-        temp_data = {
-            "validator_key": validator_key,
-            "orders": orders,
-            "total_orders": len(orders),
-        }
+        temp_data = {"positions": [{"orders": orders}]}
 
         validator_hotkey = hotkey or validator_key
 
