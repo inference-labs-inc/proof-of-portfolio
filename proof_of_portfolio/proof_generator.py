@@ -75,7 +75,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         os.makedirs(proof_dir, exist_ok=True)
         os.makedirs(vk_dir, exist_ok=True)
 
-        witness_file = os.path.join(target_dir, f"{circuit_name}.gz")
+        witness_file = os.path.join(target_dir, "circuits.json")
         proof_file = os.path.join(proof_dir, "proof")
         vk_file = os.path.join(vk_dir, "vk")
 
