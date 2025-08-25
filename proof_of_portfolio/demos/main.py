@@ -283,7 +283,7 @@ def main(args):
 
     print("Running tree_generator circuit...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    tree_generator_dir = os.path.join(current_dir, "..", "tree_generator")
+    tree_generator_dir = os.path.join(os.path.dirname(current_dir), "tree_generator")
 
     tree_prover_input = {"signals": signals, "actual_len": str(signals_count)}
     os.makedirs(tree_generator_dir, exist_ok=True)
