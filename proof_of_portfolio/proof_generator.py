@@ -75,7 +75,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         os.makedirs(proof_dir, exist_ok=True)
         os.makedirs(vk_dir, exist_ok=True)
 
-        witness_file = os.path.join(target_dir, "circuits.json")
+        witness_file = os.path.join(target_dir, "witness.gz")
         proof_file = proof_dir
         vk_file = os.path.join(vk_dir, "vk")
 
@@ -356,7 +356,7 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
         print("Executing main circuit to generate witness...")
     witness_start = time.time()
     output = run_command(
-        ["nargo", "execute", "--silence-warnings"], main_circuit_dir, verbose
+        ["nargo", "execute", "witness", "--silence-warnings"], main_circuit_dir, verbose
     )
     witness_time = time.time() - witness_start
     if verbose:
