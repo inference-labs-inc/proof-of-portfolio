@@ -399,6 +399,7 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
+    print(f"Orders processed: {signals_count}")
     print(f"Signals Merkle Root: {signals_merkle_root}")
     print(f"Returns Merkle Root: {returns_merkle_root}")
     print(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
