@@ -2,8 +2,6 @@
 
 import os
 import shutil
-import tempfile
-import json
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
@@ -59,33 +57,20 @@ def _prove_worker(miner_data, hotkey):
     Worker function to run proof generation in a separate process.
     """
     try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            checkpoint_path = os.path.join(temp_dir, "validator_checkpoint.json")
+        from .proof_generator import generate_proof
 
-            with open(checkpoint_path, "w") as f:
-                json.dump(miner_data, f)
+        result = generate_proof(miner_data, hotkey)
 
-            original_cwd = os.getcwd()
-            os.chdir(temp_dir)
-
-            try:
-                from .proof_generator import generate_proof
-
-                result = generate_proof(miner_data, hotkey)
-
-                return {
-                    "status": "success",
-                    "portfolio_metrics": result.get("portfolio_metrics", {}),
-                    "merkle_roots": result.get("merkle_roots", {}),
-                    "data_summary": result.get("data_summary", {}),
-                    "proof_results": result.get("proof_results", {}),
-                    "proof_generated": result.get("proof_results", {}).get(
-                        "proof_generated", False
-                    ),
-                }
-
-            finally:
-                os.chdir(original_cwd)
+        return {
+            "status": "success",
+            "portfolio_metrics": result.get("portfolio_metrics", {}),
+            "merkle_roots": result.get("merkle_roots", {}),
+            "data_summary": result.get("data_summary", {}),
+            "proof_results": result.get("proof_results", {}),
+            "proof_generated": result.get("proof_results", {}).get(
+                "proof_generated", False
+            ),
+        }
 
     except Exception as e:
         return {

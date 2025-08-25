@@ -117,18 +117,36 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         return None, False
 
 
-def generate_proof(data, miner_hotkey):
+def generate_proof(data=None, miner_hotkey=None):
     """
-    Core proof generation logic extracted from demos/main.py.
+    Core proof generation logic.
 
     Args:
-        data: Dictionary containing perf_ledgers and positions
-        miner_hotkey: The hotkey of the miner to generate proof for
+        data: Optional dictionary containing perf_ledgers and positions.
+              If None, will read from validator_checkpoint.json
+        miner_hotkey: The hotkey of the miner to generate proof for.
+                     If None and reading from file, uses first available hotkey
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
     """
-    print(f"Using specified hotkey: {miner_hotkey}")
+    if data is None:
+        print("Loading data from validator_checkpoint.json...")
+        import json
+
+        with open("validator_checkpoint.json", "r") as f:
+            data = json.load(f)
+
+    if miner_hotkey is None:
+        miner_hotkey = list(data["perf_ledgers"].keys())[0]
+        print(f"No hotkey specified, using first available: {miner_hotkey}")
+    else:
+        print(f"Using specified hotkey: {miner_hotkey}")
+
+    if miner_hotkey not in data["perf_ledgers"]:
+        raise ValueError(
+            f"Hotkey '{miner_hotkey}' not found in data. Available: {list(data['perf_ledgers'].keys())}"
+        )
 
     perf_ledger = data["perf_ledgers"][miner_hotkey]
     positions = data["positions"][miner_hotkey]["positions"]

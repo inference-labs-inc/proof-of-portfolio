@@ -4,23 +4,18 @@ from ..proof_generator import generate_proof
 
 
 def main(args):
-    """Demo main function - thin wrapper around core proof generation logic."""
+    """Demo main function - loads data from file and calls core proof generation logic."""
     hotkey = args.hotkey
     print("Loading data from validator_checkpoint.json...")
     with open("validator_checkpoint.json", "r") as f:
         data = json.load(f)
 
-    if hotkey:
-        if hotkey not in data["perf_ledgers"]:
-            print(f"Error: Hotkey '{hotkey}' not found in validator checkpoint data.")
-            print(f"Available hotkeys: {list(data['perf_ledgers'].keys())}")
-            return
-        miner_hotkey = hotkey
-    else:
-        miner_hotkey = list(data["perf_ledgers"].keys())[0]
-        print(f"No hotkey specified, using first available: {miner_hotkey}")
+    if hotkey and hotkey not in data["perf_ledgers"]:
+        print(f"Error: Hotkey '{hotkey}' not found in validator checkpoint data.")
+        print(f"Available hotkeys: {list(data['perf_ledgers'].keys())}")
+        return
 
-    return generate_proof(data, miner_hotkey)
+    return generate_proof(data, hotkey)
 
 
 if __name__ == "__main__":
