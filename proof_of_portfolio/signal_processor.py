@@ -8,32 +8,11 @@ from .miner import Miner
 
 def parse_order_string(order_str: str) -> Optional[Dict[str, Any]]:
     """
-    Brutal hack to avoid running into ast errors due to the price sources field containing
-    classes 🙃
+    Parse order string by replacing PriceSource with dict to make it parseable
     """
     try:
-        if "'price_sources':" in order_str:
-            start = order_str.find("'price_sources':")
-            if start != -1:
-                bracket_count = 0
-                i = order_str.find("[", start)
-                if i != -1:
-                    for j in range(i, len(order_str)):
-                        if order_str[j] == "[":
-                            bracket_count += 1
-                        elif order_str[j] == "]":
-                            bracket_count -= 1
-                            if bracket_count == 0:
-                                before = order_str[:start]
-                                after = order_str[j + 1 :]
-                                if before.rstrip().endswith(","):
-                                    before = before.rstrip()[:-1]
-                                if after.strip().startswith(","):
-                                    after = after.strip()[1:]
-                                order_str = before + after
-                                break
-
-        order_data = ast.literal_eval(order_str)
+        cleaned_str = order_str.replace("PriceSource(", "dict(")
+        order_data = ast.literal_eval(cleaned_str)
         return order_data
 
     except Exception as e:
