@@ -15,9 +15,11 @@ This is achieved by combining Merkle trees to commit to a history of portfolio d
   - [Core Concepts](#core-concepts)
   - [Project Structure](#project-structure)
   - [Installation](#installation)
-    - [1. Prerequisites](#1-prerequisites)
-    - [2. Standard Installation](#2-standard-installation)
-    - [3. Installer Script (Optional)](#3-installer-script-optional)
+    - [Automatically](#automatically)
+    - [Manually](#manually)
+      - [1. Prerequisites](#1-prerequisites)
+      - [2. Standard Installation](#2-standard-installation)
+      - [3. Installer Script (Optional)](#3-installer-script-optional)
   - [Usage Workflow](#usage-workflow)
     - [1. Validator: Generating Proofs](#1-validator-generating-proofs)
     - [2. Miner: Verifying Inclusion](#2-miner-verifying-inclusion)
@@ -57,11 +59,28 @@ The repository is organized into two main directories:
 
 The project is managed with Python and requires the `nargo` toolchain for interacting with Noir circuits.
 
-### 1. Prerequisites
+### Automatically
+
+```bash
+uv add proof-of-portfolio
+```
+
+or
+
+```bash
+pip install proof-of-portfolio
+```
+
+> [!NOTE]
+> When you run `pop` via the command line or import the package for the first time, it will automatically attempt to install the required barretenburg (bbup) and noir (nargo / noirup) dependencies
+
+### Manually
+
+#### 1. Prerequisites
 
 Ensure you have [Noir/Nargo](https://noir-lang.org/docs/getting_started/installation) installed.
 
-### 2. Standard Installation
+#### 2. Standard Installation
 
 Clone the repository and install the package in editable mode. This will install the `pop` command-line tool and all necessary Python dependencies.
 
@@ -71,7 +90,7 @@ cd proof-of-portfolio
 pip install -e .
 ```
 
-### 3. Installer Script (Optional)
+#### 3. Installer Script (Optional)
 
 An `install.sh` script is provided for convenience, which can help automate dependency setup.
 
