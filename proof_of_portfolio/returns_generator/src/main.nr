@@ -1,5 +1,5 @@
 use dep::std;
-
+use std::ops::WrappingAdd;
 
 pub global MAX_CHECKPOINTS: u32 = 200;
 pub global MAX_DAYS: u32 = 120;
