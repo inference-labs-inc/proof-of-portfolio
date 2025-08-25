@@ -10,11 +10,22 @@ class Miner:
     def __init__(self, ss58_address, name):
         self.name = name
         self.ss58_address = ss58_address
-        # Use absolute path based on the location of this file
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.TREE_GEN_DIR = os.path.abspath(
+
+        package_tree_dir = os.path.join(current_dir, "tree_generator")
+        dev_tree_dir = os.path.abspath(
             os.path.join(current_dir, "..", "tree_generator")
         )
+
+        if os.path.exists(package_tree_dir):
+            self.TREE_GEN_DIR = package_tree_dir
+        elif os.path.exists(dev_tree_dir):
+            self.TREE_GEN_DIR = dev_tree_dir
+        else:
+            raise FileNotFoundError(
+                f"tree_generator directory not found. Tried: {package_tree_dir}, {dev_tree_dir}"
+            )
+
         self.TREE_GEN_PROVER_TOML = os.path.join(self.TREE_GEN_DIR, "Prover.toml")
         self.MAX_SIGNALS = 256
 
@@ -45,28 +56,25 @@ class Miner:
             return [], 0
 
         orders = []
-        # Handle different data structures from analyze_data.py
+
         if isinstance(positions, dict):
-            # If positions is a dict, it might have a "positions" key
+
             if "positions" in positions:
                 position_list = positions["positions"]
             else:
                 print(f"Warning: Unexpected data structure for {data_json_path}")
                 return [], 0
         else:
-            # If positions is already a list, use it directly
             position_list = positions
 
         orders = []
         for position in position_list:
             orders.extend(position.get("orders", []))
 
-        # Sort orders by timestamp to ensure correct open/close pairing
         orders.sort(key=lambda o: o["processed_ms"])
 
         signals = []
 
-        # Assumes orders come in pairs (open, close).
         for i in range(0, len(orders), 2):
             if (i + 1) >= len(orders) or len(signals) >= self.MAX_SIGNALS:
                 break

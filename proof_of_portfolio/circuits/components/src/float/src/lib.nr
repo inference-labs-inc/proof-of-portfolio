@@ -155,4 +155,4 @@ fn main() {
     test_sub_floats();
     test_mul_floats();
     test_div_floats();
-}   
+}
