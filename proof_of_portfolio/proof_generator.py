@@ -249,6 +249,8 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     if verbose:
         print("Running tree_generator circuit...")
+    else:
+        print(f"Generating tree for hotkey {miner_hotkey}...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     tree_generator_dir = os.path.join(current_dir, "tree_generator")
 
@@ -291,6 +293,8 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     if verbose:
         print("Running returns_generator circuit...")
+    else:
+        print(f"Generating returns for hotkey {miner_hotkey}...")
     returns_generator_dir = os.path.join(current_dir, "returns_generator")
 
     returns_prover_input = {
@@ -322,6 +326,8 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     if verbose:
         print("Running main proof of portfolio circuit...")
+    else:
+        print(f"Generating witness for hotkey {miner_hotkey}...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
     # Finally, LFG
@@ -393,6 +399,8 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
+    print(f"Signals Merkle Root: {signals_merkle_root}")
+    print(f"Returns Merkle Root: {returns_merkle_root}")
     print(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
     print(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
     print(f"Max Drawdown: {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)")
