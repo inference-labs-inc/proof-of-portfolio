@@ -9,7 +9,7 @@ def load_processed_signals(signals_path: Path) -> List[Dict[str, Any]]:
     """Load and parse all processed signal files from directory"""
     signals = []
 
-    for signal_file in signals_path.glob("*.json"):
+    for signal_file in signals_path.glob("*"):
         try:
             with open(signal_file, "r") as f:
                 signal_data = json.load(f)
