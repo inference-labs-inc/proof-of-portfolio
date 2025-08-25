@@ -69,14 +69,9 @@ def _prove_worker(miner_data, hotkey):
             os.chdir(temp_dir)
 
             try:
-                from .demos.main import main
+                from .proof_generator import generate_proof
 
-                class Args:
-                    def __init__(self, hotkey):
-                        self.hotkey = hotkey
-
-                args = Args(hotkey)
-                result = main(args)
+                result = generate_proof(miner_data, hotkey)
 
                 return {
                     "status": "success",
