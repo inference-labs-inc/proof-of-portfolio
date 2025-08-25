@@ -13,18 +13,20 @@ SCALING_FACTOR = 10**9
 MAX_DAYS = 120
 
 
-def run_command(command, cwd):
+def run_command(command, cwd, verbose=True):
     """Executes a command in a given directory and returns the output."""
     result = subprocess.run(command, capture_output=True, text=True, cwd=cwd)
-    print("--- nargo stdout ---")
-    print(result.stdout)
-    print("--- nargo stderr ---")
-    print(result.stderr)
-    print("--------------------")
-    if result.returncode != 0:
-        print("Error:")
+    if verbose:
+        print("--- nargo stdout ---")
         print(result.stdout)
+        print("--- nargo stderr ---")
         print(result.stderr)
+        print("--------------------")
+    if result.returncode != 0:
+        if verbose:
+            print("Error:")
+            print(result.stdout)
+            print(result.stderr)
         raise RuntimeError(
             f"Command {' '.join(command)} failed with exit code {result.returncode}"
         )
@@ -117,7 +119,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         return None, False
 
 
-def generate_proof(data=None, miner_hotkey=None):
+def generate_proof(data=None, miner_hotkey=None, verbose=None):
     """
     Core proof generation logic.
 
@@ -126,12 +128,20 @@ def generate_proof(data=None, miner_hotkey=None):
               If None, will read from validator_checkpoint.json
         miner_hotkey: The hotkey of the miner to generate proof for.
                      If None and reading from file, uses first available hotkey
+        verbose: Optional boolean to control logging verbosity.
+                If None, auto-detects (demo mode = verbose, production = minimal)
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
     """
+    # Auto-detect mode: demo mode if reading from file, production if data provided
+    is_demo_mode = data is None
+    if verbose is None:
+        verbose = is_demo_mode
+
     if data is None:
-        print("Loading data from validator_checkpoint.json...")
+        if verbose:
+            print("Loading data from validator_checkpoint.json...")
         import json
 
         with open("validator_checkpoint.json", "r") as f:
@@ -139,7 +149,8 @@ def generate_proof(data=None, miner_hotkey=None):
 
     if miner_hotkey is None:
         miner_hotkey = list(data["perf_ledgers"].keys())[0]
-        print(f"No hotkey specified, using first available: {miner_hotkey}")
+        if verbose:
+            print(f"No hotkey specified, using first available: {miner_hotkey}")
     else:
         print(f"Using specified hotkey: {miner_hotkey}")
 
@@ -150,14 +161,16 @@ def generate_proof(data=None, miner_hotkey=None):
 
     perf_ledger = data["perf_ledgers"][miner_hotkey]
     positions = data["positions"][miner_hotkey]["positions"]
-    print("Preparing circuit inputs...")
+    if verbose:
+        print("Preparing circuit inputs...")
 
     cps = perf_ledger["cps"]
     checkpoint_count = len(cps)
     if checkpoint_count > MAX_CHECKPOINTS:
-        print(
-            f"Warning: Miner has {checkpoint_count} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
-        )
+        if verbose:
+            print(
+                f"Warning: Miner has {checkpoint_count} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
+            )
         cps = cps[:MAX_CHECKPOINTS]
         checkpoint_count = MAX_CHECKPOINTS
 
@@ -179,9 +192,10 @@ def generate_proof(data=None, miner_hotkey=None):
 
     signals_count = len(all_orders)
     if signals_count > MAX_SIGNALS:
-        print(
-            f"Warning: Miner has {signals_count} signals, but circuit only supports {MAX_SIGNALS}. Truncating."
-        )
+        if verbose:
+            print(
+                f"Warning: Miner has {signals_count} signals, but circuit only supports {MAX_SIGNALS}. Truncating."
+            )
         all_orders = all_orders[:MAX_SIGNALS]
         signals_count = MAX_SIGNALS
 
@@ -230,9 +244,11 @@ def generate_proof(data=None, miner_hotkey=None):
         }
     ] * (MAX_SIGNALS - len(signals))
 
-    print(f"Prepared {checkpoint_count} checkpoints and {signals_count} signals.")
+    if verbose:
+        print(f"Prepared {checkpoint_count} checkpoints and {signals_count} signals.")
 
-    print("Running tree_generator circuit...")
+    if verbose:
+        print("Running tree_generator circuit...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     tree_generator_dir = os.path.join(current_dir, "tree_generator")
 
@@ -241,7 +257,9 @@ def generate_proof(data=None, miner_hotkey=None):
     with open(os.path.join(tree_generator_dir, "Prover.toml"), "w") as f:
         toml.dump(tree_prover_input, f)
 
-    output = run_command(["nargo", "execute", "--silence-warnings"], tree_generator_dir)
+    output = run_command(
+        ["nargo", "execute", "--silence-warnings"], tree_generator_dir, verbose
+    )
 
     fields = parse_nargo_struct_output(output)
     num_leaves = MAX_SIGNALS
@@ -266,11 +284,13 @@ def generate_proof(data=None, miner_hotkey=None):
         for i in range(0, len(path_indices_flat), MERKLE_DEPTH)
     ]
 
-    print(f"Generated signals Merkle root: {signals_merkle_root}")
-    print(f"Signals Merkle root (hex): {hex(int(signals_merkle_root)).zfill(64)}")
+    if verbose:
+        print(f"Generated signals Merkle root: {signals_merkle_root}")
+        print(f"Signals Merkle root (hex): {hex(int(signals_merkle_root)).zfill(64)}")
 
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
-    print("Running returns_generator circuit...")
+    if verbose:
+        print("Running returns_generator circuit...")
     returns_generator_dir = os.path.join(current_dir, "returns_generator")
 
     returns_prover_input = {
@@ -287,7 +307,7 @@ def generate_proof(data=None, miner_hotkey=None):
         toml.dump(returns_prover_input, f)
 
     output = run_command(
-        ["nargo", "execute", "--silence-warnings"], returns_generator_dir
+        ["nargo", "execute", "--silence-warnings"], returns_generator_dir, verbose
     )
 
     fields = parse_nargo_struct_output(output)
@@ -295,11 +315,13 @@ def generate_proof(data=None, miner_hotkey=None):
     returns_merkle_root = fields[num_log_returns]
     valid_days = fields[-1]
 
-    print(f"Generated returns Merkle root: {returns_merkle_root}")
-    print(f"Returns Merkle root (hex): {hex(int(returns_merkle_root)).zfill(64)}")
-    print(f"Number of valid daily returns: {valid_days}")
+    if verbose:
+        print(f"Generated returns Merkle root: {returns_merkle_root}")
+        print(f"Returns Merkle root (hex): {hex(int(returns_merkle_root)).zfill(64)}")
+        print(f"Number of valid daily returns: {valid_days}")
 
-    print("Running main proof of portfolio circuit...")
+    if verbose:
+        print("Running main proof of portfolio circuit...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
     # Finally, LFG
@@ -324,15 +346,24 @@ def generate_proof(data=None, miner_hotkey=None):
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:
         toml.dump(main_prover_input, f)
 
-    print("Executing main circuit to generate witness...")
+    if verbose:
+        print("Executing main circuit to generate witness...")
     witness_start = time.time()
-    output = run_command(["nargo", "execute", "--silence-warnings"], main_circuit_dir)
+    output = run_command(
+        ["nargo", "execute", "--silence-warnings"], main_circuit_dir, verbose
+    )
     witness_time = time.time() - witness_start
-    print(f"Witness generation completed in {witness_time:.3f}s")
+    if verbose:
+        print(f"Witness generation completed in {witness_time:.3f}s")
 
     fields = re.findall(r"Field\(([-0-9]+)\)", output)
-    sharpe_raw = fields[0]
-    drawdown_raw = fields[1]
+    avg_daily_pnl_raw = fields[0]
+    sharpe_raw = fields[1]
+    drawdown_raw = fields[2]
+    calmar_raw = fields[3]
+    omega_raw = fields[4]
+    sortino_raw = fields[5]
+    stat_confidence_raw = fields[6]
 
     def field_to_signed_int(field_str):
         val = int(field_str)
@@ -342,41 +373,78 @@ def generate_proof(data=None, miner_hotkey=None):
             val = val - PRIME
         return val
 
+    avg_daily_pnl_value = field_to_signed_int(avg_daily_pnl_raw)
     sharpe_ratio_raw = field_to_signed_int(sharpe_raw)
     max_drawdown_raw = field_to_signed_int(drawdown_raw)
+    calmar_ratio_raw = field_to_signed_int(calmar_raw)
+    omega_ratio_raw = field_to_signed_int(omega_raw)
+    sortino_ratio_raw = field_to_signed_int(sortino_raw)
+    stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
 
+    avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
     sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
+    calmar_ratio_scaled = calmar_ratio_raw / SCALING_FACTOR
+    omega_ratio_scaled = omega_ratio_raw / SCALING_FACTOR
+    sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
+    stat_confidence_scaled = stat_confidence_raw / SCALING_FACTOR
 
     prove_time, verification_success = run_bb_prove_and_verify(main_circuit_dir)
 
-    print("\n--- Proof Generation Complete ---")
-    print("\n=== MERKLE ROOTS ===")
-    print(f"Signals Merkle Root: {signals_merkle_root}")
-    print(f"Returns Merkle Root: {returns_merkle_root}")
-
-    print("\n=== PORTFOLIO METRICS ===")
-    print(f"Sharpe Ratio (raw): {sharpe_ratio_raw}")
-    print(f"Sharpe Ratio (scaled): {sharpe_ratio_scaled:.9f}")
-    print(f"Max Drawdown (raw): {max_drawdown_raw}")
-    print(
-        f"Max Drawdown (scaled): {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)"
-    )
-
-    print("\n=== DATA SUMMARY ===")
-    print(f"Checkpoints processed: {checkpoint_count}")
-    print(f"Trading signals processed: {signals_count}")
-    print(f"Valid daily returns: {valid_days}")
-
-    print("\n=== PROOF GENERATION RESULTS ===")
-    print(f"Witness generation time: {witness_time:.3f}s")
+    # Always print key production info: hotkey and verification status
+    print(f"Hotkey: {miner_hotkey}")
+    print(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
+    print(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
+    print(f"Max Drawdown: {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)")
+    print(f"Calmar Ratio: {calmar_ratio_scaled:.9f}")
+    print(f"Omega Ratio: {omega_ratio_scaled:.9f}")
+    print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
+    print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
     if prove_time is not None:
-        print(f"Proof generation time: {prove_time:.3f}s")
         print(
             f"Proof verification: {'✅ PASSED' if verification_success else '❌ FAILED'}"
         )
     else:
-        print("Unable to prove or verify due to an error.")
+        print("Proof generation failed")
+
+    if verbose:
+        print("\n--- Proof Generation Complete ---")
+        print("\n=== MERKLE ROOTS ===")
+        print(f"Signals Merkle Root: {signals_merkle_root}")
+        print(f"Returns Merkle Root: {returns_merkle_root}")
+
+        print("\n=== PORTFOLIO METRICS ===")
+        print(f"Average Daily PnL (raw): {avg_daily_pnl_value}")
+        print(f"Average Daily PnL (scaled): {avg_daily_pnl_scaled:.9f}")
+        print(f"Sharpe Ratio (raw): {sharpe_ratio_raw}")
+        print(f"Sharpe Ratio (scaled): {sharpe_ratio_scaled:.9f}")
+        print(f"Max Drawdown (raw): {max_drawdown_raw}")
+        print(
+            f"Max Drawdown (scaled): {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)"
+        )
+        print(f"Calmar Ratio (raw): {calmar_ratio_raw}")
+        print(f"Calmar Ratio (scaled): {calmar_ratio_scaled:.9f}")
+        print(f"Omega Ratio (raw): {omega_ratio_raw}")
+        print(f"Omega Ratio (scaled): {omega_ratio_scaled:.9f}")
+        print(f"Sortino Ratio (raw): {sortino_ratio_raw}")
+        print(f"Sortino Ratio (scaled): {sortino_ratio_scaled:.9f}")
+        print(f"Statistical Confidence (raw): {stat_confidence_raw}")
+        print(f"Statistical Confidence (scaled): {stat_confidence_scaled:.9f}")
+
+        print("\n=== DATA SUMMARY ===")
+        print(f"Checkpoints processed: {checkpoint_count}")
+        print(f"Trading signals processed: {signals_count}")
+        print(f"Valid daily returns: {valid_days}")
+
+        print("\n=== PROOF GENERATION RESULTS ===")
+        print(f"Witness generation time: {witness_time:.3f}s")
+        if prove_time is not None:
+            print(f"Proof generation time: {prove_time:.3f}s")
+            print(
+                f"Proof verification: {'✅ PASSED' if verification_success else '❌ FAILED'}"
+            )
+        else:
+            print("Unable to prove or verify due to an error.")
 
     # Return structured results for programmatic access
     return {
@@ -385,11 +453,21 @@ def generate_proof(data=None, miner_hotkey=None):
             "returns": returns_merkle_root,
         },
         "portfolio_metrics": {
+            "avg_daily_pnl_raw": avg_daily_pnl_value,
+            "avg_daily_pnl_scaled": avg_daily_pnl_scaled,
             "sharpe_ratio_raw": sharpe_ratio_raw,
             "sharpe_ratio_scaled": sharpe_ratio_scaled,
             "max_drawdown_raw": max_drawdown_raw,
             "max_drawdown_scaled": max_drawdown_scaled,
             "max_drawdown_percentage": max_drawdown_scaled * 100,
+            "calmar_ratio_raw": calmar_ratio_raw,
+            "calmar_ratio_scaled": calmar_ratio_scaled,
+            "omega_ratio_raw": omega_ratio_raw,
+            "omega_ratio_scaled": omega_ratio_scaled,
+            "sortino_ratio_raw": sortino_ratio_raw,
+            "sortino_ratio_scaled": sortino_ratio_scaled,
+            "stat_confidence_raw": stat_confidence_raw,
+            "stat_confidence_scaled": stat_confidence_scaled,
         },
         "data_summary": {
             "checkpoints_processed": checkpoint_count,

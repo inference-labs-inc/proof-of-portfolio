@@ -1,11 +1,14 @@
+use dep::std::ops::WrappingAdd;
+use components::core::{
+    calmar::calmar, drawdown::daily_max_drawdown, omega::omega, sharpe::sharpe, sortino::sortino,
+    tstat::statistical_confidence,
+};
 use components::core::cps_to_log_returns::{cps_to_log_returns, MAX_CHECKPOINTS, MAX_DAYS};
-use components::core::{drawdown::daily_max_drawdown, sharpe::sharpe};
 use components::core::merkle::{
     build_merkle_root, hash_return, hash_signal, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH,
     merkle_inclusion_check, TradingSignal,
 };
-use components::utils::constants::ARRAY_SIZE;
-use dep::std::ops::WrappingAdd;
+use components::utils::{average::average, constants::ARRAY_SIZE};
 
 global RISK_FREE_RATE: i64 = 0;
 
@@ -22,7 +25,7 @@ fn main(
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
     returns_merkle_root: pub Field,
-) -> pub [Field; 2] {
+) -> pub [Field; 7] {
     // Convert checkpoints to log returns
     let (log_returns, valid_days) = cps_to_log_returns(
         gains,
@@ -67,11 +70,20 @@ fn main(
             returns_array[i] = log_returns[i];
         }
     }
-
-    // Calculate sharpe and daily max drawdown
+    // Run all metric calcs
+    let avg_daily_pnl = average(returns_array, n_returns, false);
     let sh = sharpe(returns_array, n_returns, RISK_FREE_RATE, false, false);
     let dmd = daily_max_drawdown(returns_array, n_returns);
+    let calmar_ratio = calmar(returns_array, n_returns, RISK_FREE_RATE, false);
+    let omega_ratio = omega(returns_array, n_returns, false);
+    let sortino_ratio = sortino(returns_array, n_returns, RISK_FREE_RATE, false);
+    let stat_confidence = statistical_confidence(returns_array, n_returns, false);
 
+    let avg_daily_pnl_unsigned = if avg_daily_pnl < 0 {
+        (avg_daily_pnl as u64).wrapping_add(0x8000000000000000)
+    } else {
+        avg_daily_pnl as u64
+    };
     let sh_unsigned = if sh < 0 {
         (sh as u64).wrapping_add(0x8000000000000000)
     } else {
@@ -82,5 +94,34 @@ fn main(
     } else {
         dmd as u64
     };
-    [sh_unsigned as Field, dmd_unsigned as Field]
+    let calmar_unsigned = if calmar_ratio < 0 {
+        (calmar_ratio as u64).wrapping_add(0x8000000000000000)
+    } else {
+        calmar_ratio as u64
+    };
+    let omega_unsigned = if omega_ratio < 0 {
+        (omega_ratio as u64).wrapping_add(0x8000000000000000)
+    } else {
+        omega_ratio as u64
+    };
+    let sortino_unsigned = if sortino_ratio < 0 {
+        (sortino_ratio as u64).wrapping_add(0x8000000000000000)
+    } else {
+        sortino_ratio as u64
+    };
+    let stat_confidence_unsigned = if stat_confidence < 0 {
+        (stat_confidence as u64).wrapping_add(0x8000000000000000)
+    } else {
+        stat_confidence as u64
+    };
+
+    [
+        avg_daily_pnl_unsigned as Field,
+        sh_unsigned as Field,
+        dmd_unsigned as Field,
+        calmar_unsigned as Field,
+        omega_unsigned as Field,
+        sortino_unsigned as Field,
+        stat_confidence_unsigned as Field,
+    ]
 }
