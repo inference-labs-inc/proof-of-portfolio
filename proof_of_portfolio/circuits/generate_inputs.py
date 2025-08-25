@@ -72,7 +72,7 @@ def extract_trading_signals(
     for position in miner_positions:
         for order in position["orders"]:
             # Map order_type to integer
-            order_type_map = {"LONG": 1, "SHORT": -1, "FLAT": 0}
+            order_type_map = {"LONG": 1, "SHORT": 2, "FLAT": 0}
 
             # Get trade pair ID (using first element of trade_pair array as identifier)
             trade_pair_id = hash(position["trade_pair"][0]) % (
