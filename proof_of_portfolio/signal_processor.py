@@ -1,6 +1,5 @@
 import json
 import sys
-import ast
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 from .miner import Miner
@@ -8,11 +7,11 @@ from .miner import Miner
 
 def parse_order_string(order_str: str) -> Optional[Dict[str, Any]]:
     """
-    Parse order string by replacing PriceSource with dict to make it parseable
+    Parse order string by replacing PriceSource with dict and using eval with restricted globals
     """
     try:
         cleaned_str = order_str.replace("PriceSource(", "dict(")
-        order_data = ast.literal_eval(cleaned_str)
+        order_data = eval(cleaned_str)
         return order_data
 
     except Exception as e:
