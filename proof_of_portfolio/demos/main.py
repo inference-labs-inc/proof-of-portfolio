@@ -282,7 +282,8 @@ def main(args):
     print(f"Prepared {checkpoint_count} checkpoints and {signals_count} signals.")
 
     print("Running tree_generator circuit...")
-    tree_generator_dir = os.path.abspath("tree_generator")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    tree_generator_dir = os.path.join(current_dir, "..", "tree_generator")
 
     tree_prover_input = {"signals": signals, "actual_len": str(signals_count)}
     with open(os.path.join(tree_generator_dir, "Prover.toml"), "w") as f:
@@ -346,7 +347,8 @@ def main(args):
     print(f"Number of valid daily returns: {valid_days}")
 
     print("Running main proof of portfolio circuit...")
-    main_circuit_dir = os.path.abspath("circuits")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    main_circuit_dir = os.path.join(current_dir, "..", "circuits")
 
     # Finally, LFG
     main_prover_input = {
