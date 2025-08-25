@@ -76,12 +76,14 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         os.makedirs(vk_dir, exist_ok=True)
 
         witness_file = os.path.join(target_dir, "witness.gz")
+        circuit_file = os.path.join(target_dir, "circuit.json")
+
         proof_file = proof_dir
         vk_file = os.path.join(vk_dir, "vk")
 
         prove_start = time.time()
         prove_result = subprocess.run(
-            ["bb", "prove", "-w", witness_file, "-o", proof_file],
+            ["bb", "prove", "-b", circuit_file, "-w", witness_file, "-o", proof_file],
             capture_output=True,
             text=True,
             cwd=circuit_dir,
