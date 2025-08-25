@@ -70,7 +70,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
     try:
         target_dir = os.path.join(circuit_dir, "target")
         proof_dir = os.path.join(circuit_dir, "proof")
-        vk_dir = os.path.join(circuit_dir, "verification_key")
+        vk_dir = os.path.join(circuit_dir, "vk")
 
         os.makedirs(proof_dir, exist_ok=True)
         os.makedirs(vk_dir, exist_ok=True)
@@ -81,7 +81,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
 
         prove_start = time.time()
         prove_result = subprocess.run(
-            ["bb", "prove", "-b", witness_file, "-o", proof_file, "-v", vk_file],
+            ["bb", "prove", "-b", witness_file, "-o", proof_file],
             capture_output=True,
             text=True,
             cwd=circuit_dir,
