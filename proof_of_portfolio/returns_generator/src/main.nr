@@ -10,7 +10,12 @@ global SECONDS_PER_DAY: u64 = 86400;
 
 // Hashes a single 64-bit log return into a Field element.
 pub fn hash_return(log_return: i64) -> Field {
-    std::hash::pedersen_hash([log_return as Field])
+    let unsigned_value = if log_return < 0 {
+        (log_return as u64).wrapping_add(0x8000000000000000)
+    } else {
+        log_return as u64
+    };
+    std::hash::pedersen_hash([unsigned_value as Field])
 }
 
 // Builds a Merkle root from a set of leaves.
