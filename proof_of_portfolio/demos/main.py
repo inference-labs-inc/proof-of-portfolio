@@ -320,7 +320,10 @@ def main(args):
 
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     print("Running returns_generator circuit...")
-    returns_generator_dir = os.path.abspath("../returns_generator")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    returns_generator_dir = os.path.join(
+        os.path.dirname(current_dir), "returns_generator"
+    )
 
     returns_prover_input = {
         "gains": [str(g) for g in gains],
@@ -350,7 +353,7 @@ def main(args):
 
     print("Running main proof of portfolio circuit...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    main_circuit_dir = os.path.join(current_dir, "..", "circuits")
+    main_circuit_dir = os.path.join(os.path.dirname(current_dir), "circuits")
 
     # Finally, LFG
     main_prover_input = {
