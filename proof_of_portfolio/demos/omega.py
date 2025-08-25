@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
@@ -94,7 +95,9 @@ class MinMetrics:
 
 
 def run_omega_nargo(log_returns: list[float], bypass_confidence: bool, weighting: bool):
-    prover_path = "demo/just_omega/Prover.toml"
+    prover_path = os.path.join(
+        os.path.dirname(__file__), "..", "demo", "just_omega", "Prover.toml"
+    )
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
 

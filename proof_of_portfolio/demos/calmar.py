@@ -88,7 +88,9 @@ class MinMetrics:
 def run_calmar_nargo(
     log_returns: list[float], bypass_confidence: bool, weighting: bool
 ):
-    prover_path = "demo/just_calmar/Prover.toml"
+    prover_path = os.path.join(
+        os.path.dirname(__file__), "..", "demo", "just_calmar", "Prover.toml"
+    )
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
     print(f"DEBUG: Writing to Prover.toml - first 5 returns: {log_returns[:5]}")

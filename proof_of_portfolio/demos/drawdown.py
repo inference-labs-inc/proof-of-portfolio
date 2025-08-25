@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
@@ -21,7 +22,9 @@ class MinMetrics:
 
 
 def run_drawdown_nargo(log_returns: list[float]):
-    prover_path = "demo/just_drawdown/Prover.toml"
+    prover_path = os.path.join(
+        os.path.dirname(__file__), "..", "demo", "just_drawdown", "Prover.toml"
+    )
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
 

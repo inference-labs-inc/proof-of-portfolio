@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -119,7 +120,9 @@ class MinMetrics:
 def run_sortino_nargo(
     log_returns: list[float], bypass_confidence: bool, weighting: bool
 ):
-    prover_path = "demo/just_sortino/Prover.toml"
+    prover_path = os.path.join(
+        os.path.dirname(__file__), "..", "demo", "just_sortino", "Prover.toml"
+    )
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
 

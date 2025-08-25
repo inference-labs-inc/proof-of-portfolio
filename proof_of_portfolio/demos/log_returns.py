@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 from . import utils
@@ -18,7 +20,13 @@ def compare_implementations(test_data: dict):
         test_data["accum_times"],
         test_data["checkpoint_count"],
         target_duration,
-        "demo/just_cps_to_log_return/Prover.toml",
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "demo",
+            "just_cps_to_log_return",
+            "Prover.toml",
+        ),
     )
 
     baseline_count = len(baseline_daily_returns)

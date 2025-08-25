@@ -42,7 +42,7 @@ class MinMetrics:
 
 
 def run_tstat_nargo(log_returns: list[float], bypass_confidence: bool, weighting: bool):
-    prover_path = "demo/just_tstat/Prover.toml"
+    prover_path = "../demo/just_tstat/Prover.toml"
 
     padded_returns = log_returns + [0.0] * (120 - len(log_returns))
 

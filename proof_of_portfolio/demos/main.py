@@ -286,6 +286,7 @@ def main(args):
     tree_generator_dir = os.path.join(current_dir, "..", "tree_generator")
 
     tree_prover_input = {"signals": signals, "actual_len": str(signals_count)}
+    os.makedirs(tree_generator_dir, exist_ok=True)
     with open(os.path.join(tree_generator_dir, "Prover.toml"), "w") as f:
         toml.dump(tree_prover_input, f)
 
@@ -319,7 +320,7 @@ def main(args):
 
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     print("Running returns_generator circuit...")
-    returns_generator_dir = os.path.abspath("returns_generator")
+    returns_generator_dir = os.path.abspath("../returns_generator")
 
     returns_prover_input = {
         "gains": [str(g) for g in gains],
@@ -330,6 +331,7 @@ def main(args):
         "target_duration": str(target_duration),
     }
 
+    os.makedirs(returns_generator_dir, exist_ok=True)
     with open(os.path.join(returns_generator_dir, "Prover.toml"), "w") as f:
         toml.dump(returns_prover_input, f)
 
@@ -368,6 +370,7 @@ def main(args):
         "returns_merkle_root": field_to_toml_value(int(returns_merkle_root)),
     }
 
+    os.makedirs(main_circuit_dir, exist_ok=True)
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:
         toml.dump(main_prover_input, f)
 
