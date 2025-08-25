@@ -83,8 +83,8 @@ class Miner:
             close_order = orders[i + 1]
 
             # Map string order types to numeric codes for the circuit
-            # LONG -> 1, SHORT -> -1, FLAT -> 0 (as per main circuit)
-            order_type_map = {"SHORT": -1, "LONG": 1, "FLAT": 0}
+            # Use unsigned values: LONG -> 1, SHORT -> 2, FLAT -> 0
+            order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
             order_type_code = order_type_map.get(open_order["order_type"], 0)
 
             # Convert UUIDs to single Field (as per main circuit)

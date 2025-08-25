@@ -7,7 +7,7 @@ pub global MAX_SIGNALS: u32 = 256;
 
 pub struct TradingSignal {
     pub trade_pair: Field,
-    pub order_type: i8,
+    pub order_type: u8,
     pub leverage: u64,
     pub price: Field,
     pub processed_ms: u64,
@@ -16,7 +16,7 @@ pub struct TradingSignal {
     pub ask: Field,
 }
 
-pub fn hash_return(log_return: i64) -> Field {
+pub fn hash_return(log_return: u64) -> Field {
     std::hash::pedersen_hash([log_return as Field])
 }
 
