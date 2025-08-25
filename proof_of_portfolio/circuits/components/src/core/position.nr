@@ -35,7 +35,7 @@ global LEVERAGE_SCALE: u32 = 10_000;
 
 global ORDER_TYPE_LONG: u8 = 1;
 global ORDER_TYPE_SHORT: u8 = 2;
-global ORDER_TYPE_FLAT: u8 = 3;
+global ORDER_TYPE_FLAT: u8 = 0;
 
 global ORDER_SRC_ORGANIC: u8 = 1;
 

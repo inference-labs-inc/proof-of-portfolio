@@ -245,7 +245,7 @@ def main(args):
             trade_pair_counter += 1
 
         order_type_str = order["order_type"]
-        order_type_map = {"SHORT": -1, "LONG": 1, "FLAT": 0}
+        order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
         price = int(order.get("price", 0) * SCALING_FACTOR)
         order_uuid = order.get("order_uuid", "0")
         bid = int(order.get("bid", 0) * SCALING_FACTOR)
