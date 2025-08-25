@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from typing import Dict, List, Any, Optional
 from pathlib import Path
@@ -23,10 +24,17 @@ def load_processed_signals(signals_path: Path) -> List[Dict[str, Any]]:
     """Load and parse all processed signal files from directory"""
     signals = []
 
-    for signal_file in signals_path.glob("*"):
+    for signal_file in [
+        f
+        for f in signals_path.glob("*")
+        if os.path.isfile(f) and "." not in os.path.basename(f)
+    ]:
         try:
             with open(signal_file, "r") as f:
-                signal_data = json.load(f)
+                f_str = f.read()
+                f_str.replace("PriceSource", "dict")
+
+                signal_data = eval(f_str)
                 signals.append(signal_data)
         except (json.JSONDecodeError, FileNotFoundError) as e:
             print(f"Warning: Could not parse {signal_file}: {e}", file=sys.stderr)
