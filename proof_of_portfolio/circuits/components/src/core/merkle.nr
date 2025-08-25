@@ -1,4 +1,5 @@
 use dep::std;
+use std::ops::WrappingAdd;
 
 // Globals
 pub global MERKLE_DEPTH: u32 = 8;
@@ -16,8 +17,13 @@ pub struct TradingSignal {
     pub ask: Field,
 }
 
-pub fn hash_return(log_return: u64) -> Field {
-    std::hash::pedersen_hash([log_return as Field])
+pub fn hash_return(log_return: i64) -> Field {
+    let unsigned_value = if log_return < 0 {
+        (log_return as u64).wrapping_add(0x8000000000000000)
+    } else {
+        log_return as u64
+    };
+    std::hash::pedersen_hash([unsigned_value as Field])
 }
 
 pub fn hash_signal(signal: TradingSignal) -> Field {

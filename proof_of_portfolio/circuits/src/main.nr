@@ -5,6 +5,7 @@ use components::core::merkle::{
     merkle_inclusion_check, TradingSignal,
 };
 use components::utils::constants::ARRAY_SIZE;
+use dep::std::ops::WrappingAdd;
 
 global RISK_FREE_RATE: i64 = 0;
 
@@ -71,5 +72,15 @@ fn main(
     let sh = sharpe(returns_array, n_returns, RISK_FREE_RATE, false, false);
     let dmd = daily_max_drawdown(returns_array, n_returns);
 
-    [sh as Field, dmd as Field]
+    let sh_unsigned = if sh < 0 {
+        (sh as u64).wrapping_add(0x8000000000000000)
+    } else {
+        sh as u64
+    };
+    let dmd_unsigned = if dmd < 0 {
+        (dmd as u64).wrapping_add(0x8000000000000000)
+    } else {
+        dmd as u64
+    };
+    [sh_unsigned as Field, dmd_unsigned as Field]
 }
