@@ -81,7 +81,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
 
         prove_start = time.time()
         prove_result = subprocess.run(
-            ["bb", "prove", "-b", witness_file, "-o", proof_file],
+            ["bb", "prove", "-w", witness_file, "-o", proof_file],
             capture_output=True,
             text=True,
             cwd=circuit_dir,
