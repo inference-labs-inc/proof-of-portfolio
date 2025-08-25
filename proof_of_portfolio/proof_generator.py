@@ -99,7 +99,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         print(f"Proof generated in {prove_time:.3f}s")
 
         verify_result = subprocess.run(
-            ["bb", "verify", "-p", proof_file, "-v", vk_file],
+            ["bb", "verify", "-p", proof_file, "-k", vk_file],
             capture_output=True,
             text=True,
             cwd=circuit_dir,
