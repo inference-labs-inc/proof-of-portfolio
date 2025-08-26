@@ -92,6 +92,18 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
 
         if prove_result.returncode != 0:
             print("bb prove failed:")
+            print(
+                [
+                    "bb",
+                    "prove",
+                    "-b",
+                    circuit_file,
+                    "-w",
+                    witness_file,
+                    "-o",
+                    proof_file,
+                ].join(" ")
+            )
             print(prove_result.stdout)
             print(prove_result.stderr)
             return None, False
