@@ -36,10 +36,143 @@ def run_command(command, cwd, verbose=True):
 def parse_nargo_struct_output(output):
     """
     Parses the raw output of a nargo execute command that returns a struct.
-    It finds all the Field values in the output, which is simpler and more robust
-    than trying to parse the nested struct/vec syntax. Unfortunate that there is no clean JSON output.
     """
-    return re.findall(r"Field\(([-0-9]+)\)", output)
+    if (
+        "[" in output
+        and "]" in output
+        and not ("MerkleTree" in output or "ReturnsData" in output)
+    ):
+        array_matches = re.findall(r"\[([^\]]+)\]", output)
+        if array_matches:
+            array_content = array_matches[-1]
+            values = []
+            for item in array_content.split(","):
+                item = item.strip()
+                if item.startswith("0x"):
+                    try:
+                        values.append(str(int(item, 16)))
+                    except ValueError:
+                        continue
+                elif item.lstrip("-").isdigit():
+                    values.append(item)
+            if values:
+                return values
+
+    struct_start = output.find("{")
+    struct_end = output.rfind("}")
+
+    if struct_start == -1 or struct_end == -1:
+        return re.findall(r"Field\(([-0-9]+)\)", output)
+
+    struct_content = output[struct_start : struct_end + 1]
+
+    if "MerkleTree" in output:
+        tree = {}
+        try:
+            # Parse leaf_hashes
+            if "leaf_hashes:" in struct_content:
+                start = struct_content.find("leaf_hashes:") + len("leaf_hashes:")
+                end = struct_content.find(", path_elements:")
+                leaf_section = struct_content[start:end].strip()
+                if leaf_section.startswith("[") and leaf_section.endswith("]"):
+                    leaf_content = leaf_section[1:-1]
+                    tree["leaf_hashes"] = [
+                        x.strip() for x in leaf_content.split(",") if x.strip()
+                    ]
+
+            # Parse path_elements
+            if "path_elements:" in struct_content:
+                start = struct_content.find("path_elements:") + len("path_elements:")
+                end = struct_content.find(", path_indices:")
+                path_elem_section = struct_content[start:end].strip()
+                tree["path_elements"] = parse_nested_arrays(path_elem_section)
+
+            # Parse path_indices
+            if "path_indices:" in struct_content:
+                start = struct_content.find("path_indices:") + len("path_indices:")
+                end = struct_content.find(", root:")
+                path_idx_section = struct_content[start:end].strip()
+                tree["path_indices"] = parse_nested_arrays(path_idx_section)
+
+            # Parse root
+            if "root:" in struct_content:
+                start = struct_content.find("root:") + len("root:")
+                root_section = struct_content[start:].strip().rstrip("}")
+                tree["root"] = root_section.strip()
+
+            return tree
+        except Exception:
+            pass
+
+    values = []
+
+    parts = re.split(r"[,\s]+", struct_content)
+    for part in parts:
+        part = part.strip("{}[](), \t\n\r")
+        if not part:
+            continue
+
+        # Check if it's a hex value
+        if part.startswith("0x") and len(part) > 2:
+            try:
+                values.append(str(int(part, 16)))
+                continue
+            except ValueError:
+                pass
+
+        # Check if it's a negative number
+        if part.lstrip("-").isdigit():
+            values.append(part)
+
+    return values
+
+
+def parse_nested_arrays(section):
+    """Helper function to parse nested array structures like [[...], [...]]"""
+    if not section.strip().startswith("["):
+        return []
+
+    arrays = []
+    depth = 0
+    current_array = ""
+
+    for char in section:
+        if char == "[":
+            depth += 1
+            if depth == 2:  # Start of inner array
+                current_array = ""
+            elif depth == 1:  # Start of outer array
+                continue
+        elif char == "]":
+            depth -= 1
+            if depth == 1:  # End of inner array
+                if current_array.strip():
+                    arrays.append(
+                        [x.strip() for x in current_array.split(",") if x.strip()]
+                    )
+                current_array = ""
+            elif depth == 0:  # End of outer array
+                break
+        elif depth == 2:  # Inside inner array
+            current_array += char
+
+    return arrays
+
+
+def parse_single_field_output(output):
+    """
+    Parses nargo output that contains a single field value.
+    Handles both new hex format (0x...) and old Field() format.
+    Returns the integer value, or None if no field found.
+    """
+    if "0x" in output:
+        hex_match = output.split("0x")[1].split()[0]
+        return int(hex_match, 16)
+
+    if "Field(" in output:
+        return int(output.split("Field(")[1].split(")")[0])
+
+    return None
 
 
 def field_to_toml_value(f):
@@ -280,32 +413,24 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
         verbose,
     )
 
-    fields = parse_nargo_struct_output(output)
-    num_leaves = MAX_SIGNALS
-    num_path_elements = MAX_SIGNALS * MERKLE_DEPTH
-    num_path_indices = MAX_SIGNALS * MERKLE_DEPTH
-
-    path_elements_flat = fields[num_leaves : num_leaves + num_path_elements]
-    path_indices_flat = fields[
-        num_leaves
-        + num_path_elements : num_leaves
-        + num_path_elements
-        + num_path_indices
-    ]
-    signals_merkle_root = fields[-1]
-
-    path_elements = [
-        path_elements_flat[i : i + MERKLE_DEPTH]
-        for i in range(0, len(path_elements_flat), MERKLE_DEPTH)
-    ]
-    path_indices = [
-        path_indices_flat[i : i + MERKLE_DEPTH]
-        for i in range(0, len(path_indices_flat), MERKLE_DEPTH)
-    ]
+    tree = parse_nargo_struct_output(output)
+    try:
+        path_elements = tree["path_elements"]
+        path_indices = tree["path_indices"]
+        signals_merkle_root = tree["root"]
+    except Exception:
+        raise RuntimeError(
+            "Unexpected tree_generator output structure, expected MerkleTree dict with leaf_hashes, path_elements, path_indices, and root"
+        )
 
     if verbose:
         print(f"Generated signals Merkle root: {signals_merkle_root}")
-        print(f"Signals Merkle root (hex): {hex(int(signals_merkle_root)).zfill(64)}")
+        if isinstance(signals_merkle_root, str) and signals_merkle_root.startswith(
+            "0x"
+        ):
+            print(f"Signals Merkle root (hex): {signals_merkle_root}")
+        else:
+            print(f"Signals Merkle root (int): {signals_merkle_root}")
 
     # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     if verbose:
@@ -332,13 +457,25 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     )
 
     fields = parse_nargo_struct_output(output)
-    num_log_returns = MAX_DAYS
-    returns_merkle_root = fields[num_log_returns]
-    valid_days = fields[-1]
+
+    # Parse the ReturnsData struct: log_returns array + returns_merkle_root + valid_days
+    if len(fields) >= 2:
+        # Last field is valid_days, second to last is returns_merkle_root
+        valid_days = fields[-1]
+        returns_merkle_root = fields[-2]
+    else:
+        # Fallback for unexpected format
+        num_log_returns = MAX_DAYS
+        returns_merkle_root = (
+            fields[num_log_returns] if len(fields) > num_log_returns else fields[-2]
+        )
+        valid_days = fields[-1]
 
     if verbose:
         print(f"Generated returns Merkle root: {returns_merkle_root}")
-        print(f"Returns Merkle root (hex): {hex(int(returns_merkle_root)).zfill(64)}")
+        print(
+            f"Returns Merkle root (hex): 0x{hex(int(returns_merkle_root))[2:].zfill(64)}"
+        )
         print(f"Number of valid daily returns: {valid_days}")
 
     if verbose:
@@ -358,10 +495,26 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
         "signals": signals,
         "signals_count": str(signals_count),
         "path_elements": [
-            [field_to_toml_value(int(x)) for x in p] for p in path_elements
+            [
+                field_to_toml_value(
+                    int(x, 16) if isinstance(x, str) and x.startswith("0x") else int(x)
+                )
+                for x in p
+            ]
+            for p in path_elements
         ],
-        "path_indices": path_indices,  # These are small, so no conversion needed
-        "signals_merkle_root": field_to_toml_value(int(signals_merkle_root)),
+        "path_indices": [
+            [
+                int(x, 16) if isinstance(x, str) and x.startswith("0x") else int(x)
+                for x in p
+            ]
+            for p in path_indices
+        ],
+        "signals_merkle_root": (
+            signals_merkle_root
+            if isinstance(signals_merkle_root, str)
+            else str(signals_merkle_root)
+        ),
         "returns_merkle_root": field_to_toml_value(int(returns_merkle_root)),
     }
 
@@ -379,7 +532,12 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     if verbose:
         print(f"Witness generation completed in {witness_time:.3f}s")
 
-    fields = re.findall(r"Field\(([-0-9]+)\)", output)
+    fields = parse_nargo_struct_output(output)
+    if len(fields) < 7:
+        raise RuntimeError(
+            f"Expected 7 output fields from main circuit, got {len(fields)}: {fields}"
+        )
+
     avg_daily_pnl_raw = fields[0]
     sharpe_raw = fields[1]
     drawdown_raw = fields[2]
@@ -389,12 +547,23 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     stat_confidence_raw = fields[6]
 
     def field_to_signed_int(field_str):
-        val = int(field_str)
-        # Convert from field element to signed integer
-        PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-        if val > PRIME // 2:
-            val = val - PRIME
-        return val
+        if isinstance(field_str, str) and field_str.startswith("0x"):
+            val = int(field_str, 16)
+        else:
+            val = int(field_str)
+
+        # Noir's i64 as u64 casting uses standard two's complement
+        # Convert from u64 back to i64 using two's complement
+        if val >= 2**63:  # If the high bit is set, it's negative
+            return val - 2**64  # Convert from unsigned to signed
+        else:
+            return val  # Positive values unchanged
+
+    if verbose:
+        print("Raw field values before conversion:")
+        print(f"  avg_daily_pnl_raw: {avg_daily_pnl_raw}")
+        print(f"  sharpe_raw: {sharpe_raw}")
+        print(f"  drawdown_raw: {drawdown_raw}")
 
     avg_daily_pnl_value = field_to_signed_int(avg_daily_pnl_raw)
     sharpe_ratio_raw = field_to_signed_int(sharpe_raw)
@@ -403,6 +572,12 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     omega_ratio_raw = field_to_signed_int(omega_raw)
     sortino_ratio_raw = field_to_signed_int(sortino_raw)
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
+
+    if verbose:
+        print("Converted values:")
+        print(f"  avg_daily_pnl_value: {avg_daily_pnl_value}")
+        print(f"  sharpe_ratio_raw: {sharpe_ratio_raw}")
+        print(f"  max_drawdown_raw: {max_drawdown_raw}")
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
     sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR

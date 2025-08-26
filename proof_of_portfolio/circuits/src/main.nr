@@ -1,4 +1,3 @@
-use dep::std::ops::WrappingAdd;
 use components::core::{
     calmar::calmar, drawdown::daily_max_drawdown, omega::omega, sharpe::sharpe, sortino::sortino,
     tstat::statistical_confidence,
@@ -79,49 +78,13 @@ fn main(
     let sortino_ratio = sortino(returns_array, n_returns, RISK_FREE_RATE, false);
     let stat_confidence = statistical_confidence(returns_array, n_returns, false);
 
-    let avg_daily_pnl_unsigned = if avg_daily_pnl < 0 {
-        (avg_daily_pnl as u64).wrapping_add(0x8000000000000000)
-    } else {
-        avg_daily_pnl as u64
-    };
-    let sh_unsigned = if sh < 0 {
-        (sh as u64).wrapping_add(0x8000000000000000)
-    } else {
-        sh as u64
-    };
-    let dmd_unsigned = if dmd < 0 {
-        (dmd as u64).wrapping_add(0x8000000000000000)
-    } else {
-        dmd as u64
-    };
-    let calmar_unsigned = if calmar_ratio < 0 {
-        (calmar_ratio as u64).wrapping_add(0x8000000000000000)
-    } else {
-        calmar_ratio as u64
-    };
-    let omega_unsigned = if omega_ratio < 0 {
-        (omega_ratio as u64).wrapping_add(0x8000000000000000)
-    } else {
-        omega_ratio as u64
-    };
-    let sortino_unsigned = if sortino_ratio < 0 {
-        (sortino_ratio as u64).wrapping_add(0x8000000000000000)
-    } else {
-        sortino_ratio as u64
-    };
-    let stat_confidence_unsigned = if stat_confidence < 0 {
-        (stat_confidence as u64).wrapping_add(0x8000000000000000)
-    } else {
-        stat_confidence as u64
-    };
-
     [
-        avg_daily_pnl_unsigned as Field,
-        sh_unsigned as Field,
-        dmd_unsigned as Field,
-        calmar_unsigned as Field,
-        omega_unsigned as Field,
-        sortino_unsigned as Field,
-        stat_confidence_unsigned as Field,
+        (avg_daily_pnl as u64) as Field,
+        (sh as u64) as Field,
+        (dmd as u64) as Field,
+        (calmar_ratio as u64) as Field,
+        (omega_ratio as u64) as Field,
+        (sortino_ratio as u64) as Field,
+        (stat_confidence as u64) as Field,
     ]
 }
