@@ -29,12 +29,14 @@ fn build_merkle_tree(signals: [TradingSignal; MAX_SIGNALS], actual_len: u32) -> 
 
     // 2. Build the tree from the bottom up
     for d in 0..MERKLE_DEPTH {
-        let layer_width = 1 << ((MERKLE_DEPTH - d) as u8);
+        let layer_width = 1 << ((MERKLE_DEPTH - d) as u32);
         let next_layer_width = layer_width / 2;
-        for i in 0..next_layer_width {
-            let left = tree[d][2 * i];
-            let right = tree[d][2 * i + 1];
-            tree[d + 1][i] = pedersen_hash([left, right]);
+        for i in 0..MAX_SIGNALS {
+            if (i as u32) < next_layer_width {
+                let left = tree[d][2 * i];
+                let right = tree[d][2 * i + 1];
+                tree[d + 1][i] = pedersen_hash([left, right]);
+            }
         }
     }
 
