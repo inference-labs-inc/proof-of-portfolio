@@ -22,7 +22,7 @@ unconstrained fn compute_sqrt(n: u64) -> u64 {
         }
 
         let mut prev = 0;
-        for _ in 0..15 {
+        for _ in 0..150 {
             if x != prev {
                 if x > 0 {
                     prev = x;

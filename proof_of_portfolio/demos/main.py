@@ -15,7 +15,7 @@ def main(args):
         print(f"Available hotkeys: {list(data['perf_ledgers'].keys())}")
         return
 
-    return generate_proof(data, hotkey)
+    return generate_proof(data, hotkey, True)
 
 
 if __name__ == "__main__":

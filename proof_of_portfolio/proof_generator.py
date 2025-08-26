@@ -98,8 +98,9 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
 
         print(f"Proof generated in {prove_time:.3f}s")
 
+        public_inputs_file = os.path.join(proof_dir, "public_inputs")
         verify_result = subprocess.run(
-            ["bb", "verify", "-p", proof_file, "-k", vk_file],
+            ["bb", "verify", "-p", proof_file, "-k", vk_file, "-i", public_inputs_file],
             capture_output=True,
             text=True,
             cwd=circuit_dir,
@@ -262,7 +263,9 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
         toml.dump(tree_prover_input, f)
 
     output = run_command(
-        ["nargo", "execute", "--silence-warnings"], tree_generator_dir, verbose
+        ["nargo", "execute", "--silence-warnings" if not verbose else ""],
+        tree_generator_dir,
+        verbose,
     )
 
     fields = parse_nargo_struct_output(output)
