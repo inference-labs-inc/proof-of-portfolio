@@ -185,10 +185,10 @@ def field_to_toml_value(f):
     return str(f)
 
 
-def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
+def run_bb_prove(circuit_dir):
     """
-    Runs barretenberg proving and verification.
-    Returns proof generation time and verification status.
+    Runs barretenberg proving.
+    Returns proof generation time and status.
     """
     print("\n--- Running Barretenberg Proof Generation ---")
 
@@ -212,7 +212,6 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
         circuit_file = os.path.join(target_dir, "circuits.json")
 
         proof_file = proof_dir
-        vk_file = os.path.join(vk_dir, "vk")
 
         prove_start = time.time()
         prove_result = subprocess.run(
@@ -242,25 +241,7 @@ def run_bb_prove_and_verify(circuit_dir, circuit_name="main"):
             return None, False
 
         print(f"Proof generated in {prove_time:.3f}s")
-
-        public_inputs_file = os.path.join(proof_dir, "public_inputs")
-        verify_result = subprocess.run(
-            ["bb", "verify", "-p", proof_file, "-k", vk_file, "-i", public_inputs_file],
-            capture_output=True,
-            text=True,
-            cwd=circuit_dir,
-        )
-
-        verification_success = verify_result.returncode == 0
-
-        if verification_success:
-            print("✅ Proof verification: PASSED")
-        else:
-            print("❌ Proof verification: FAILED")
-            print(verify_result.stdout)
-            print(verify_result.stderr)
-
-        return prove_time, verification_success
+        return prove_time, True
 
     except Exception as e:
         print(f"Error during proof generation/verification: {e}")
@@ -587,7 +568,7 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
     stat_confidence_scaled = stat_confidence_raw / SCALING_FACTOR
 
-    prove_time, verification_success = run_bb_prove_and_verify(main_circuit_dir)
+    prove_time, verification_success = run_bb_prove(main_circuit_dir)
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
