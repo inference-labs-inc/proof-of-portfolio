@@ -52,14 +52,14 @@ def requires_dependencies(func):
     return wrapper
 
 
-def _prove_worker(miner_data, hotkey):
+def _prove_worker(miner_data, hotkey, verbose=False):
     """
     Worker function to run proof generation in a separate process.
     """
     try:
         from .proof_generator import generate_proof
 
-        result = generate_proof(miner_data, hotkey)
+        result = generate_proof(miner_data, hotkey, verbose=verbose)
 
         return {
             "status": "success",
@@ -81,13 +81,14 @@ def _prove_worker(miner_data, hotkey):
 
 
 @requires_dependencies
-async def prove(miner_data, hotkey):
+async def prove(miner_data, hotkey, verbose=False):
     """
     Generate zero-knowledge proof for miner portfolio data asynchronously.
 
     Args:
         miner_data: Dictionary containing perf_ledgers and positions for the miner
         hotkey: Miner's hotkey
+        verbose: Boolean to control logging verbosity
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
@@ -97,7 +98,7 @@ async def prove(miner_data, hotkey):
     with ProcessPoolExecutor(max_workers=1) as executor:
         try:
             result = await loop.run_in_executor(
-                executor, _prove_worker, miner_data, hotkey
+                executor, _prove_worker, miner_data, hotkey, verbose
             )
             return result
         except Exception as e:
@@ -108,15 +109,16 @@ async def prove(miner_data, hotkey):
             }
 
 
-def prove_sync(miner_data, hotkey):
+def prove_sync(miner_data, hotkey, verbose=False):
     """
     Synchronous wrapper for the prove function for backward compatibility.
 
     Args:
         miner_data: Dictionary containing perf_ledgers and positions for the miner
         hotkey: Miner's hotkey
+        verbose: Boolean to control logging verbosity
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
     """
-    return _prove_worker(miner_data, hotkey)
+    return _prove_worker(miner_data, hotkey, verbose)
