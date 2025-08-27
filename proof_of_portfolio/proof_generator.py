@@ -3,6 +3,8 @@ import toml
 import re
 import os
 import time
+from .min_metrics import MinMetrics
+import math
 
 # Constants for the circuit
 MAX_CHECKPOINTS = 200
@@ -570,6 +572,46 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     prove_time, verification_success = run_bb_prove(main_circuit_dir)
 
+    # Calculate MinMetrics (Python) for comparison with ZK circuit
+    try:
+
+        # Extract daily log returns from checkpoint data (same as ZK circuit)
+        daily_log_returns = []
+        for cp in cps:
+            if cp["gain"] > 0:
+                daily_log_returns.append(math.log(1 + cp["gain"]))
+            elif cp["loss"] > 0:
+                daily_log_returns.append(math.log(1 - cp["loss"]))
+            else:
+                daily_log_returns.append(0.0)
+
+        if len(daily_log_returns) > 0:
+            python_avg_daily_pnl = MinMetrics.average(daily_log_returns)
+            python_sharpe = MinMetrics.sharpe(daily_log_returns, bypass_confidence=True)
+            python_max_drawdown = MinMetrics.daily_max_drawdown(daily_log_returns)
+            python_calmar = MinMetrics.calmar(daily_log_returns, bypass_confidence=True)
+            python_omega = MinMetrics.omega(daily_log_returns, bypass_confidence=True)
+            python_sortino = MinMetrics.sortino(
+                daily_log_returns, bypass_confidence=True
+            )
+            python_stat_confidence = MinMetrics.statistical_confidence(
+                daily_log_returns, bypass_confidence=True
+            )
+        else:
+            python_avg_daily_pnl = python_sharpe = python_max_drawdown = (
+                python_calmar
+            ) = python_omega = python_sortino = python_stat_confidence = 0.0
+
+    except Exception as e:
+        if verbose:
+            print(f"Warning: Could not calculate Python MinMetrics: {e}")
+            import traceback
+
+            print(f"Traceback: {traceback.format_exc()}")
+        python_avg_daily_pnl = python_sharpe = python_max_drawdown = python_calmar = (
+            python_omega
+        ) = python_sortino = python_stat_confidence = "N/A"
+
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
     print(f"Orders processed: {signals_count}")
@@ -582,10 +624,41 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     print(f"Omega Ratio: {omega_ratio_scaled:.9f}")
     print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
     print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
-    if prove_time is not None:
+
+    # Print Python MinMetrics for comparison
+    print("\n--- PYTHON MINMETRICS ---")
+    if isinstance(python_avg_daily_pnl, (int, float)):
+        print(f"Average Daily PnL: {python_avg_daily_pnl:.9f}")
+    else:
+        print(f"Average Daily PnL: {python_avg_daily_pnl}")
+    if isinstance(python_sharpe, (int, float)):
+        print(f"Sharpe Ratio: {python_sharpe:.9f}")
+    else:
+        print(f"Sharpe Ratio: {python_sharpe}")
+    if isinstance(python_max_drawdown, (int, float)):
         print(
-            f"Proof verification: {'✅ PASSED' if verification_success else '❌ FAILED'}"
+            f"Max Drawdown: {python_max_drawdown:.9f} ({python_max_drawdown * 100:.6f}%)"
         )
+    else:
+        print(f"Max Drawdown: {python_max_drawdown}")
+    if isinstance(python_calmar, (int, float)):
+        print(f"Calmar Ratio: {python_calmar:.9f}")
+    else:
+        print(f"Calmar Ratio: {python_calmar}")
+    if isinstance(python_omega, (int, float)):
+        print(f"Omega Ratio: {python_omega:.9f}")
+    else:
+        print(f"Omega Ratio: {python_omega}")
+    if isinstance(python_sortino, (int, float)):
+        print(f"Sortino Ratio: {python_sortino:.9f}")
+    else:
+        print(f"Sortino Ratio: {python_sortino}")
+    if isinstance(python_stat_confidence, (int, float)):
+        print(f"Statistical Confidence: {python_stat_confidence:.9f}")
+    else:
+        print(f"Statistical Confidence: {python_stat_confidence}")
+    if prove_time is not None:
+        print(f"Proof generated in {prove_time}s")
     else:
         print("Proof generation failed")
 
