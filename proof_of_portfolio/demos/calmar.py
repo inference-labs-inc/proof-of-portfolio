@@ -4,6 +4,7 @@ import subprocess
 import os
 import time
 from . import utils
+from ..parsing_utils import parse_demo_output
 
 SCALE = 10_000_000
 WEIGHTED_AVERAGE_DECAY_RATE = 0.08
@@ -127,20 +128,11 @@ def run_calmar_nargo(
             f"DEBUG: Prover.toml after nargo execute - first line of log_returns: {content.split('log_returns = [')[1].split(',')[0] if 'log_returns = [' in content else 'NOT_FOUND'}"
         )
 
-    fp = 0
-    if "Field" in result.stdout:
-        unsigned_i = int(result.stdout.split("Field(")[1].split(")")[0])
-        if unsigned_i >= 2**63:
-            i = unsigned_i - 2**64
-        else:
-            i = unsigned_i
-        if i == CALMAR_NOCONFIDENCE_VALUE:
-            fp = float(i)
-        else:
-            fp = i / SCALE
     if result.returncode != 0:
         print(result.stderr)
         raise RuntimeError("nargo execute failed")
+
+    fp = parse_demo_output(result.stdout, SCALE, CALMAR_NOCONFIDENCE_VALUE)
 
     # Debug: Final check of Prover.toml at end of function
     with open(prover_path, "r") as f:

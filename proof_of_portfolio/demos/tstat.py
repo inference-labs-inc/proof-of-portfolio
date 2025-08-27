@@ -3,6 +3,7 @@ import numpy as np
 import subprocess
 from scipy.stats import ttest_1samp
 from . import utils
+from ..parsing_utils import parse_demo_output
 
 SCALE = 10_000_000
 WEIGHTED_AVERAGE_DECAY_RATE = 0.08
@@ -59,21 +60,13 @@ def run_tstat_nargo(log_returns: list[float], bypass_confidence: bool, weighting
         text=True,
         cwd=prover_path.rsplit("/", 1)[0],
     )
-    fp = 0
-    if "Field" in result.stdout:
-        unsigned_i = int(result.stdout.split("Field(")[1].split(")")[0])
-        if unsigned_i >= 2**63:
-            i = unsigned_i - 2**64
-        else:
-            i = unsigned_i
-        if i == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE:
-            fp = float(i)
-        else:
-            fp = i / SCALE
     if result.returncode != 0:
         print(result.stderr)
         raise RuntimeError("nargo execute failed")
-    return fp
+
+    return parse_demo_output(
+        result.stdout, SCALE, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
+    )
 
 
 def compare_implementations(test_data: dict, bypass_confidence: bool, weighting: bool):
