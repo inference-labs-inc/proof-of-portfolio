@@ -9,8 +9,6 @@ use components::core::merkle::{
 };
 use components::utils::{average::average, constants::ARRAY_SIZE};
 
-global RISK_FREE_RATE: i64 = 0;
-
 fn main(
     gains: [i64; MAX_CHECKPOINTS],
     losses: [i64; MAX_CHECKPOINTS],
@@ -24,6 +22,9 @@ fn main(
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
     returns_merkle_root: pub Field,
+    risk_free_rate: i64,
+    use_weighting: bool,
+    bypass_confidence: bool,
 ) -> pub [Field; 7] {
     // Convert checkpoints to log returns
     let (log_returns, valid_days) = cps_to_log_returns(
@@ -70,13 +71,13 @@ fn main(
         }
     }
     // Run all metric calcs
-    let avg_daily_pnl = average(returns_array, n_returns, false);
-    let sh = sharpe(returns_array, n_returns, RISK_FREE_RATE, false, false);
+    let avg_daily_pnl = average(returns_array, n_returns, use_weighting);
+    let sh = sharpe(returns_array, n_returns, risk_free_rate, use_weighting, bypass_confidence);
     let dmd = daily_max_drawdown(returns_array, n_returns);
-    let calmar_ratio = calmar(returns_array, n_returns, RISK_FREE_RATE, false);
-    let omega_ratio = omega(returns_array, n_returns, false);
-    let sortino_ratio = sortino(returns_array, n_returns, RISK_FREE_RATE, false);
-    let stat_confidence = statistical_confidence(returns_array, n_returns, false);
+    let calmar_ratio = calmar(returns_array, n_returns, risk_free_rate, bypass_confidence);
+    let omega_ratio = omega(returns_array, n_returns, bypass_confidence);
+    let sortino_ratio = sortino(returns_array, n_returns, risk_free_rate, bypass_confidence);
+    let stat_confidence = statistical_confidence(returns_array, n_returns, bypass_confidence);
 
     [
         (avg_daily_pnl as u64) as Field,

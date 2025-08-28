@@ -13,9 +13,10 @@ def main(args):
     if hotkey and hotkey not in data["perf_ledgers"]:
         print(f"Error: Hotkey '{hotkey}' not found in validator checkpoint data.")
         print(f"Available hotkeys: {list(data['perf_ledgers'].keys())}")
-        return
+        return 1
 
-    return generate_proof(data, hotkey, True)
+    result = generate_proof(data, hotkey, True)
+    return 0 if result and result.get("proof_results", {}).get("proof_generated") else 1
 
 
 if __name__ == "__main__":
@@ -31,4 +32,5 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args)
+    exit_code = main(args)
+    exit(exit_code)

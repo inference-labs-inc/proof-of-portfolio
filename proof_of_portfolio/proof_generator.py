@@ -251,7 +251,14 @@ def run_bb_prove(circuit_dir):
         return None, False
 
 
-def generate_proof(data=None, miner_hotkey=None, verbose=None):
+def generate_proof(
+    data=None,
+    miner_hotkey=None,
+    verbose=None,
+    annual_risk_free_percentage=4.19,
+    use_weighting=False,
+    bypass_confidence=False,
+):
     """
     Core proof generation logic.
 
@@ -262,6 +269,9 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
                      If None and reading from file, uses first available hotkey
         verbose: Optional boolean to control logging verbosity.
                 If None, auto-detects (demo mode = verbose, production = minimal)
+        annual_risk_free_percentage: Annual risk-free rate percentage (default 4.19)
+        use_weighting: Whether to use weighted calculations (default False)
+        bypass_confidence: Whether to bypass confidence thresholds (default False)
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
@@ -484,6 +494,11 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
         print(f"Generating witness for hotkey {miner_hotkey}...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
+    # Convert risk-free rate to daily log rate and scale for circuit
+    annual_risk_free_decimal = annual_risk_free_percentage / 100
+    daily_log_risk_free_rate = math.log(1 + annual_risk_free_decimal) / 365
+    risk_free_rate_scaled = int(daily_log_risk_free_rate * SCALING_FACTOR)
+
     # Finally, LFG
     main_prover_input = {
         "gains": [str(g) for g in gains],
@@ -516,6 +531,9 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
             else str(signals_merkle_root)
         ),
         "returns_merkle_root": field_to_toml_value(int(returns_merkle_root)),
+        "risk_free_rate": str(risk_free_rate_scaled),
+        "use_weighting": str(int(use_weighting)),
+        "bypass_confidence": str(int(bypass_confidence)),
     }
 
     os.makedirs(main_circuit_dir, exist_ok=True)
@@ -591,15 +609,10 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     # Calculate MinMetrics (Python) for comparison with ZK circuit
     try:
-        # Extract daily log returns from checkpoint data (same as ZK circuit)
+        # Extract raw sum values from checkpoint data (matching subnet's daily_return_log)
         daily_log_returns = []
         for cp in cps:
-            if cp["gain"] > 0:
-                daily_log_returns.append(math.log(1 + cp["gain"]))
-            elif cp["loss"] > 0:
-                daily_log_returns.append(math.log(1 - cp["loss"]))
-            else:
-                daily_log_returns.append(0.0)
+            daily_log_returns.append(cp["gain"] + cp["loss"])
 
         if len(daily_log_returns) > 0:
             python_avg_daily_pnl = MinMetrics.average(daily_log_returns)

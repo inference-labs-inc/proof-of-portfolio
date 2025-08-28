@@ -25,10 +25,10 @@ class MinMetrics:
     STATISTICAL_CONFIDENCE_MINIMUM_N = 60
     SHARPE_NOCONFIDENCE_VALUE = -100
     OMEGA_LOSS_MINIMUM = 0.01
-    OMEGA_NOCONFIDENCE_VALUE = -100
+    OMEGA_NOCONFIDENCE_VALUE = 0.0
     SORTINO_DOWNSIDE_MINIMUM = 0.01
     SORTINO_NOCONFIDENCE_VALUE = -100
-    CALMAR_RATIO_CAP = 1000
+    CALMAR_RATIO_CAP = 10
     CALMAR_NOCONFIDENCE_VALUE = -100
     STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE = -100
 
@@ -40,7 +40,7 @@ class MinMetrics:
 
     @staticmethod
     def weighting_distribution(
-        log_returns: Union[list[float], np.ndarray]
+        log_returns: Union[list[float], np.ndarray],
     ) -> np.ndarray:
         """
         Returns the weighting distribution that decays from max_weight to min_weight
@@ -368,11 +368,7 @@ class MinMetrics:
         days_in_year: int = DAYS_IN_YEAR_CRYPTO,
         **kwargs,
     ) -> float:
-        """
-        Calculates the Calmar ratio (simplified version without ledger dependency)
-        """
-        # Positional Component
-        if len(log_returns) < 30:  # Simplified confidence check
+        if len(log_returns) < MinMetrics.STATISTICAL_CONFIDENCE_MINIMUM_N:
             if not bypass_confidence:
                 return MinMetrics.CALMAR_NOCONFIDENCE_VALUE
 
@@ -381,10 +377,14 @@ class MinMetrics:
         )
         max_drawdown = MinMetrics.daily_max_drawdown(log_returns)
 
-        # Simplified risk normalization factor (without full ledger context)
-        drawdown_normalization_factor = 1.0 / max(max_drawdown, 0.01)
+        if max_drawdown <= 0 or max_drawdown > 1:
+            drawdown_normalization_factor = 0
+        else:
+            drawdown_percentage = max((1 - max_drawdown) * 100, 0.01)
+            if drawdown_percentage >= 10:
+                drawdown_normalization_factor = 0
+            else:
+                drawdown_normalization_factor = 1.0 / drawdown_percentage
 
         raw_calmar = float(base_return_percentage * drawdown_normalization_factor)
-        return min(
-            raw_calmar, MinMetrics.CALMAR_RATIO_CAP
-        )  # Cap the Calmar ratio to prevent extreme values
+        return min(raw_calmar, MinMetrics.CALMAR_RATIO_CAP)

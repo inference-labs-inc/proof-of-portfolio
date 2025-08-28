@@ -52,14 +52,28 @@ def requires_dependencies(func):
     return wrapper
 
 
-def _prove_worker(miner_data, hotkey, verbose=False):
+def _prove_worker(
+    miner_data,
+    hotkey,
+    verbose=False,
+    annual_risk_free_percentage=4.19,
+    use_weighting=False,
+    bypass_confidence=False,
+):
     """
     Worker function to run proof generation in a separate process.
     """
     try:
         from .proof_generator import generate_proof
 
-        result = generate_proof(miner_data, hotkey, verbose=verbose)
+        result = generate_proof(
+            miner_data,
+            hotkey,
+            verbose=verbose,
+            annual_risk_free_percentage=annual_risk_free_percentage,
+            use_weighting=use_weighting,
+            bypass_confidence=bypass_confidence,
+        )
 
         return {
             "status": "success",
@@ -81,7 +95,14 @@ def _prove_worker(miner_data, hotkey, verbose=False):
 
 
 @requires_dependencies
-async def prove(miner_data, hotkey, verbose=False):
+async def prove(
+    miner_data,
+    hotkey,
+    verbose=False,
+    annual_risk_free_percentage=4.19,
+    use_weighting=False,
+    bypass_confidence=False,
+):
     """
     Generate zero-knowledge proof for miner portfolio data asynchronously.
 
@@ -98,7 +119,14 @@ async def prove(miner_data, hotkey, verbose=False):
     with ProcessPoolExecutor(max_workers=1) as executor:
         try:
             result = await loop.run_in_executor(
-                executor, _prove_worker, miner_data, hotkey, verbose
+                executor,
+                _prove_worker,
+                miner_data,
+                hotkey,
+                verbose,
+                annual_risk_free_percentage,
+                use_weighting,
+                bypass_confidence,
             )
             return result
         except Exception as e:
@@ -109,7 +137,14 @@ async def prove(miner_data, hotkey, verbose=False):
             }
 
 
-def prove_sync(miner_data, hotkey, verbose=False):
+def prove_sync(
+    miner_data,
+    hotkey,
+    verbose=False,
+    annual_risk_free_percentage=4.19,
+    use_weighting=False,
+    bypass_confidence=False,
+):
     """
     Synchronous wrapper for the prove function for backward compatibility.
 
@@ -121,4 +156,11 @@ def prove_sync(miner_data, hotkey, verbose=False):
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
     """
-    return _prove_worker(miner_data, hotkey, verbose)
+    return _prove_worker(
+        miner_data,
+        hotkey,
+        verbose,
+        annual_risk_free_percentage,
+        use_weighting,
+        bypass_confidence,
+    )
