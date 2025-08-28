@@ -10,7 +10,7 @@ description = "Zero-Knowledge Proof framework for verifiable, private portfolio 
 readme = "README.md"
 authors = [{ name = "Inference Labs, Inc.", email = "info@inferencelabs.com" }]
 requires-python = ">=3.10"
-dependencies = ["numpy", "colorama", "matplotlib", "toml", "scipy"]
+dependencies = ["numpy", "colorama", "matplotlib", "toml", "scipy", "bittensor"]
 
 [project.optional-dependencies]
 dev = ["black", "flake8", "pre-commit"]
@@ -33,3 +33,6 @@ include-package-data = true
     "demo/**/*",
     "returns_generator/**/*",
 ]
+
+[tool.ruff.lint]
+ignore = ["E741"]

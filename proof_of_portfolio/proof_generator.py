@@ -5,6 +5,7 @@ import os
 import time
 from .min_metrics import MinMetrics
 import math
+import bittensor as bt
 
 # Constants for the circuit
 MAX_CHECKPOINTS = 200
@@ -19,16 +20,16 @@ def run_command(command, cwd, verbose=True):
     """Executes a command in a given directory and returns the output."""
     result = subprocess.run(command, capture_output=True, text=True, cwd=cwd)
     if verbose:
-        print("--- nargo stdout ---")
-        print(result.stdout)
-        print("--- nargo stderr ---")
-        print(result.stderr)
-        print("--------------------")
+        bt.logging.info("--- nargo stdout ---")
+        bt.logging.info(result.stdout)
+        bt.logging.info("--- nargo stderr ---")
+        bt.logging.info(result.stderr)
+        bt.logging.info("--------------------")
     if result.returncode != 0:
         if verbose:
-            print("Error:")
-            print(result.stdout)
-            print(result.stderr)
+            bt.logging.error("Error:")
+            bt.logging.error(result.stdout)
+            bt.logging.error(result.stderr)
         raise RuntimeError(
             f"Command {' '.join(command)} failed with exit code {result.returncode}"
         )
@@ -265,25 +266,39 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
     """
+    bt.logging.info(
+        f"generate_proof called with verbose={verbose}, miner_hotkey={miner_hotkey[:8] if miner_hotkey else None}"
+    )
+
     # Auto-detect mode: demo mode if reading from file, production if data provided
     is_demo_mode = data is None
     if verbose is None:
         verbose = is_demo_mode
 
-    if data is None:
-        if verbose:
-            print("Loading data from validator_checkpoint.json...")
+    bt.logging.info(
+        f"After auto-detect: verbose={verbose}, is_demo_mode={is_demo_mode}"
+    )
+
+    try:
+        if data is None:
+            if verbose:
+                bt.logging.info("Loading data from validator_checkpoint.json...")
         import json
 
         with open("validator_checkpoint.json", "r") as f:
             data = json.load(f)
+    except Exception as e:
+        bt.logging.error(f"Failed to load data {e}")
 
     if miner_hotkey is None:
         miner_hotkey = list(data["perf_ledgers"].keys())[0]
         if verbose:
-            print(f"No hotkey specified, using first available: {miner_hotkey}")
+            bt.logging.info(
+                f"No hotkey specified, using first available: {miner_hotkey}"
+            )
     else:
-        print(f"Using specified hotkey: {miner_hotkey}")
+        if verbose:
+            bt.logging.info(f"Using specified hotkey: {miner_hotkey}")
 
     if miner_hotkey not in data["perf_ledgers"]:
         raise ValueError(
@@ -293,13 +308,13 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     perf_ledger = data["perf_ledgers"][miner_hotkey]
     positions = data["positions"][miner_hotkey]["positions"]
     if verbose:
-        print("Preparing circuit inputs...")
+        bt.logging.info("Preparing circuit inputs...")
 
     cps = perf_ledger["cps"]
     checkpoint_count = len(cps)
     if checkpoint_count > MAX_CHECKPOINTS:
         if verbose:
-            print(
+            bt.logging.warning(
                 f"Warning: Miner has {checkpoint_count} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
             )
         cps = cps[:MAX_CHECKPOINTS]
@@ -324,7 +339,7 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     signals_count = len(all_orders)
     if signals_count > MAX_SIGNALS:
         if verbose:
-            print(
+            bt.logging.warning(
                 f"Warning: Miner has {signals_count} signals, but circuit only supports {MAX_SIGNALS}. Truncating."
             )
         all_orders = all_orders[:MAX_SIGNALS]
@@ -376,12 +391,14 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
     ] * (MAX_SIGNALS - len(signals))
 
     if verbose:
-        print(f"Prepared {checkpoint_count} checkpoints and {signals_count} signals.")
+        bt.logging.info(
+            f"Prepared {checkpoint_count} checkpoints and {signals_count} signals."
+        )
 
     if verbose:
-        print("Running tree_generator circuit...")
+        bt.logging.info("Running tree_generator circuit...")
     else:
-        print(f"Generating tree for hotkey {miner_hotkey}...")
+        bt.logging.info(f"Generating tree for hotkey {miner_hotkey}...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     tree_generator_dir = os.path.join(current_dir, "tree_generator")
 
@@ -574,7 +591,6 @@ def generate_proof(data=None, miner_hotkey=None, verbose=None):
 
     # Calculate MinMetrics (Python) for comparison with ZK circuit
     try:
-
         # Extract daily log returns from checkpoint data (same as ZK circuit)
         daily_log_returns = []
         for cp in cps:
