@@ -59,6 +59,7 @@ def _prove_worker(
     annual_risk_free_percentage=4.19,
     use_weighting=False,
     bypass_confidence=False,
+    daily_checkpoints=2,
 ):
     """
     Worker function to run proof generation in a separate process.
@@ -73,6 +74,7 @@ def _prove_worker(
             annual_risk_free_percentage=annual_risk_free_percentage,
             use_weighting=use_weighting,
             bypass_confidence=bypass_confidence,
+            daily_checkpoints=daily_checkpoints,
         )
 
         return {
@@ -102,6 +104,7 @@ async def prove(
     annual_risk_free_percentage=4.19,
     use_weighting=False,
     bypass_confidence=False,
+    daily_checkpoints=2,
 ):
     """
     Generate zero-knowledge proof for miner portfolio data asynchronously.
@@ -127,6 +130,7 @@ async def prove(
                 annual_risk_free_percentage,
                 use_weighting,
                 bypass_confidence,
+                daily_checkpoints,
             )
             return result
         except Exception as e:
@@ -144,6 +148,7 @@ def prove_sync(
     annual_risk_free_percentage=4.19,
     use_weighting=False,
     bypass_confidence=False,
+    daily_checkpoints=2,
 ):
     """
     Synchronous wrapper for the prove function for backward compatibility.
@@ -163,4 +168,5 @@ def prove_sync(
         annual_risk_free_percentage,
         use_weighting,
         bypass_confidence,
+        daily_checkpoints,
     )
