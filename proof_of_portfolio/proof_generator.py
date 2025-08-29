@@ -3,7 +3,6 @@ import toml
 import re
 import os
 import time
-from .min_metrics import MinMetrics
 import math
 import bittensor as bt
 
@@ -358,26 +357,59 @@ def generate_proof(
         bt.logging.info("Preparing circuit inputs...")
 
     cps = perf_ledger["cps"]
-    checkpoint_count = len(cps)
-    if checkpoint_count > MAX_CHECKPOINTS:
+    if len(cps) > MAX_CHECKPOINTS:
         if verbose:
             bt.logging.warning(
-                f"Warning: Miner has {checkpoint_count} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
+                f"Warning: Miner has {len(cps)} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
             )
         cps = cps[:MAX_CHECKPOINTS]
-        checkpoint_count = MAX_CHECKPOINTS
+
+    target_duration = perf_ledger["target_cp_duration_ms"]
 
     gains = [int(c["gain"] * SCALING_FACTOR) for c in cps]
     losses = [int(c["loss"] * SCALING_FACTOR) for c in cps]
     last_update_times = [c["last_update_ms"] for c in cps]
     accum_times = [c["accum_ms"] for c in cps]
-    target_duration = perf_ledger["target_cp_duration_ms"]
+    checkpoint_count = len(cps)
 
-    # Pad
     gains += [0] * (MAX_CHECKPOINTS - len(gains))
     losses += [0] * (MAX_CHECKPOINTS - len(losses))
     last_update_times += [0] * (MAX_CHECKPOINTS - len(last_update_times))
     accum_times += [0] * (MAX_CHECKPOINTS - len(accum_times))
+
+    daily_log_returns = aggregate_daily_returns(cps, target_duration, daily_checkpoints)
+    aggregated_gains = []
+    aggregated_losses = []
+    aggregated_last_update_times = []
+    aggregated_accum_times = []
+
+    for i, daily_return in enumerate(daily_log_returns):
+        if daily_return >= 0:
+            aggregated_gains.append(int(daily_return * SCALING_FACTOR))
+            aggregated_losses.append(0)
+        else:
+            aggregated_gains.append(0)
+            aggregated_losses.append(int(daily_return * SCALING_FACTOR))
+
+        aggregated_last_update_times.append(1000000 + i)
+        aggregated_accum_times.append(target_duration)
+
+    aggregated_checkpoint_count = len(daily_log_returns)
+
+    aggregated_gains += [0] * (MAX_CHECKPOINTS - len(aggregated_gains))
+    aggregated_losses += [0] * (MAX_CHECKPOINTS - len(aggregated_losses))
+    aggregated_last_update_times += [0] * (
+        MAX_CHECKPOINTS - len(aggregated_last_update_times)
+    )
+    aggregated_accum_times += [0] * (MAX_CHECKPOINTS - len(aggregated_accum_times))
+
+    if verbose:
+        bt.logging.info(
+            f"Processing {checkpoint_count} raw checkpoints for merkle roots"
+        )
+        bt.logging.info(
+            f"Using {aggregated_checkpoint_count} aggregated daily returns for metrics"
+        )
 
     all_orders = []
     for pos in positions:
@@ -439,7 +471,7 @@ def generate_proof(
 
     if verbose:
         bt.logging.info(
-            f"Prepared {checkpoint_count} checkpoints and {signals_count} signals."
+            f"Prepared {aggregated_checkpoint_count} aggregated daily returns and {signals_count} signals for circuit."
         )
 
     if verbose:
@@ -538,11 +570,11 @@ def generate_proof(
 
     # Finally, LFG
     main_prover_input = {
-        "gains": [str(g) for g in gains],
-        "losses": [str(l) for l in losses],
-        "last_update_times": [str(t) for t in last_update_times],
-        "accum_times": [str(a) for a in accum_times],
-        "checkpoint_count": str(checkpoint_count),
+        "gains": [str(g) for g in aggregated_gains],
+        "losses": [str(l) for l in aggregated_losses],
+        "last_update_times": [str(t) for t in aggregated_last_update_times],
+        "accum_times": [str(a) for a in aggregated_accum_times],
+        "checkpoint_count": str(aggregated_checkpoint_count),
         "target_duration": str(target_duration),
         "signals": signals,
         "signals_count": str(signals_count),
@@ -644,39 +676,6 @@ def generate_proof(
 
     prove_time, verification_success = run_bb_prove(main_circuit_dir)
 
-    # Calculate MinMetrics (Python) for comparison with ZK circuit
-    try:
-        daily_log_returns = aggregate_daily_returns(
-            cps, target_duration, daily_checkpoints
-        )
-
-        if len(daily_log_returns) > 0:
-            python_avg_daily_pnl = MinMetrics.average(daily_log_returns)
-            python_sharpe = MinMetrics.sharpe(daily_log_returns, bypass_confidence=True)
-            python_max_drawdown = MinMetrics.daily_max_drawdown(daily_log_returns)
-            python_calmar = MinMetrics.calmar(daily_log_returns, bypass_confidence=True)
-            python_omega = MinMetrics.omega(daily_log_returns, bypass_confidence=True)
-            python_sortino = MinMetrics.sortino(
-                daily_log_returns, bypass_confidence=True
-            )
-            python_stat_confidence = MinMetrics.statistical_confidence(
-                daily_log_returns, bypass_confidence=True
-            )
-        else:
-            python_avg_daily_pnl = python_sharpe = python_max_drawdown = (
-                python_calmar
-            ) = python_omega = python_sortino = python_stat_confidence = 0.0
-
-    except Exception as e:
-        if verbose:
-            print(f"Warning: Could not calculate Python MinMetrics: {e}")
-            import traceback
-
-            print(f"Traceback: {traceback.format_exc()}")
-        python_avg_daily_pnl = python_sharpe = python_max_drawdown = python_calmar = (
-            python_omega
-        ) = python_sortino = python_stat_confidence = "N/A"
-
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
     print(f"Orders processed: {signals_count}")
@@ -690,38 +689,6 @@ def generate_proof(
     print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
     print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
 
-    # Print Python MinMetrics for comparison
-    print("\n--- PYTHON MINMETRICS ---")
-    if isinstance(python_avg_daily_pnl, (int, float)):
-        print(f"Average Daily PnL: {python_avg_daily_pnl:.9f}")
-    else:
-        print(f"Average Daily PnL: {python_avg_daily_pnl}")
-    if isinstance(python_sharpe, (int, float)):
-        print(f"Sharpe Ratio: {python_sharpe:.9f}")
-    else:
-        print(f"Sharpe Ratio: {python_sharpe}")
-    if isinstance(python_max_drawdown, (int, float)):
-        print(
-            f"Max Drawdown: {python_max_drawdown:.9f} ({python_max_drawdown * 100:.6f}%)"
-        )
-    else:
-        print(f"Max Drawdown: {python_max_drawdown}")
-    if isinstance(python_calmar, (int, float)):
-        print(f"Calmar Ratio: {python_calmar:.9f}")
-    else:
-        print(f"Calmar Ratio: {python_calmar}")
-    if isinstance(python_omega, (int, float)):
-        print(f"Omega Ratio: {python_omega:.9f}")
-    else:
-        print(f"Omega Ratio: {python_omega}")
-    if isinstance(python_sortino, (int, float)):
-        print(f"Sortino Ratio: {python_sortino:.9f}")
-    else:
-        print(f"Sortino Ratio: {python_sortino}")
-    if isinstance(python_stat_confidence, (int, float)):
-        print(f"Statistical Confidence: {python_stat_confidence:.9f}")
-    else:
-        print(f"Statistical Confidence: {python_stat_confidence}")
     if prove_time is not None:
         print(f"Proof generated in {prove_time}s")
     else:
@@ -733,26 +700,8 @@ def generate_proof(
         print(f"Signals Merkle Root: {signals_merkle_root}")
         print(f"Returns Merkle Root: {returns_merkle_root}")
 
-        print("\n=== PORTFOLIO METRICS ===")
-        print(f"Average Daily PnL (raw): {avg_daily_pnl_value}")
-        print(f"Average Daily PnL (scaled): {avg_daily_pnl_scaled:.9f}")
-        print(f"Sharpe Ratio (raw): {sharpe_ratio_raw}")
-        print(f"Sharpe Ratio (scaled): {sharpe_ratio_scaled:.9f}")
-        print(f"Max Drawdown (raw): {max_drawdown_raw}")
-        print(
-            f"Max Drawdown (scaled): {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)"
-        )
-        print(f"Calmar Ratio (raw): {calmar_ratio_raw}")
-        print(f"Calmar Ratio (scaled): {calmar_ratio_scaled:.9f}")
-        print(f"Omega Ratio (raw): {omega_ratio_raw}")
-        print(f"Omega Ratio (scaled): {omega_ratio_scaled:.9f}")
-        print(f"Sortino Ratio (raw): {sortino_ratio_raw}")
-        print(f"Sortino Ratio (scaled): {sortino_ratio_scaled:.9f}")
-        print(f"Statistical Confidence (raw): {stat_confidence_raw}")
-        print(f"Statistical Confidence (scaled): {stat_confidence_scaled:.9f}")
-
         print("\n=== DATA SUMMARY ===")
-        print(f"Checkpoints processed: {checkpoint_count}")
+        print(f"Daily returns processed: {aggregated_checkpoint_count}")
         print(f"Trading signals processed: {signals_count}")
         print(f"Valid daily returns: {valid_days}")
 
@@ -790,7 +739,7 @@ def generate_proof(
             "stat_confidence_scaled": stat_confidence_scaled,
         },
         "data_summary": {
-            "checkpoints_processed": checkpoint_count,
+            "daily_returns_processed": aggregated_checkpoint_count,
             "signals_processed": signals_count,
             "valid_daily_returns": int(valid_days),
         },
