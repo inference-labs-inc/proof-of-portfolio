@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "proof-of-portfolio"
-version = "0.0.56"
+version = "0.0.57"
 description = "Zero-Knowledge Proof framework for verifiable, private portfolio performance metrics"
 readme = "README.md"
 authors = [{ name = "Inference Labs, Inc.", email = "info@inferencelabs.com" }]
