@@ -253,6 +253,45 @@ def run_bb_prove(circuit_dir):
         return None, False
 
 
+def aggregate_daily_returns(cps, target_duration, daily_checkpoints=2):
+    """
+    Aggregate checkpoint returns into daily returns following subnet's daily_return_log logic.
+    Only includes complete days with proper checkpoint accumulation.
+
+    Args:
+        cps: List of checkpoint dictionaries
+        target_duration: Target checkpoint duration in ms
+        daily_checkpoints: Number of checkpoints expected per day (from ValiConfig.DAILY_CHECKPOINTS)
+    """
+    from datetime import datetime, timezone
+
+    if not cps:
+        return []
+
+    TARGET_CHECKPOINT_DURATION_MS = target_duration
+
+    daily_groups = {}
+
+    for cp in cps:
+        start_time = cp["last_update_ms"] - cp["accum_ms"]
+        full_cell = cp["accum_ms"] == TARGET_CHECKPOINT_DURATION_MS
+
+        running_date = datetime.fromtimestamp(start_time / 1000, tz=timezone.utc).date()
+
+        if full_cell:
+            if running_date not in daily_groups:
+                daily_groups[running_date] = []
+            daily_groups[running_date].append(cp)
+
+    daily_returns = []
+    for running_date, day_checkpoints in sorted(daily_groups.items()):
+        if len(day_checkpoints) == daily_checkpoints:
+            daily_return = sum(cp["gain"] + cp["loss"] for cp in day_checkpoints)
+            daily_returns.append(daily_return)
+
+    return daily_returns
+
+
 def generate_proof(
     data=None,
     miner_hotkey=None,
@@ -260,6 +299,7 @@ def generate_proof(
     annual_risk_free_percentage=4.19,
     use_weighting=False,
     bypass_confidence=False,
+    daily_checkpoints=2,
 ):
     """
     Core proof generation logic.
@@ -274,6 +314,7 @@ def generate_proof(
         annual_risk_free_percentage: Annual risk-free rate percentage (default 4.19)
         use_weighting: Whether to use weighted calculations (default False)
         bypass_confidence: Whether to bypass confidence thresholds (default False)
+        daily_checkpoints: Number of checkpoints expected per day (default 2)
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
@@ -611,10 +652,9 @@ def generate_proof(
 
     # Calculate MinMetrics (Python) for comparison with ZK circuit
     try:
-        # Extract raw sum values from checkpoint data (matching subnet's daily_return_log)
-        daily_log_returns = []
-        for cp in cps:
-            daily_log_returns.append(cp["gain"] + cp["loss"])
+        daily_log_returns = aggregate_daily_returns(
+            cps, target_duration, daily_checkpoints
+        )
 
         if len(daily_log_returns) > 0:
             python_avg_daily_pnl = MinMetrics.average(daily_log_returns)
