@@ -19,12 +19,6 @@ MAX_DAYS = 120
 def run_command(command, cwd, verbose=True):
     """Executes a command in a given directory and returns the output."""
     result = subprocess.run(command, capture_output=True, text=True, cwd=cwd)
-    if verbose:
-        bt.logging.info("--- nargo stdout ---")
-        bt.logging.info(result.stdout)
-        bt.logging.info("--- nargo stderr ---")
-        bt.logging.info(result.stderr)
-        bt.logging.info("--------------------")
     if result.returncode != 0:
         if verbose:
             bt.logging.error("Error:")
