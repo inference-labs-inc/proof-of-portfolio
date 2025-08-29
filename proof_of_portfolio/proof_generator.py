@@ -391,7 +391,7 @@ def generate_proof(
             aggregated_gains.append(0)
             aggregated_losses.append(int(daily_return * SCALING_FACTOR))
 
-        aggregated_last_update_times.append(1000000 + i)
+        aggregated_last_update_times.append(target_duration + (i * target_duration))
         aggregated_accum_times.append(target_duration)
 
     aggregated_checkpoint_count = len(daily_log_returns)
