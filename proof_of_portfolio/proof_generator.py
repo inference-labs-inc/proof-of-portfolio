@@ -519,11 +519,11 @@ def generate_proof(
     returns_generator_dir = os.path.join(current_dir, "returns_generator")
 
     returns_prover_input = {
-        "gains": [str(g) for g in gains],
-        "losses": [str(l) for l in losses],
-        "last_update_times": [str(t) for t in last_update_times],
-        "accum_times": [str(a) for a in accum_times],
-        "checkpoint_count": str(checkpoint_count),
+        "gains": [str(g) for g in aggregated_gains],
+        "losses": [str(l) for l in aggregated_losses],
+        "last_update_times": [str(t) for t in aggregated_last_update_times],
+        "accum_times": [str(a) for a in aggregated_accum_times],
+        "checkpoint_count": str(aggregated_checkpoint_count),
         "target_duration": str(target_duration),
     }
 
