@@ -57,7 +57,7 @@ pub fn calculate_daily_returns(
 
     let mut valid_days: u32 = 0;
     for i in 0..MAX_DAYS {
-        if daily_counts[i] == DAILY_CHECKPOINTS {
+        if daily_counts[i] > 0 {
             if valid_days < (MAX_DAYS as u32) {
                 daily_returns[valid_days] = daily_sums[i];
                 valid_days += 1;
