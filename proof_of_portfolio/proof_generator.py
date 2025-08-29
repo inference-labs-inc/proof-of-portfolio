@@ -228,16 +228,18 @@ def run_bb_prove(circuit_dir):
         if prove_result.returncode != 0:
             print("bb prove failed:")
             print(
-                [
-                    "bb",
-                    "prove",
-                    "-b",
-                    circuit_file,
-                    "-w",
-                    witness_file,
-                    "-o",
-                    proof_file,
-                ].join(" ")
+                " ".join(
+                    [
+                        "bb",
+                        "prove",
+                        "-b",
+                        circuit_file,
+                        "-w",
+                        witness_file,
+                        "-o",
+                        proof_file,
+                    ]
+                )
             )
             print(prove_result.stdout)
             print(prove_result.stderr)
