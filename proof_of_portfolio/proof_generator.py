@@ -293,6 +293,7 @@ def generate_proof(
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
+    witness_only=False,
 ):
     """
     Core proof generation logic.
@@ -308,6 +309,7 @@ def generate_proof(
         use_weighting: Whether to use weighted calculations (default False)
         bypass_confidence: Whether to bypass confidence thresholds (default False)
         daily_checkpoints: Number of checkpoints expected per day (default 2)
+        witness_only: If True, skip barretenberg proof generation for faster testing (default False)
 
     Returns:
         Dictionary with proof results including status, portfolio_metrics, etc.
@@ -674,7 +676,12 @@ def generate_proof(
     sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
     stat_confidence_scaled = stat_confidence_raw / SCALING_FACTOR
 
-    prove_time, verification_success = run_bb_prove(main_circuit_dir)
+    if witness_only:
+        prove_time, verification_success = None, False
+        if verbose:
+            print("Skipping barretenberg proof generation (witness_only=True)")
+    else:
+        prove_time, verification_success = run_bb_prove(main_circuit_dir)
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")

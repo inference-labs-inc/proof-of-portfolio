@@ -1,7 +1,7 @@
 pub global ARRAY_SIZE: u32 = 256;
 pub global SCALE: i64 = 10_000_000;
 pub global DAYS_IN_YEAR: i64 = 365;
-pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 30;
+pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 60;
 
 // Risk-free rate (as basis points, e.g., 200 = 2%)
 pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 200;
@@ -17,8 +17,8 @@ pub global OMEGA_SCALE_FACTOR: i64 = 10000000; // 10M for Omega precision
 pub global SHARPE_SCALE_FACTOR: i64 = 1000000; // 1M for Sharpe precision
 
 // Default return values for insufficient confidence
-pub global CALMAR_NOCONFIDENCE_VALUE: i64 = 0;
-pub global SHARPE_NOCONFIDENCE_VALUE: i64 = 0;
-pub global OMEGA_NOCONFIDENCE_VALUE: i64 = 0;
-pub global SORTINO_NOCONFIDENCE_VALUE: i64 = 0;
-pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = 0;
+pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9 (SCALING_FACTOR)
+pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9 (SCALING_FACTOR)
+pub global OMEGA_NOCONFIDENCE_VALUE: i64 = 0; // Omega uses 0.0 in subnet
+pub global SORTINO_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9 (SCALING_FACTOR)
+pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9 (SCALING_FACTOR)
