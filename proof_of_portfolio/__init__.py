@@ -77,15 +77,24 @@ def _prove_worker(
             daily_checkpoints=daily_checkpoints,
         )
 
+        proof_results = result.get("proof_results", {})
+        proof_generated = proof_results.get("proof_generated", False)
+        verification_success = proof_results.get("verification_success", False)
+
+        if proof_generated and verification_success:
+            status = "success"
+        elif proof_generated and not verification_success:
+            status = "verification_failed"
+        else:
+            status = "proof_generation_failed"
+
         return {
-            "status": "success",
+            "status": status,
             "portfolio_metrics": result.get("portfolio_metrics", {}),
             "merkle_roots": result.get("merkle_roots", {}),
             "data_summary": result.get("data_summary", {}),
-            "proof_results": result.get("proof_results", {}),
-            "proof_generated": result.get("proof_results", {}).get(
-                "proof_generated", False
-            ),
+            "proof_results": proof_results,
+            "proof_generated": proof_generated,
         }
 
     except Exception as e:
