@@ -648,12 +648,6 @@ def generate_proof(
         else:
             return val  # Positive values unchanged
 
-    if verbose:
-        print("Raw field values before conversion:")
-        print(f"  avg_daily_pnl_raw: {avg_daily_pnl_raw}")
-        print(f"  sharpe_raw: {sharpe_raw}")
-        print(f"  drawdown_raw: {drawdown_raw}")
-
     avg_daily_pnl_value = field_to_signed_int(avg_daily_pnl_raw)
     sharpe_ratio_raw = field_to_signed_int(sharpe_raw)
     max_drawdown_raw = field_to_signed_int(drawdown_raw)
@@ -661,12 +655,6 @@ def generate_proof(
     omega_ratio_raw = field_to_signed_int(omega_raw)
     sortino_ratio_raw = field_to_signed_int(sortino_raw)
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
-
-    if verbose:
-        print("Converted values:")
-        print(f"  avg_daily_pnl_value: {avg_daily_pnl_value}")
-        print(f"  sharpe_ratio_raw: {sharpe_ratio_raw}")
-        print(f"  max_drawdown_raw: {max_drawdown_raw}")
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
     sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
