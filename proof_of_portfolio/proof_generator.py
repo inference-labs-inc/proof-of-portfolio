@@ -669,9 +669,20 @@ def generate_proof(
         if verbose:
             print("Skipping barretenberg proof generation (witness_only=True)")
     else:
-        prove_time, verification_success = run_bb_prove(main_circuit_dir)
-        if prove_time is None:
-            raise RuntimeError("Barretenberg proof generation failed")
+        try:
+            prove_time, verification_success = run_bb_prove(main_circuit_dir)
+            if prove_time is None:
+                if verbose:
+                    print(
+                        "Barretenberg proof generation failed, but metrics are still available from witness"
+                    )
+                prove_time, verification_success = None, False
+        except Exception as e:
+            if verbose:
+                print(
+                    f"Exception during proof generation: {e}, but metrics are still available from witness"
+                )
+            prove_time, verification_success = None, False
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
