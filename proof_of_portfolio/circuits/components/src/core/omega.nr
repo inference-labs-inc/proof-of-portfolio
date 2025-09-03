@@ -1,12 +1,12 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, OMEGA_SCALE_FACTOR,
+    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, OMEGA_SCALE_FACTOR, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR,
     STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 use crate::utils::weighting_distribution::weighting_distribution;
 
-pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool, bypass_confidence: bool) -> i64 {
     // Check minimum sample size for statistical confidence
-    if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         OMEGA_NOCONFIDENCE_VALUE
     } else {
         if use_weighting {
@@ -31,9 +31,9 @@ pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: boo
             let descaled_negative_sum = weighted_negative_sum / weight_scale;
             let abs_weighted_negative_sum = -descaled_negative_sum;
             if abs_weighted_negative_sum > 0 {
-                ((descaled_positive_sum * (OMEGA_SCALE_FACTOR as i64)) / abs_weighted_negative_sum) as i64
+                ((descaled_positive_sum * RATIO_SCALE_FACTOR) / abs_weighted_negative_sum) as i64
             } else {
-                OMEGA_SCALE_FACTOR
+                LARGE_POSITIVE_VALUE
             }
         } else {
             let mut positive_sum: u64 = 0;
@@ -50,9 +50,9 @@ pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: boo
             }
 
             if negative_sum > 0 {
-                ((positive_sum * (OMEGA_SCALE_FACTOR as u64)) / negative_sum) as i64
+                ((positive_sum * RATIO_SCALE_FACTOR as u64) / negative_sum) as i64
             } else {
-                OMEGA_SCALE_FACTOR
+                LARGE_POSITIVE_VALUE
             }
         }
     }
@@ -65,7 +65,7 @@ fn test_omega_all_positive() {
         returns[i] = 100;
     }
 
-    let result = omega(returns, 5, false);
+    let result = omega(returns, 5, false, false);
     assert(result == 10000000);
 }
 
@@ -76,7 +76,7 @@ fn test_omega_all_negative() {
         returns[i] = -100;
     }
 
-    let result = omega(returns, 5, false);
+    let result = omega(returns, 5, false, false);
     assert(result == 0);
 }
 
@@ -88,7 +88,7 @@ fn test_omega_mixed_returns() {
     returns[2] = 800;
     returns[3] = -300;
 
-    let result = omega(returns, 4, false);
+    let result = omega(returns, 4, false, false);
     assert(result == 22500000);
 }
 
@@ -99,6 +99,6 @@ fn test_omega_zero_returns() {
         returns[i] = 0;
     }
 
-    let result = omega(returns, 5, false);
+    let result = omega(returns, 5, false, false);
     assert(result == 10000000);
 }

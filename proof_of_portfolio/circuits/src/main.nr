@@ -72,7 +72,7 @@ fn main(
     }
     // Run all metric calcs
     let avg_daily_pnl = average(returns_array, n_returns, use_weighting);
-    let sh = sharpe(
+    let sharpe_ratio = sharpe(
         returns_array,
         n_returns,
         risk_free_rate,
@@ -80,14 +80,27 @@ fn main(
         bypass_confidence,
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
-    let calmar_ratio = calmar(returns_array, n_returns, risk_free_rate, bypass_confidence);
-    let omega_ratio = omega(returns_array, n_returns, bypass_confidence);
-    let sortino_ratio = sortino(returns_array, n_returns, risk_free_rate, bypass_confidence);
-    let stat_confidence = statistical_confidence(returns_array, n_returns, bypass_confidence);
+    let calmar_ratio = calmar(
+        returns_array,
+        n_returns,
+        risk_free_rate,
+        use_weighting,
+        bypass_confidence,
+    );
+    let omega_ratio = omega(returns_array, n_returns, use_weighting, bypass_confidence);
+    let sortino_ratio = sortino(
+        returns_array,
+        n_returns,
+        risk_free_rate,
+        use_weighting,
+        bypass_confidence,
+    );
+    let stat_confidence =
+        statistical_confidence(returns_array, n_returns, use_weighting, bypass_confidence);
 
     [
         (avg_daily_pnl as u64) as Field,
-        (sh as u64) as Field,
+        (sharpe_ratio as u64) as Field,
         (dmd as u64) as Field,
         (calmar_ratio as u64) as Field,
         (omega_ratio as u64) as Field,

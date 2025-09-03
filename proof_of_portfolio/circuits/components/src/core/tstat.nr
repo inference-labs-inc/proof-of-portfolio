@@ -1,7 +1,7 @@
 use crate::utils::{
     average::average,
     constants::{
-        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR,
     },
     sqrt::sqrt,
     variance::variance,
@@ -11,9 +11,10 @@ pub fn statistical_confidence(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     use_weighting: bool,
+    bypass_confidence: bool,
 ) -> i64 {
     // Check minimum sample size for statistical confidence
-    if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         if actual_len < 2 {
             STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
         } else {
@@ -41,10 +42,9 @@ fn compute_t_statistic(
         let standard_error = std_dev / n_sqrt;
 
         if standard_error == 0 {
-            // Effectively infinite t-statistic, return a large number
-            1000000
+            RATIO_SCALE_FACTOR
         } else {
-            (avg * SCALE) / standard_error
+            (avg * RATIO_SCALE_FACTOR) / standard_error
         }
     }
 }
@@ -58,7 +58,7 @@ fn test_tstat_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = statistical_confidence(returns, 5, false);
+    let result = statistical_confidence(returns, 5, false, false);
     assert(result != 0);
 }
 
@@ -67,7 +67,7 @@ fn test_tstat_insufficient_data() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 1000;
 
-    let result = statistical_confidence(returns, 1, false);
+    let result = statistical_confidence(returns, 1, false, false);
     assert(result == 0);
 }
 
@@ -78,7 +78,7 @@ fn test_tstat_zero_variance() {
         returns[i] = 100;
     }
 
-    let result = statistical_confidence(returns, 5, false);
+    let result = statistical_confidence(returns, 5, false, false);
     assert(result == 0);
 }
 
@@ -88,6 +88,6 @@ fn test_tstat_exactly_two_samples() {
     returns[0] = 1000;
     returns[1] = -500;
 
-    let result = statistical_confidence(returns, 2, false);
+    let result = statistical_confidence(returns, 2, false, false);
     assert(result != 0);
 }

@@ -2,7 +2,7 @@ use crate::utils::{
     ann_excess_return::ann_excess_return,
     ann_volatility::ann_volatility,
     constants::{
-        ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE
+        ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE, RATIO_SCALE_FACTOR
     },
 };
 
@@ -25,7 +25,7 @@ pub fn sharpe(
             volatility
         };
 
-        (excess_return * SCALE) / effective_volatility
+        (excess_return * RATIO_SCALE_FACTOR) / effective_volatility
     };
     result
 }

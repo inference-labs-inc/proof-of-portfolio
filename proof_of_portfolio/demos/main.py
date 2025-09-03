@@ -15,7 +15,14 @@ def main(args):
         print(f"Available hotkeys: {list(data['perf_ledgers'].keys())}")
         return 1
 
-    result = generate_proof(data, hotkey, True)
+    result = generate_proof(
+        data,
+        hotkey,
+        True,
+        use_weighting=False,
+        bypass_confidence=True,
+        witness_only=True,
+    )
     return 0 if result and result.get("proof_results", {}).get("proof_generated") else 1
 
 

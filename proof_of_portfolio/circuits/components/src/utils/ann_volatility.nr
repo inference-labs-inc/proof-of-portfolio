@@ -10,7 +10,7 @@ pub fn ann_volatility(
     } else {
         let daily_variance = variance(daily_returns, actual_len, 1, use_weighting);
         let annualized_variance = daily_variance * 365;
-        sqrt(annualized_variance as u64) as i64 * 1000
+        sqrt(annualized_variance as u64) as i64
     };
     result
 }

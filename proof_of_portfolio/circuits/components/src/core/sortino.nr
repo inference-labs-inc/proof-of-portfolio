@@ -2,7 +2,7 @@ use crate::utils::{
     ann_excess_return::ann_excess_return,
     constants::{
         ARRAY_SIZE, DAILY_LOG_RISK_FREE_RATE, DAYS_IN_YEAR, SORTINO_DOWNSIDE_MINIMUM,
-        SORTINO_NOCONFIDENCE_VALUE, STATISTICAL_CONFIDENCE_MINIMUM_N,
+        SORTINO_NOCONFIDENCE_VALUE, STATISTICAL_CONFIDENCE_MINIMUM_N, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR,
     },
     sqrt::sqrt,
 };
@@ -12,9 +12,10 @@ pub fn sortino(
     actual_len: u32,
     RISK_FREE_RATE: i64,
     use_weighting: bool,
+    bypass_confidence: bool,
 ) -> i64 {
     // Check minimum sample size for statistical confidence
-    if actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
     } else {
         let excess_return =
@@ -55,10 +56,9 @@ pub fn sortino(
                 SORTINO_DOWNSIDE_MINIMUM
             };
 
-            (excess_return * 100000000) / effective_downside_volatility
+            (excess_return * RATIO_SCALE_FACTOR) / effective_downside_volatility
         } else {
-            // No negative returns means infinite Sortino ratio, return a large value
-            100000000
+            LARGE_POSITIVE_VALUE
         }
     }
 }
@@ -72,7 +72,7 @@ fn test_sortino_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = sortino(returns, 5, 100, false);
+    let result = sortino(returns, 5, 100, false, false);
     assert(result != 0);
 }
 
@@ -83,7 +83,7 @@ fn test_sortino_no_negative_returns() {
         returns[i] = 1000;
     }
 
-    let result = sortino(returns, 5, 100, false);
+    let result = sortino(returns, 5, 100, false, false);
     assert(result == 0);
 }
 
@@ -94,7 +94,7 @@ fn test_sortino_all_negative_returns() {
         returns[i] = -500;
     }
 
-    let result = sortino(returns, 5, 0, false);
+    let result = sortino(returns, 5, 0, false, false);
     assert(result != 0);
 }
 
@@ -107,6 +107,6 @@ fn test_sortino_high_downside_volatility() {
     returns[3] = -1200;
     returns[4] = 1600;
 
-    let result = sortino(returns, 5, 200, false);
+    let result = sortino(returns, 5, 200, false, false);
     assert(result != 0);
 }

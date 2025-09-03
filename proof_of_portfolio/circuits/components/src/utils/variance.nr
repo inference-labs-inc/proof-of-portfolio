@@ -49,7 +49,7 @@ pub fn variance(
                     sum_sq_diff += sq_diff;
                 }
             }
-            variance = sum_sq_diff / ((actual_len - ddof) as i64);
+            variance = sum_sq_diff / (actual_len as i64);
         }
     }
     variance

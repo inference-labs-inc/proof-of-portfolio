@@ -11,7 +11,7 @@ MAX_CHECKPOINTS = 200
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
 ARRAY_SIZE = 256
-SCALING_FACTOR = 10**9
+SCALING_FACTOR = 10**7
 MAX_DAYS = 120
 
 
@@ -656,13 +656,15 @@ def generate_proof(
     sortino_ratio_raw = field_to_signed_int(sortino_raw)
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
 
+    RATIO_SCALE_FACTOR = 1_000_000
+
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
-    sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
+    sharpe_ratio_scaled = sharpe_ratio_raw / RATIO_SCALE_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
-    calmar_ratio_scaled = calmar_ratio_raw / SCALING_FACTOR
-    omega_ratio_scaled = omega_ratio_raw / SCALING_FACTOR
-    sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
-    stat_confidence_scaled = stat_confidence_raw / SCALING_FACTOR
+    calmar_ratio_scaled = calmar_ratio_raw / RATIO_SCALE_FACTOR
+    omega_ratio_scaled = omega_ratio_raw / RATIO_SCALE_FACTOR
+    sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
+    stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
 
     if witness_only:
         prove_time, verification_success = None, False
