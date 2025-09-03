@@ -67,31 +67,31 @@ pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: boo
             if abs_weighted_negative_sum > 0 {
                 ((descaled_positive_sum * (OMEGA_SCALE_FACTOR as i64)) / abs_weighted_negative_sum)
                      as i64
-                } else {
-                    OMEGA_SCALE_FACTOR
-                }
             } else {
-                let mut positive_sum: u64 = 0;
-                let mut negative_sum: u64 = 0;
+                OMEGA_SCALE_FACTOR
+            }
+        } else {
+            let mut positive_sum: u64 = 0;
+            let mut negative_sum: u64 = 0;
 
-                for i in 0..ARRAY_SIZE {
-                    if (i as u32) < actual_len {
-                        if log_returns[i] > 0 {
-                            positive_sum = positive_sum + (log_returns[i] as u64);
-                        } else if log_returns[i] < 0 {
-                            negative_sum = negative_sum + ((-log_returns[i]) as u64);
-                        }
+            for i in 0..ARRAY_SIZE {
+                if (i as u32) < actual_len {
+                    if log_returns[i] > 0 {
+                        positive_sum = positive_sum + (log_returns[i] as u64);
+                    } else if log_returns[i] < 0 {
+                        negative_sum = negative_sum + ((-log_returns[i]) as u64);
                     }
                 }
+            }
 
-                if negative_sum > 0 {
-                    ((positive_sum * (OMEGA_SCALE_FACTOR as u64)) / negative_sum) as i64
-                } else {
-                    OMEGA_SCALE_FACTOR
-                }
+            if negative_sum > 0 {
+                ((positive_sum * (OMEGA_SCALE_FACTOR as u64)) / negative_sum) as i64
+            } else {
+                OMEGA_SCALE_FACTOR
             }
         }
     }
+}
 
 pub fn main(
     log_returns: [i64; ARRAY_SIZE],

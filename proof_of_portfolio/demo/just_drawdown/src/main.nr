@@ -31,18 +31,18 @@ fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], n_returns: u32) -> i64 {
         cumulative_log_returns[0] = log_returns[0];
         for i in 1..ARRAY_SIZE {
             if (i as u32) < n_returns {
-                cumulative_log_returns[i] = cumulative_log_returns[i-1] + log_returns[i];
+                cumulative_log_returns[i] = cumulative_log_returns[i - 1] + log_returns[i];
             }
         }
 
         let mut running_max_log = [0; ARRAY_SIZE];
         running_max_log[0] = cumulative_log_returns[0];
         for i in 1..ARRAY_SIZE {
-             if (i as u32) < n_returns {
-                if cumulative_log_returns[i] > running_max_log[i-1] {
+            if (i as u32) < n_returns {
+                if cumulative_log_returns[i] > running_max_log[i - 1] {
                     running_max_log[i] = cumulative_log_returns[i];
                 } else {
-                    running_max_log[i] = running_max_log[i-1];
+                    running_max_log[i] = running_max_log[i - 1];
                 }
             }
         }

@@ -23,3 +23,15 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-toml
+
+  - repo: local
+    hooks:
+      - id: nargo-fmt
+        name: Format Noir code
+        entry: bash
+        args: [-c, 'for dir in $(find . -name "Nargo.toml" -exec dirname {} \;); do echo "Formatting Noir files in $dir"; (cd "$dir" && nargo fmt); done']
+        language: system
+        files: \.nr$
+        pass_filenames: false
+        always_run: false
+        require_serial: true

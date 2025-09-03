@@ -89,7 +89,6 @@ pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {
     weights
 }
 
-
 pub fn average(daily_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
     let mut result = 0;
     if actual_len > 0 {
@@ -203,8 +202,6 @@ pub fn annualized_excess_return(
     };
     result
 }
-
-
 
 pub fn main(
     daily_returns: [i64; ARRAY_SIZE],

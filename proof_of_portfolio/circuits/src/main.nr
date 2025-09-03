@@ -1,6 +1,6 @@
 use components::core::{
-    calmar::calmar, drawdown::daily_max_drawdown, omega::omega, sharpe::sharpe, sortino::sortino,
-    tstat::statistical_confidence,
+    calmar::calmar, drawdown::daily_max_drawdown, omega::omega, pnl_score::pnl_score,
+    sharpe::sharpe, sortino::sortino, tstat::statistical_confidence,
 };
 use components::core::cps_to_log_returns::{cps_to_log_returns, MAX_CHECKPOINTS, MAX_DAYS};
 use components::core::merkle::{
@@ -25,7 +25,7 @@ fn main(
     risk_free_rate: i64,
     use_weighting: bool,
     bypass_confidence: bool,
-) -> pub [Field; 7] {
+) -> pub [Field; 8] {
     // Convert checkpoints to log returns
     let (log_returns, valid_days) = cps_to_log_returns(
         gains,
@@ -60,8 +60,9 @@ fn main(
             leaves[i] = hash_return(log_returns[i]);
         }
     }
-    let computed_returns_root = build_merkle_root(leaves, n_returns);
-    //assert(computed_returns_root == returns_merkle_root);
+    let _computed_returns_root = build_merkle_root(leaves, n_returns);
+    // Check that the computed root matches the expected root
+    assert(_computed_returns_root == returns_merkle_root);
 
     // Build array from returns
     let mut returns_array = [0; ARRAY_SIZE];
@@ -97,6 +98,15 @@ fn main(
     );
     let stat_confidence =
         statistical_confidence(returns_array, n_returns, use_weighting, bypass_confidence);
+    let pnl_score_result = pnl_score(
+        gains,
+        losses,
+        last_update_times,
+        accum_times,
+        checkpoint_count,
+        target_duration,
+        use_weighting,
+    );
 
     [
         (avg_daily_pnl as u64) as Field,
@@ -106,5 +116,6 @@ fn main(
         (omega_ratio as u64) as Field,
         (sortino_ratio as u64) as Field,
         (stat_confidence as u64) as Field,
+        (pnl_score_result as u64) as Field,
     ]
 }

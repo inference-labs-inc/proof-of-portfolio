@@ -18,13 +18,14 @@ pub fn hash_return(log_return: i64) -> Field {
     std::hash::pedersen_hash([unsigned_value as Field])
 }
 
-// Builds a Merkle root from a set of leaves.
+// Exact same build_merkle_root from components/core/merkle.nr for consistency
 pub fn build_merkle_root(leaves: [Field; MAX_RETURNS], num_leaves: u32) -> Field {
     let mut nodes = leaves;
     let mut current_num_leaves = num_leaves;
 
-    for _ in 0..MERKLE_DEPTH {
+    for _ in 0..8 {
         let mut next_level_nodes = [0; MAX_RETURNS];
+
         for i in 0..(MAX_RETURNS / 2) {
             if (i * 2) < current_num_leaves {
                 let left = nodes[i * 2];
@@ -33,25 +34,19 @@ pub fn build_merkle_root(leaves: [Field; MAX_RETURNS], num_leaves: u32) -> Field
                 } else {
                     left
                 };
+
                 next_level_nodes[i] = std::hash::pedersen_hash([left, right]);
             }
         }
+
         nodes = next_level_nodes;
-        let next_num_leaves = (current_num_leaves + 1) / 2;
-        current_num_leaves = if current_num_leaves <= 1 {
-            current_num_leaves
-        } else {
-            next_num_leaves
-        };
+        current_num_leaves = (current_num_leaves + 1) / 2;
     }
-    if num_leaves == 0 {
-        0
-    } else {
-        nodes[0]
-    }
+
+    nodes[0]
 }
 
-// Accepts pre-processed daily returns directly (no filtering/aggregation)
+// Use the same day-grouping logic as main circuit for alignment
 pub fn calculate_daily_returns(
     gains: [i64; MAX_CHECKPOINTS],
     losses: [i64; MAX_CHECKPOINTS],
@@ -61,16 +56,63 @@ pub fn calculate_daily_returns(
     target_duration: u64,
 ) -> ([i64; MAX_DAYS], u32) {
     let mut daily_returns: [i64; MAX_DAYS] = [0; MAX_DAYS];
+    let mut daily_sums: [i64; MAX_DAYS] = [0; MAX_DAYS];
+    let mut daily_counts: [u32; MAX_DAYS] = [0; MAX_DAYS];
+    let mut unique_days: [u64; MAX_DAYS] = [0; MAX_DAYS];
+    let mut num_days: u32 = 0;
 
-    // Since Python pre-processes the data to match subnet logic,
-    // we just pass through the aggregated daily returns directly
-    for i in 0..MAX_DAYS {
+    // Group checkpoints by day timestamp (matching main circuit logic)
+    for i in 0..MAX_CHECKPOINTS {
         if (i as u32) < checkpoint_count {
-            daily_returns[i] = gains[i] + losses[i];
+            if accum_times[i] == target_duration {
+                let start_time = last_update_times[i] - accum_times[i];
+                let day_timestamp = start_time / (SECONDS_PER_DAY * 1000);
+
+                let mut day_index: u32 = MAX_DAYS as u32;
+                let mut found = false;
+
+                // Find existing day or create new one
+                for j in 0..MAX_DAYS {
+                    if !found {
+                        if unique_days[j] == day_timestamp {
+                            day_index = j as u32;
+                            found = true;
+                        } else {
+                            if unique_days[j] == 0 {
+                                if day_index == (MAX_DAYS as u32) {
+                                    unique_days[j] = day_timestamp;
+                                    day_index = j as u32;
+                                    if (j as u32) >= num_days {
+                                        num_days = (j as u32) + 1;
+                                    }
+                                    found = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Add to daily sum
+                if day_index < (MAX_DAYS as u32) {
+                    daily_sums[day_index] += gains[i] + losses[i];
+                    daily_counts[day_index] += 1;
+                }
+            }
         }
     }
 
-    (daily_returns, checkpoint_count)
+    // Compact non-zero days into final array (matching main circuit)
+    let mut valid_days: u32 = 0;
+    for i in 0..MAX_DAYS {
+        if daily_counts[i] > 0 {
+            if valid_days < (MAX_DAYS as u32) {
+                daily_returns[valid_days] = daily_sums[i];
+                valid_days += 1;
+            }
+        }
+    }
+
+    (daily_returns, valid_days)
 }
 
 pub fn cps_to_log_returns(

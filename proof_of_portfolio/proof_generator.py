@@ -622,9 +622,9 @@ def generate_proof(
         print(f"Witness generation completed in {witness_time:.3f}s")
 
     fields = parse_nargo_struct_output(output)
-    if len(fields) < 7:
+    if len(fields) < 8:
         raise RuntimeError(
-            f"Expected 7 output fields from main circuit, got {len(fields)}: {fields}"
+            f"Expected 8 output fields from main circuit, got {len(fields)}: {fields}"
         )
 
     avg_daily_pnl_raw = fields[0]
@@ -634,6 +634,7 @@ def generate_proof(
     omega_raw = fields[4]
     sortino_raw = fields[5]
     stat_confidence_raw = fields[6]
+    pnl_score_raw = fields[7]
 
     def field_to_signed_int(field_str):
         if isinstance(field_str, str) and field_str.startswith("0x"):
@@ -655,16 +656,19 @@ def generate_proof(
     omega_ratio_raw = field_to_signed_int(omega_raw)
     sortino_ratio_raw = field_to_signed_int(sortino_raw)
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
+    pnl_score_value = field_to_signed_int(pnl_score_raw)
 
     RATIO_SCALE_FACTOR = 1_000_000
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
+    avg_daily_pnl_ptn_scaled = avg_daily_pnl_scaled * 365 * 100
     sharpe_ratio_scaled = sharpe_ratio_raw / RATIO_SCALE_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
     calmar_ratio_scaled = calmar_ratio_raw / RATIO_SCALE_FACTOR
     omega_ratio_scaled = omega_ratio_raw / RATIO_SCALE_FACTOR
     sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
     stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
+    pnl_score_scaled = pnl_score_value / SCALING_FACTOR
 
     if witness_only:
         prove_time, verification_success = None, False
@@ -698,6 +702,7 @@ def generate_proof(
     print(f"Omega Ratio: {omega_ratio_scaled:.9f}")
     print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
     print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
+    print(f"PnL Score: {pnl_score_scaled:.9f}")
 
     if prove_time is not None:
         print(f"Proof generated in {prove_time}s")
@@ -734,6 +739,7 @@ def generate_proof(
         "portfolio_metrics": {
             "avg_daily_pnl_raw": avg_daily_pnl_value,
             "avg_daily_pnl_scaled": avg_daily_pnl_scaled,
+            "avg_daily_pnl_ptn_scaled": avg_daily_pnl_ptn_scaled,
             "sharpe_ratio_raw": sharpe_ratio_raw,
             "sharpe_ratio_scaled": sharpe_ratio_scaled,
             "max_drawdown_raw": max_drawdown_raw,
@@ -747,6 +753,8 @@ def generate_proof(
             "sortino_ratio_scaled": sortino_ratio_scaled,
             "stat_confidence_raw": stat_confidence_raw,
             "stat_confidence_scaled": stat_confidence_scaled,
+            "pnl_score_raw": pnl_score_value,
+            "pnl_score_scaled": pnl_score_scaled,
         },
         "data_summary": {
             "daily_returns_processed": aggregated_checkpoint_count,
