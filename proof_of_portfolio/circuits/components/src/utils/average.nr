@@ -1,11 +1,15 @@
-use crate::utils::{constants::ARRAY_SIZE, weighting_distribution::weighting_distribution};
+use crate::utils::constants::ARRAY_SIZE;
 
-
-pub fn average(daily_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool) -> i64 {
+// Modified to accept precomputed weights
+pub fn average(
+    daily_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    weights: [i64; ARRAY_SIZE],
+    use_weighting: bool
+) -> i64 {
     let mut result = 0;
     if actual_len > 0 {
         if use_weighting {
-            let weights = weighting_distribution(actual_len);
             let mut weighted_sum: i64 = 0;
             let mut sum_of_weights: i64 = 0;
 
@@ -38,7 +42,8 @@ fn test_average_positive_numbers() {
     returns[1] = 200;
     returns[2] = 300;
 
-    let result = average(returns, 3, false);
+    let weights = [100000; ARRAY_SIZE]; // Equal weights for test
+    let result = average(returns, 3, weights, false);
     assert(result == 200);
 }
 
@@ -49,7 +54,8 @@ fn test_average_negative_numbers() {
     returns[1] = -200;
     returns[2] = -300;
 
-    let result = average(returns, 3, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = average(returns, 3, weights, false);
     assert(result == -200);
 }
 
@@ -61,7 +67,8 @@ fn test_average_mixed_numbers() {
     returns[2] = 300;
     returns[3] = -400;
 
-    let result = average(returns, 4, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = average(returns, 4, weights, false);
     assert(result == -50);
 }
 
@@ -70,7 +77,8 @@ fn test_average_single_number() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 500;
 
-    let result = average(returns, 1, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = average(returns, 1, weights, false);
     assert(result == 500);
 }
 
@@ -81,6 +89,7 @@ fn test_average_zeros() {
         returns[i] = 0;
     }
 
-    let result = average(returns, 10, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = average(returns, 10, weights, false);
     assert(result == 0);
 }

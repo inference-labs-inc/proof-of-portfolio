@@ -8,6 +8,7 @@ pub fn pnl_score(
     accum_times: [u64; MAX_CHECKPOINTS],
     checkpoint_count: u32,
     target_duration: u64,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
 ) -> i64 {
     // Group checkpoints by complete days and sum daily PnL
@@ -25,7 +26,7 @@ pub fn pnl_score(
     }
 
     // Return average of daily PnL values
-    average(daily_pnl, daily_count, use_weighting)
+    average(daily_pnl, daily_count, weights, use_weighting)
 }
 
 #[test]
@@ -45,6 +46,7 @@ fn test_pnl_score_basic() {
     losses[1] = -100;
     accum_times[1] = 86400;
 
+    let weights = [100000; ARRAY_SIZE];
     let result = pnl_score(
         gains,
         losses,
@@ -52,6 +54,7 @@ fn test_pnl_score_basic() {
         accum_times,
         2,
         86400,
+        weights,
         false,
     );
 
@@ -76,6 +79,7 @@ fn test_pnl_score_incomplete_days() {
     losses[1] = -100;
     accum_times[1] = 43200; // 12 hours, less than target
 
+    let weights = [100000; ARRAY_SIZE];
     let result = pnl_score(
         gains,
         losses,
@@ -83,6 +87,7 @@ fn test_pnl_score_incomplete_days() {
         accum_times,
         2,
         86400,
+        weights,
         false,
     );
 

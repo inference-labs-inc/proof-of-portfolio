@@ -10,6 +10,7 @@ use crate::utils::{
 pub fn statistical_confidence(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
 ) -> i64 {
@@ -19,20 +20,21 @@ pub fn statistical_confidence(
             STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
         } else {
             // Allow computation for sample sizes between 2 and minimum, but with reduced confidence
-            compute_t_statistic(log_returns, actual_len, use_weighting)
+            compute_t_statistic(log_returns, actual_len, weights, use_weighting)
         }
     } else {
-        compute_t_statistic(log_returns, actual_len, use_weighting)
+        compute_t_statistic(log_returns, actual_len, weights, use_weighting)
     }
 }
 
 fn compute_t_statistic(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
 ) -> i64 {
-    let avg = average(log_returns, actual_len, use_weighting);
-    let var = variance(log_returns, actual_len, 1, use_weighting);
+    let avg = average(log_returns, actual_len, weights, use_weighting);
+    let var = variance(log_returns, actual_len, 1, weights, use_weighting);
 
     if var <= 0 {
         STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
@@ -58,7 +60,8 @@ fn test_tstat_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = statistical_confidence(returns, 5, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = statistical_confidence(returns, 5, weights, false, false);
     assert(result != 0);
 }
 
@@ -67,7 +70,8 @@ fn test_tstat_insufficient_data() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 1000;
 
-    let result = statistical_confidence(returns, 1, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = statistical_confidence(returns, 1, weights, false, false);
     assert(result == 0);
 }
 
@@ -78,7 +82,8 @@ fn test_tstat_zero_variance() {
         returns[i] = 100;
     }
 
-    let result = statistical_confidence(returns, 5, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = statistical_confidence(returns, 5, weights, false, false);
     assert(result == 0);
 }
 
@@ -88,6 +93,7 @@ fn test_tstat_exactly_two_samples() {
     returns[0] = 1000;
     returns[1] = -500;
 
-    let result = statistical_confidence(returns, 2, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = statistical_confidence(returns, 2, weights, false, false);
     assert(result != 0);
 }

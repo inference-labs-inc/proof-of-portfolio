@@ -2,15 +2,13 @@ use crate::utils::constants::{
     ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, OMEGA_SCALE_FACTOR, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR,
     STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
-use crate::utils::weighting_distribution::weighting_distribution;
 
-pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, use_weighting: bool, bypass_confidence: bool) -> i64 {
+pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, weights: [i64; ARRAY_SIZE], use_weighting: bool, bypass_confidence: bool) -> i64 {
     // Check minimum sample size for statistical confidence
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         OMEGA_NOCONFIDENCE_VALUE
     } else {
         if use_weighting {
-            let weights = weighting_distribution(actual_len);
             let mut weighted_positive_sum: i64 = 0;
             let mut weighted_negative_sum: i64 = 0;
             let weight_scale: i64 = 100000;
@@ -65,7 +63,8 @@ fn test_omega_all_positive() {
         returns[i] = 100;
     }
 
-    let result = omega(returns, 5, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(returns, 5, weights, false, false);
     assert(result == 10000000);
 }
 
@@ -76,7 +75,8 @@ fn test_omega_all_negative() {
         returns[i] = -100;
     }
 
-    let result = omega(returns, 5, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(returns, 5, weights, false, false);
     assert(result == 0);
 }
 
@@ -88,7 +88,8 @@ fn test_omega_mixed_returns() {
     returns[2] = 800;
     returns[3] = -300;
 
-    let result = omega(returns, 4, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(returns, 4, weights, false, false);
     assert(result == 22500000);
 }
 
@@ -99,6 +100,7 @@ fn test_omega_zero_returns() {
         returns[i] = 0;
     }
 
-    let result = omega(returns, 5, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(returns, 5, weights, false, false);
     assert(result == 10000000);
 }

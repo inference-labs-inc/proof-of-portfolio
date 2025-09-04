@@ -10,6 +10,7 @@ pub fn sharpe(
     daily_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     risk_free_rate: i64,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
 ) -> i64 {
@@ -17,8 +18,8 @@ pub fn sharpe(
         SHARPE_NOCONFIDENCE_VALUE
     } else {
         let excess_return =
-            ann_excess_return(daily_returns, actual_len, risk_free_rate, use_weighting);
-        let volatility = ann_volatility(daily_returns, actual_len, use_weighting);
+            ann_excess_return(daily_returns, actual_len, risk_free_rate, weights, use_weighting);
+        let volatility = ann_volatility(daily_returns, actual_len, weights, use_weighting);
         let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {
             SHARPE_STDDEV_MINIMUM
         } else {
@@ -39,7 +40,8 @@ fn test_sharpe_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = sharpe(returns, 5, 100, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sharpe(returns, 5, 100, weights, false, false);
     assert(result != 0);
 }
 
@@ -50,7 +52,8 @@ fn test_sharpe_low_volatility() {
         returns[i] = 50;
     }
 
-    let result = sharpe(returns, 10, 10, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sharpe(returns, 10, 10, weights, false, false);
     assert(result == 0);
 }
 
@@ -63,6 +66,7 @@ fn test_sharpe_high_volatility() {
     returns[3] = -2000;
     returns[4] = 1000;
 
-    let result = sharpe(returns, 5, 200, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sharpe(returns, 5, 200, weights, false, false);
     assert(result != 0);
 }

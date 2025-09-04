@@ -11,6 +11,7 @@ pub fn sortino(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     RISK_FREE_RATE: i64,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
 ) -> i64 {
@@ -19,7 +20,7 @@ pub fn sortino(
         SORTINO_NOCONFIDENCE_VALUE
     } else {
         let excess_return =
-            ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, use_weighting);
+            ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, weights, use_weighting);
 
         let mut downside_variance_sum: u64 = 0;
         let mut negative_count: u32 = 0;
@@ -72,7 +73,8 @@ fn test_sortino_normal_case() {
     returns[3] = -300;
     returns[4] = 600;
 
-    let result = sortino(returns, 5, 100, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sortino(returns, 5, 100, weights, false, false);
     assert(result != 0);
 }
 
@@ -83,7 +85,8 @@ fn test_sortino_no_negative_returns() {
         returns[i] = 1000;
     }
 
-    let result = sortino(returns, 5, 100, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sortino(returns, 5, 100, weights, false, false);
     assert(result == 0);
 }
 
@@ -94,7 +97,8 @@ fn test_sortino_all_negative_returns() {
         returns[i] = -500;
     }
 
-    let result = sortino(returns, 5, 0, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sortino(returns, 5, 0, weights, false, false);
     assert(result != 0);
 }
 
@@ -107,6 +111,7 @@ fn test_sortino_high_downside_volatility() {
     returns[3] = -1200;
     returns[4] = 1600;
 
-    let result = sortino(returns, 5, 200, false, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = sortino(returns, 5, 200, weights, false, false);
     assert(result != 0);
 }

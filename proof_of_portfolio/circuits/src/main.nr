@@ -7,7 +7,9 @@ use components::core::merkle::{
     build_merkle_root, hash_return, hash_signal, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH,
     merkle_inclusion_check, TradingSignal,
 };
-use components::utils::{average::average, constants::ARRAY_SIZE};
+use components::utils::{
+    average::average, constants::ARRAY_SIZE, weighting_distribution::weighting_distribution,
+};
 
 fn main(
     gains: [i64; MAX_CHECKPOINTS],
@@ -71,12 +73,27 @@ fn main(
             returns_array[i] = log_returns[i];
         }
     }
-    // Run all metric calcs
-    let avg_daily_pnl = average(returns_array, n_returns, use_weighting);
+
+    // Compute weights once for all metrics to avoid redundant expensive calculations
+    let weights = if use_weighting {
+        weighting_distribution(n_returns)
+    } else {
+        // Equal weights when weighting is disabled
+        let mut equal_weights = [0; ARRAY_SIZE];
+        for i in 0..ARRAY_SIZE {
+            equal_weights[i] = 100000; // Scale value for equal weighting
+        }
+        equal_weights
+    };
+
+    // Run all metric calcs with precomputed weights
+    let avg_daily_pnl = average(returns_array, n_returns, weights, use_weighting);
+
     let sharpe_ratio = sharpe(
         returns_array,
         n_returns,
         risk_free_rate,
+        weights,
         use_weighting,
         bypass_confidence,
     );
@@ -85,19 +102,32 @@ fn main(
         returns_array,
         n_returns,
         risk_free_rate,
+        weights,
         use_weighting,
         bypass_confidence,
     );
-    let omega_ratio = omega(returns_array, n_returns, use_weighting, bypass_confidence);
+    let omega_ratio = omega(
+        returns_array,
+        n_returns,
+        weights,
+        use_weighting,
+        bypass_confidence,
+    );
     let sortino_ratio = sortino(
         returns_array,
         n_returns,
         risk_free_rate,
+        weights,
         use_weighting,
         bypass_confidence,
     );
-    let stat_confidence =
-        statistical_confidence(returns_array, n_returns, use_weighting, bypass_confidence);
+    let stat_confidence = statistical_confidence(
+        returns_array,
+        n_returns,
+        weights,
+        use_weighting,
+        bypass_confidence,
+    );
     let pnl_score_result = pnl_score(
         gains,
         losses,
@@ -105,6 +135,7 @@ fn main(
         accum_times,
         checkpoint_count,
         target_duration,
+        weights,
         use_weighting,
     );
 

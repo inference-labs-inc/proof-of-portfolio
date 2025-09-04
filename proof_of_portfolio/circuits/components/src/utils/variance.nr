@@ -1,11 +1,12 @@
 use crate::utils::{
-    average::average, constants::ARRAY_SIZE, weighting_distribution::weighting_distribution,
+    average::average, constants::ARRAY_SIZE,
 };
 
 pub fn variance(
     daily_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     ddof: u32,
+    weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
 ) -> i64 {
     let mut variance = 0;
@@ -21,9 +22,8 @@ pub fn variance(
     }
 
     if proceed {
-        let mean = average(daily_returns, actual_len, use_weighting);
+        let mean = average(daily_returns, actual_len, weights, use_weighting);
         if use_weighting {
-            let weights = weighting_distribution(actual_len);
             let mut weighted_sum_sq_diff: i64 = 0;
             let mut sum_of_weights: i64 = 0;
 
@@ -62,7 +62,8 @@ fn test_variance_same_values() {
         returns[i] = 100;
     }
 
-    let result = variance(returns, 5, 1, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = variance(returns, 5, 1, weights, false);
     assert(result == 0);
 }
 
@@ -73,7 +74,8 @@ fn test_variance_different_values() {
     returns[1] = 200;
     returns[2] = 300;
 
-    let result = variance(returns, 3, 1, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = variance(returns, 3, 1, weights, false);
     assert(result > 0);
 }
 
@@ -84,8 +86,9 @@ fn test_variance_with_ddof_zero() {
     returns[1] = 200;
     returns[2] = 300;
 
-    let result_ddof_0 = variance(returns, 3, 0, false);
-    let result_ddof_1 = variance(returns, 3, 1, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result_ddof_0: i64 = variance(returns, 3, 0, weights, false);
+    let result_ddof_1: i64 = variance(returns, 3, 1, weights, false);
     assert(result_ddof_0 != result_ddof_1);
 }
 
@@ -94,6 +97,7 @@ fn test_variance_single_value() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 500;
 
-    let result = variance(returns, 1, 0, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = variance(returns, 1, 0, weights, false);
     assert(result == 0);
 }
