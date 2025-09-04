@@ -14,13 +14,15 @@ pub fn sortino(
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
+    avg_daily_return: i64,
+    variance_val: i64,
+    ann_excess_return_val: i64,
 ) -> i64 {
     // Check minimum sample size for statistical confidence
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
     } else {
-        let excess_return =
-            ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, weights, use_weighting);
+        let excess_return = ann_excess_return_val;
 
         let mut downside_variance_sum: u64 = 0;
         let mut negative_count: u32 = 0;
@@ -74,7 +76,10 @@ fn test_sortino_normal_case() {
     returns[4] = 600;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = sortino(returns, 5, 100, weights, false, false);
+    let avg = 320;
+    let variance_val = 200000;
+    let ann_excess = 116700;
+    let result = sortino(returns, 5, 100, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }
 
@@ -86,7 +91,10 @@ fn test_sortino_no_negative_returns() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = sortino(returns, 5, 100, weights, false, false);
+    let avg = 1000;
+    let variance_val = 0;
+    let ann_excess = 365000;
+    let result = sortino(returns, 5, 100, weights, false, false, avg, variance_val, ann_excess);
     assert(result == 0);
 }
 
@@ -98,7 +106,10 @@ fn test_sortino_all_negative_returns() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = sortino(returns, 5, 0, weights, false, false);
+    let avg = -500;
+    let variance_val = 0;
+    let ann_excess = -182500;
+    let result = sortino(returns, 5, 0, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }
 
@@ -112,6 +123,9 @@ fn test_sortino_high_downside_volatility() {
     returns[4] = 1600;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = sortino(returns, 5, 200, weights, false, false);
+    let avg = 600;
+    let variance_val = 450000;
+    let ann_excess = 218800;
+    let result = sortino(returns, 5, 200, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }

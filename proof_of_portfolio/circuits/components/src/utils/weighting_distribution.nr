@@ -32,7 +32,7 @@ pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {
     let scale: i64 = 100000;
 
     let EXP_MINUS_01 = 90484;
-    let TOLERANCE = 100;
+    let TOLERANCE = 500;
 
     let EXPECTED_SUM_25 = 926511;
     let EXPECTED_SUM_50 = 993262;

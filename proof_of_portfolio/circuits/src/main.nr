@@ -8,7 +8,8 @@ use components::core::merkle::{
     merkle_inclusion_check, TradingSignal,
 };
 use components::utils::{
-    average::average, constants::ARRAY_SIZE, weighting_distribution::weighting_distribution,
+    ann_excess_return::ann_excess_return, average::average, constants::ARRAY_SIZE,
+    variance::variance, weighting_distribution::weighting_distribution,
 };
 
 fn main(
@@ -86,8 +87,19 @@ fn main(
         equal_weights
     };
 
-    // Run all metric calcs with precomputed weights
-    let avg_daily_pnl = average(returns_array, n_returns, weights, use_weighting);
+    // Pre-compute common values to avoid redundant calculations
+    let avg_daily_return = average(returns_array, n_returns, weights, use_weighting);
+    let variance_val = variance(returns_array, n_returns, 1, weights, use_weighting);
+    let ann_excess_return_val = ann_excess_return(
+        returns_array,
+        n_returns,
+        risk_free_rate,
+        weights,
+        use_weighting,
+    );
+
+    // Run all metric calcs with precomputed values
+    let avg_daily_pnl = avg_daily_return;
 
     let sharpe_ratio = sharpe(
         returns_array,
@@ -96,6 +108,9 @@ fn main(
         weights,
         use_weighting,
         bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
@@ -105,6 +120,9 @@ fn main(
         weights,
         use_weighting,
         bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
     );
     let omega_ratio = omega(
         returns_array,
@@ -120,6 +138,9 @@ fn main(
         weights,
         use_weighting,
         bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
     );
     let stat_confidence = statistical_confidence(
         returns_array,
@@ -127,6 +148,9 @@ fn main(
         weights,
         use_weighting,
         bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
     );
     let pnl_score_result = pnl_score(
         gains,

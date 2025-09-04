@@ -11,12 +11,14 @@ pub fn calmar(
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
+    avg_daily_return: i64,
+    variance_val: i64,
+    ann_excess_return_val: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         -100
     } else {
-        let ann_excess_return =
-            ann_excess_return(log_returns, actual_len, RISK_FREE_RATE, weights, use_weighting);
+        let ann_excess_return = ann_excess_return_val;
         let max_drawdown = daily_max_drawdown(log_returns, actual_len);
 
         if max_drawdown == 0 {
@@ -40,7 +42,10 @@ fn test_calmar_normal_case() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = calmar(returns, 40, 100, weights, false, false);
+    let avg = 25;
+    let variance_val = 30625;
+    let ann_excess = 9025;
+    let result = calmar(returns, 40, 100, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }
 
@@ -51,7 +56,10 @@ fn test_calmar_insufficient_data() {
     returns[1] = -500;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = calmar(returns, 2, 100, weights, false, false);
+    let avg = 250;
+    let variance_val = 1125000;
+    let ann_excess = 91150;
+    let result = calmar(returns, 2, 100, weights, false, false, avg, variance_val, ann_excess);
     assert(result == 0);
 }
 
@@ -63,7 +71,10 @@ fn test_calmar_exactly_30_days() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = calmar(returns, 30, 50, weights, false, false);
+    let avg = 100;
+    let variance_val = 0;
+    let ann_excess = 36450;
+    let result = calmar(returns, 30, 50, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }
 
@@ -75,6 +86,9 @@ fn test_calmar_negative_returns() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = calmar(returns, 50, 0, weights, false, false);
+    let avg = -100;
+    let variance_val = 0;
+    let ann_excess = -36500;
+    let result = calmar(returns, 50, 0, weights, false, false, avg, variance_val, ann_excess);
     assert(result != 0);
 }
