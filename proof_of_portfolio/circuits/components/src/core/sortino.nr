@@ -1,8 +1,9 @@
 use crate::utils::{
     ann_excess_return::ann_excess_return,
     constants::{
-        ARRAY_SIZE, DAILY_LOG_RISK_FREE_RATE, DAYS_IN_YEAR, SORTINO_DOWNSIDE_MINIMUM,
-        SORTINO_NOCONFIDENCE_VALUE, STATISTICAL_CONFIDENCE_MINIMUM_N, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR,
+        ARRAY_SIZE, DAILY_LOG_RISK_FREE_RATE, DAYS_IN_YEAR, LARGE_POSITIVE_VALUE,
+        RATIO_SCALE_FACTOR, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     sqrt::sqrt,
 };
@@ -18,7 +19,6 @@ pub fn sortino(
     variance_val: i64,
     ann_excess_return_val: i64,
 ) -> i64 {
-    // Check minimum sample size for statistical confidence
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
     } else {
@@ -52,7 +52,6 @@ pub fn sortino(
             let downside_variance = downside_variance_sum / ((negative_count - 1) as u64);
             let downside_volatility = sqrt(downside_variance * (DAYS_IN_YEAR as u64)) as i64;
 
-            // Use minimum downside volatility to avoid division by zero/small numbers
             let effective_downside_volatility = if downside_volatility > SORTINO_DOWNSIDE_MINIMUM {
                 downside_volatility
             } else {
@@ -79,7 +78,17 @@ fn test_sortino_normal_case() {
     let avg = 320;
     let variance_val = 200000;
     let ann_excess = 116700;
-    let result = sortino(returns, 5, 100, weights, false, false, avg, variance_val, ann_excess);
+    let result = sortino(
+        returns,
+        5,
+        100,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }
 
@@ -94,7 +103,17 @@ fn test_sortino_no_negative_returns() {
     let avg = 1000;
     let variance_val = 0;
     let ann_excess = 365000;
-    let result = sortino(returns, 5, 100, weights, false, false, avg, variance_val, ann_excess);
+    let result = sortino(
+        returns,
+        5,
+        100,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result == 0);
 }
 
@@ -109,7 +128,17 @@ fn test_sortino_all_negative_returns() {
     let avg = -500;
     let variance_val = 0;
     let ann_excess = -182500;
-    let result = sortino(returns, 5, 0, weights, false, false, avg, variance_val, ann_excess);
+    let result = sortino(
+        returns,
+        5,
+        0,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }
 
@@ -126,6 +155,16 @@ fn test_sortino_high_downside_volatility() {
     let avg = 600;
     let variance_val = 450000;
     let ann_excess = 218800;
-    let result = sortino(returns, 5, 200, weights, false, false, avg, variance_val, ann_excess);
+    let result = sortino(
+        returns,
+        5,
+        200,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }

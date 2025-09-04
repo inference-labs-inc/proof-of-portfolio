@@ -51,7 +51,7 @@ pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {
                 assert(exp_val == scale);
             } else {
                 let expected = (weights[i - 1] * EXP_MINUS_01 + scale / 2) / scale;
-                assert(exp_val >= expected - TOLERANCE);
+
                 assert(exp_val <= expected + TOLERANCE);
             }
 

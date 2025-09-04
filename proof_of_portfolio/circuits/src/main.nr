@@ -75,7 +75,6 @@ fn main(
         }
     }
 
-    // Compute weights once for all metrics to avoid redundant expensive calculations
     let weights = if use_weighting {
         weighting_distribution(n_returns)
     } else {
@@ -87,9 +86,33 @@ fn main(
         equal_weights
     };
 
-    // Pre-compute common values to avoid redundant calculations
-    let avg_daily_return = average(returns_array, n_returns, weights, use_weighting);
-    let variance_val = variance(returns_array, n_returns, 1, weights, use_weighting);
+    let sum_of_weights = if use_weighting {
+        let mut sum: i64 = 0;
+        for i in 0..ARRAY_SIZE {
+            if (i as u32) < n_returns {
+                sum += weights[i];
+            }
+        }
+        sum
+    } else {
+        n_returns as i64
+    };
+
+    let avg_daily_return = average(
+        returns_array,
+        n_returns,
+        weights,
+        use_weighting,
+        sum_of_weights,
+    );
+    let variance_val = variance(
+        returns_array,
+        n_returns,
+        1,
+        weights,
+        use_weighting,
+        sum_of_weights,
+    );
     let ann_excess_return_val = ann_excess_return(
         returns_array,
         n_returns,
@@ -98,7 +121,6 @@ fn main(
         use_weighting,
     );
 
-    // Run all metric calcs with precomputed values
     let avg_daily_pnl = avg_daily_return;
 
     let sharpe_ratio = sharpe(

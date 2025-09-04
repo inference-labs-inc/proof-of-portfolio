@@ -34,31 +34,21 @@ pub fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], actual_len: u32) -> i6
     let mut max_drawdown = 0;
 
     if actual_len > 0 {
-        let mut cumulative_log_returns = [0; ARRAY_SIZE];
         let mut current_sum: i64 = 0;
+        let mut current_max: i64 = -9223372036854775807;
+
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
                 current_sum += log_returns[i];
-                cumulative_log_returns[i] = current_sum;
-            }
-        }
 
-        let mut running_max_log = [0; ARRAY_SIZE];
-        let mut current_max: i64 = -9223372036854775807;
-        for i in 0..ARRAY_SIZE {
-            if (i as u32) < actual_len {
-                if cumulative_log_returns[i] > current_max {
-                    current_max = cumulative_log_returns[i];
+                if current_sum > current_max {
+                    current_max = current_sum;
                 }
-                running_max_log[i] = current_max;
-            }
-        }
 
-        for i in 0..ARRAY_SIZE {
-            if (i as u32) < actual_len {
-                let drawdown_log = cumulative_log_returns[i] - running_max_log[i];
+                let drawdown_log = current_sum - current_max;
                 let exp_val = exp_scaled(drawdown_log);
                 let drawdown = SCALE - exp_val;
+
                 if drawdown > max_drawdown {
                     max_drawdown = drawdown;
                 }

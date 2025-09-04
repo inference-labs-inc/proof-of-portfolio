@@ -9,7 +9,19 @@ pub fn ann_volatility(
     let result = if actual_len < 2 {
         SCALE
     } else {
-        let daily_variance = variance(daily_returns, actual_len, 1, weights, use_weighting);
+        // Calculate sum_of_weights for this call
+        let sum_of_weights = if use_weighting {
+            let mut sum: i64 = 0;
+            for i in 0..ARRAY_SIZE {
+                if (i as u32) < actual_len {
+                    sum += weights[i];
+                }
+            }
+            sum
+        } else {
+            actual_len as i64
+        };
+        let daily_variance = variance(daily_returns, actual_len, 1, weights, use_weighting, sum_of_weights);
         let annualized_variance = daily_variance * 365;
         sqrt(annualized_variance as u64) as i64
     };

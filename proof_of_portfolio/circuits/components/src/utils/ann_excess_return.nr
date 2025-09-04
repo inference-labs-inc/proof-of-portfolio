@@ -7,7 +7,24 @@ pub fn ann_excess_return(
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
 ) -> i64 {
-    let avg = average(log_returns, actual_len, weights, use_weighting);
+    let sum_of_weights = if use_weighting {
+        let mut sum: i64 = 0;
+        for i in 0..ARRAY_SIZE {
+            if (i as u32) < actual_len {
+                sum += weights[i];
+            }
+        }
+        sum
+    } else {
+        actual_len as i64
+    };
+    let avg = average(
+        log_returns,
+        actual_len,
+        weights,
+        use_weighting,
+        sum_of_weights,
+    );
     let annualized = avg * DAYS_IN_YEAR;
     annualized - RISK_FREE_RATE
 }

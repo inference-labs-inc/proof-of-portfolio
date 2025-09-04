@@ -1,22 +1,20 @@
 use crate::utils::constants::ARRAY_SIZE;
 
-// Modified to accept precomputed weights
 pub fn average(
     daily_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
     weights: [i64; ARRAY_SIZE],
-    use_weighting: bool
+    use_weighting: bool,
+    sum_of_weights: i64,
 ) -> i64 {
     let mut result = 0;
     if actual_len > 0 {
         if use_weighting {
             let mut weighted_sum: i64 = 0;
-            let mut sum_of_weights: i64 = 0;
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     weighted_sum += daily_returns[i] * weights[i];
-                    sum_of_weights += weights[i];
                 }
             }
             if sum_of_weights != 0 {
@@ -42,8 +40,8 @@ fn test_average_positive_numbers() {
     returns[1] = 200;
     returns[2] = 300;
 
-    let weights = [100000; ARRAY_SIZE]; // Equal weights for test
-    let result = average(returns, 3, weights, false);
+    let weights = [100000; ARRAY_SIZE];
+    let result = average(returns, 3, weights, false, 3);
     assert(result == 200);
 }
 
@@ -55,7 +53,7 @@ fn test_average_negative_numbers() {
     returns[2] = -300;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = average(returns, 3, weights, false);
+    let result = average(returns, 3, weights, false, 3);
     assert(result == -200);
 }
 
@@ -68,7 +66,7 @@ fn test_average_mixed_numbers() {
     returns[3] = -400;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = average(returns, 4, weights, false);
+    let result = average(returns, 4, weights, false, 4);
     assert(result == -50);
 }
 
@@ -78,7 +76,7 @@ fn test_average_single_number() {
     returns[0] = 500;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = average(returns, 1, weights, false);
+    let result = average(returns, 1, weights, false, 1);
     assert(result == 500);
 }
 
@@ -90,6 +88,6 @@ fn test_average_zeros() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = average(returns, 10, weights, false);
+    let result = average(returns, 10, weights, false, 10);
     assert(result == 0);
 }
