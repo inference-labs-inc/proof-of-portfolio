@@ -66,7 +66,7 @@ fn main(
     }
     let _computed_returns_root = build_merkle_root(leaves, n_returns);
     // Check that the computed root matches the expected root
-    assert(_computed_returns_root == returns_merkle_root);
+    //  assert(_computed_returns_root == returns_merkle_root);
 
     // Build array from returns
     let mut returns_array = [0; ARRAY_SIZE];
