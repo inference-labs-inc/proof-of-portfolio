@@ -3,6 +3,7 @@ import toml
 import re
 import os
 import time
+import json
 import bittensor as bt
 
 # Constants for the circuit
@@ -291,10 +292,9 @@ def generate_proof(
         if data is None:
             if verbose:
                 bt.logging.info("Loading data from validator_checkpoint.json...")
-        import json
 
-        with open("validator_checkpoint.json", "r") as f:
-            data = json.load(f)
+            with open("validator_checkpoint.json", "r") as f:
+                data = json.load(f)
     except Exception as e:
         bt.logging.error(f"Failed to load data {e}")
 
