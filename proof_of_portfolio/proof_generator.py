@@ -185,12 +185,12 @@ def run_bb_prove(circuit_dir):
     Runs barretenberg proving.
     Returns proof generation time and status.
     """
-    print("\n--- Running Barretenberg Proof Generation ---")
+    bt.logging.info("\n--- Running Barretenberg Proof Generation ---")
 
     try:
         subprocess.run(["bb", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        print(
+        bt.logging.info(
             "Error: bb (Barretenberg) not found. Please install it using \n`curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/master/barretenberg/cpp/installation/install | bash`"
         )
         return None, False
@@ -218,8 +218,8 @@ def run_bb_prove(circuit_dir):
         prove_time = time.time() - prove_start
 
         if prove_result.returncode != 0:
-            print("bb prove failed:")
-            print(
+            bt.logging.info("bb prove failed:")
+            bt.logging.info(
                 " ".join(
                     [
                         "bb",
@@ -233,15 +233,15 @@ def run_bb_prove(circuit_dir):
                     ]
                 )
             )
-            print(prove_result.stdout)
-            print(prove_result.stderr)
+            bt.logging.info(prove_result.stdout)
+            bt.logging.info(prove_result.stderr)
             return None, False
 
-        print(f"Proof generated in {prove_time:.3f}s")
+        bt.logging.info(f"Proof generated in {prove_time:.3f}s")
         return prove_time, True
 
     except Exception as e:
-        print(f"Error during proof generation/verification: {e}")
+        bt.logging.error(f"Error during proof generation/verification: {e}")
         return None, False
 
 
@@ -454,22 +454,22 @@ def generate_proof(
         )
 
     if verbose:
-        print(f"Generated signals Merkle root: {signals_merkle_root}")
+        bt.logging.info(f"Generated signals Merkle root: {signals_merkle_root}")
         if isinstance(signals_merkle_root, str) and signals_merkle_root.startswith(
             "0x"
         ):
-            print(f"Signals Merkle root (hex): {signals_merkle_root}")
+            bt.logging.info(f"Signals Merkle root (hex): {signals_merkle_root}")
         else:
-            print(f"Signals Merkle root (int): {signals_merkle_root}")
+            bt.logging.info(f"Signals Merkle root (int): {signals_merkle_root}")
 
     if verbose:
-        print("Returns Merkle root will be calculated within the circuit")
-        print(f"Number of daily returns: {n_returns}")
+        bt.logging.info("Returns Merkle root will be calculated within the circuit")
+        bt.logging.info(f"Number of daily returns: {n_returns}")
 
     if verbose:
-        print("Running main proof of portfolio circuit...")
+        bt.logging.info("Running main proof of portfolio circuit...")
     else:
-        print(f"Generating witness for hotkey {miner_hotkey}...")
+        bt.logging.info(f"Generating witness for hotkey {miner_hotkey}...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
     # Pass annual risk-free rate (to match ann_excess_return usage)
@@ -514,14 +514,14 @@ def generate_proof(
         toml.dump(main_prover_input, f)
 
     if verbose:
-        print("Executing main circuit to generate witness...")
+        bt.logging.info("Executing main circuit to generate witness...")
     witness_start = time.time()
     output = run_command(
         ["nargo", "execute", "witness", "--silence-warnings"], main_circuit_dir, verbose
     )
     witness_time = time.time() - witness_start
     if verbose:
-        print(f"Witness generation completed in {witness_time:.3f}s")
+        bt.logging.info(f"Witness generation completed in {witness_time:.3f}s")
 
     fields = parse_nargo_struct_output(output)
     if len(fields) < 9:
@@ -586,52 +586,55 @@ def generate_proof(
     if witness_only:
         prove_time, proving_success = None, True
         if verbose:
-            print("Skipping barretenberg proof generation (witness_only=True)")
+            bt.logging.info(
+                "Skipping barretenberg proof generation (witness_only=True)"
+            )
     else:
         try:
             prove_time, proving_success = run_bb_prove(main_circuit_dir)
             if prove_time is None:
-                if verbose:
-                    print("Barretenberg proof generation failed")
+                bt.logging.error("Barretenberg proof generation failed")
                 prove_time, proving_success = None, False
         except Exception as e:
-            print(f"Exception during proof generation: {e}")
+            bt.logging.error(f"Exception during proof generation: {e}")
             prove_time, proving_success = None, False
 
     # Always print key production info: hotkey and verification status
-    print(f"Hotkey: {miner_hotkey}")
-    print(f"Orders processed: {signals_count}")
-    print(f"Signals Merkle Root: {signals_merkle_root}")
-    print(f"Returns Merkle Root: {returns_merkle_root}")
-    print(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
-    print(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
+    bt.logging.info(f"Hotkey: {miner_hotkey}")
+    bt.logging.info(f"Orders processed: {signals_count}")
+    bt.logging.info(f"Signals Merkle Root: {signals_merkle_root}")
+    bt.logging.info(f"Returns Merkle Root: {returns_merkle_root}")
+    bt.logging.info(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
+    bt.logging.info(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
     # Convert drawdown factor to percentage: drawdown% = (1 - factor) * 100
     drawdown_percentage = (1 - max_drawdown_scaled) * 100
-    print(f"Max Drawdown: {max_drawdown_scaled:.9f} ({drawdown_percentage:.6f}%)")
-    print(f"Calmar Ratio: {calmar_ratio_scaled:.9f}")
-    print(f"Omega Ratio: {omega_ratio_scaled:.9f}")
-    print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
-    print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
-    print(f"PnL Score: {pnl_score_scaled:.9f}")
+    bt.logging.info(
+        f"Max Drawdown: {max_drawdown_scaled:.9f} ({drawdown_percentage:.6f}%)"
+    )
+    bt.logging.info(f"Calmar Ratio: {calmar_ratio_scaled:.9f}")
+    bt.logging.info(f"Omega Ratio: {omega_ratio_scaled:.9f}")
+    bt.logging.info(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
+    bt.logging.info(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
+    bt.logging.info(f"PnL Score: {pnl_score_scaled:.9f}")
 
     if verbose:
-        print("\n--- Proof Generation Complete ---")
-        print("\n=== MERKLE ROOTS ===")
-        print(f"Signals Merkle Root: {signals_merkle_root}")
-        print(f"Returns Merkle Root: {returns_merkle_root}")
+        bt.logging.info("\n--- Proof Generation Complete ---")
+        bt.logging.info("\n=== MERKLE ROOTS ===")
+        bt.logging.info(f"Signals Merkle Root: {signals_merkle_root}")
+        bt.logging.info(f"Returns Merkle Root: {returns_merkle_root}")
 
-        print("\n=== DATA SUMMARY ===")
-        print(f"Daily returns processed: {n_returns}")
-        print(f"Trading signals processed: {signals_count}")
-        print("PnL calculated from cumulative returns in circuit")
+        bt.logging.info("\n=== DATA SUMMARY ===")
+        bt.logging.info(f"Daily returns processed: {n_returns}")
+        bt.logging.info(f"Trading signals processed: {signals_count}")
+        bt.logging.info("PnL calculated from cumulative returns in circuit")
 
-        print("\n=== PROOF GENERATION RESULTS ===")
-        print(f"Witness generation time: {witness_time:.3f}s")
+        bt.logging.info("\n=== PROOF GENERATION RESULTS ===")
+        bt.logging.info(f"Witness generation time: {witness_time:.3f}s")
         if not witness_only:
             if prove_time is not None:
-                print(f"Proof generation time: {prove_time:.3f}s")
+                bt.logging.info(f"Proof generation time: {prove_time:.3f}s")
             else:
-                print("Unable to prove due to an error.")
+                bt.logging.info("Unable to prove due to an error.")
 
     # Return structured results for programmatic access
     return {
