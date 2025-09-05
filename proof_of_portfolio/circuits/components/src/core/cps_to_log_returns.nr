@@ -1,4 +1,4 @@
-pub global MAX_CHECKPOINTS: u32 = 200;
+pub global MAX_CHECKPOINTS: u32 = 512;
 pub global MAX_DAYS: u32 = 120;
 global SCALE: i64 = 10_000_000;
 global DAILY_CHECKPOINTS: u32 = 2;

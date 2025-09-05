@@ -6,7 +6,7 @@ import time
 import bittensor as bt
 
 # Constants for the circuit
-MAX_CHECKPOINTS = 200
+MAX_CHECKPOINTS = 512  # Increased to support more checkpoint data
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
 ARRAY_SIZE = 256
@@ -699,7 +699,9 @@ def generate_proof(
     print(f"Returns Merkle Root: {returns_merkle_root}")
     print(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
     print(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
-    print(f"Max Drawdown: {max_drawdown_scaled:.9f} ({max_drawdown_scaled * 100:.6f}%)")
+    # Convert drawdown factor to percentage: drawdown% = (1 - factor) * 100
+    drawdown_percentage = (1 - max_drawdown_scaled) * 100
+    print(f"Max Drawdown: {max_drawdown_scaled:.9f} ({drawdown_percentage:.6f}%)")
     print(f"Calmar Ratio: {calmar_ratio_scaled:.9f}")
     print(f"Omega Ratio: {omega_ratio_scaled:.9f}")
     print(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
@@ -746,7 +748,7 @@ def generate_proof(
             "sharpe_ratio_scaled": sharpe_ratio_scaled,
             "max_drawdown_raw": max_drawdown_raw,
             "max_drawdown_scaled": max_drawdown_scaled,
-            "max_drawdown_percentage": max_drawdown_scaled * 100,
+            "max_drawdown_percentage": (1 - max_drawdown_scaled) * 100,
             "calmar_ratio_raw": calmar_ratio_raw,
             "calmar_ratio_scaled": calmar_ratio_scaled,
             "omega_ratio_raw": omega_ratio_raw,
