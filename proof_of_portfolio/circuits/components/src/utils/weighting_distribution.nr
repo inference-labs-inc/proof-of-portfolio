@@ -1,6 +1,6 @@
 use crate::utils::constants::ARRAY_SIZE;
 
-unconstrained fn compute_exp_decay_unconstrained(neg_x_scaled: i64) -> i64 {
+fn compute_exp_decay(neg_x_scaled: i64) -> i64 {
     let scale: i64 = 100000;
 
     let is_beyond_threshold = neg_x_scaled < -300000;
@@ -44,16 +44,7 @@ pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {
     for i in 0..ARRAY_SIZE {
         if (i as u32) < actual_len {
             let neg_x_scaled = -decay_rate * (i as i64);
-            // safety: constrained below
-            let exp_val = unsafe { compute_exp_decay_unconstrained(neg_x_scaled) };
-
-            if i == 0 {
-                assert(exp_val == scale);
-            } else {
-                let expected = (weights[i - 1] * EXP_MINUS_01 + scale / 2) / scale;
-
-                assert(exp_val <= expected + TOLERANCE);
-            }
+            let exp_val = compute_exp_decay(neg_x_scaled);
 
             assert(exp_val > 0);
             assert(exp_val <= scale);
