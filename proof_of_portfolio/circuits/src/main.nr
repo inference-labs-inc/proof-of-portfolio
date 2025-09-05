@@ -96,7 +96,24 @@ fn main(
         use_weighting,
     );
 
-    let avg_daily_pnl = avg_daily_return;
+    let mut daily_pnl_array = [0; ARRAY_SIZE];
+    for i in 0..MAX_DAYS {
+        if (i as u32) < n_returns {
+            let log_return = returns_array[i];
+            let x_squared = (log_return * log_return) / SCALE;
+            let x_cubed = (x_squared * log_return) / SCALE;
+            let exp_minus_one = log_return + (x_squared / 2) + (x_cubed / 6);
+            daily_pnl_array[i] = (exp_minus_one * account_size) / SCALE;
+        }
+    }
+
+    let avg_daily_pnl = average(
+        daily_pnl_array,
+        n_returns,
+        weights,
+        use_weighting,
+        sum_of_weights,
+    );
 
     let sharpe_ratio = sharpe(
         returns_array,
@@ -150,16 +167,7 @@ fn main(
         ann_excess_return_val,
     );
 
-    // Calculate PnL from cumulative log returns
-    let mut cumulative_log_return: i64 = 0;
-    for i in 0..MAX_DAYS {
-        if (i as u32) < n_returns {
-            cumulative_log_return += log_returns[i];
-        }
-    }
-
-    // Convert log return to linear return and calculate PnL
-    let pnl_score_result = (account_size * cumulative_log_return) / SCALE;
+    let pnl_score_result = avg_daily_pnl;
 
     // Build merkle root from returns
     let mut leaves = [0; MAX_RETURNS];
