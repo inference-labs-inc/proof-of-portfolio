@@ -294,7 +294,7 @@ def generate_proof(
             {
                 "trade_pair": str(trade_pair_map[trade_pair_str]),
                 "order_type": str(order_type_map.get(order_type_str, 0)),
-                "leverage": str(int(abs(order.leverage) * SCALING_FACTOR)),
+                "leverage": str(int(abs(get_attr(order, "leverage")) * SCALING_FACTOR)),
                 "price": str(price),
                 "processed_ms": str(processed_ms),
                 "order_uuid": f"0x{order_uuid.replace('-', '')}",
@@ -421,6 +421,8 @@ def generate_proof(
     log_verbose(verbose, "info", f"Witness generation completed in {witness_time:.3f}s")
 
     fields = parse_circuit_output(output)
+    log_verbose(verbose, "info", f"Circuit output: {output}")
+    log_verbose(verbose, "info", f"Parsed fields: {fields}")
     if len(fields) < 9:
         raise RuntimeError(
             f"Expected 9 output fields from main circuit, got {len(fields)}: {fields}"
