@@ -6,11 +6,11 @@ fn compute_exp_decay(neg_x_scaled: i64) -> i64 {
     let is_beyond_threshold = neg_x_scaled < -300000;
 
     if is_beyond_threshold {
-        let reduced_weight = (-neg_x_scaled / 100000);
-        if reduced_weight > 10 {
+        let abs_val = -neg_x_scaled;
+        if abs_val > 1000000 {
             1
         } else {
-            scale / reduced_weight
+            scale / (abs_val / 10000)
         }
     } else {
         let x = neg_x_scaled;
