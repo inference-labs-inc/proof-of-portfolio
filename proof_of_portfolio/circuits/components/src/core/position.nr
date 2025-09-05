@@ -1,3 +1,8 @@
+use crate::utils::constants::{
+    PRICE_SCALE, LEVERAGE_SCALE, ORDER_TYPE_LONG, ORDER_TYPE_SHORT, ORDER_TYPE_FLAT,
+    ORDER_SRC_ORGANIC, FEE_V6_TIME_MS, SLIPPAGE_V1_TIME_MS,
+};
+
 pub fn test_function() -> u64 {
     1
 }
@@ -29,18 +34,6 @@ pub struct TradePairExtended {
     pub fees: u64,
     pub asset_type: u8,
 }
-
-global PRICE_SCALE: u64 = 1_000_000_000_000;
-global LEVERAGE_SCALE: u32 = 10_000;
-
-global ORDER_TYPE_LONG: u8 = 1;
-global ORDER_TYPE_SHORT: u8 = 2;
-global ORDER_TYPE_FLAT: u8 = 0;
-
-global ORDER_SRC_ORGANIC: u8 = 1;
-
-global FEE_V6_TIME_MS: u64 = 1720843707000;
-global SLIPPAGE_V1_TIME_MS: u64 = 1739937600000;
 
 fn abs_i32(x: i32) -> u32 {
     if x >= 0 {

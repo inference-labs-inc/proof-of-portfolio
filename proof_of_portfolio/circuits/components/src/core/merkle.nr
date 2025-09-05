@@ -1,10 +1,6 @@
+use crate::utils::constants::{MAX_RETURNS, MERKLE_DEPTH};
 use dep::std;
 use std::ops::WrappingAdd;
-
-// Globals
-pub global MERKLE_DEPTH: u32 = 8;
-pub global MAX_RETURNS: u32 = 256;
-pub global MAX_SIGNALS: u32 = 256;
 
 pub struct TradingSignal {
     pub trade_pair: Field,

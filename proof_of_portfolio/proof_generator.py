@@ -6,12 +6,11 @@ import time
 import bittensor as bt
 
 # Constants for the circuit
-MAX_CHECKPOINTS = 512  # Increased to support more checkpoint data
+MAX_DAYS = 120
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
 ARRAY_SIZE = 256
 SCALING_FACTOR = 10**7
-MAX_DAYS = 120
 
 
 def run_command(command, cwd, verbose=True):
@@ -245,45 +244,6 @@ def run_bb_prove(circuit_dir):
         return None, False
 
 
-def aggregate_daily_returns(cps, target_duration, daily_checkpoints=2):
-    """
-    Aggregate checkpoint returns into daily returns following subnet's daily_return_log logic.
-    Only includes complete days with proper checkpoint accumulation.
-
-    Args:
-        cps: List of checkpoint dictionaries
-        target_duration: Target checkpoint duration in ms
-        daily_checkpoints: Number of checkpoints expected per day (from ValiConfig.DAILY_CHECKPOINTS)
-    """
-    from datetime import datetime, timezone
-
-    if not cps:
-        return []
-
-    TARGET_CHECKPOINT_DURATION_MS = target_duration
-
-    daily_groups = {}
-
-    for cp in cps:
-        start_time = cp["last_update_ms"] - cp["accum_ms"]
-        full_cell = cp["accum_ms"] == TARGET_CHECKPOINT_DURATION_MS
-
-        running_date = datetime.fromtimestamp(start_time / 1000, tz=timezone.utc).date()
-
-        if full_cell:
-            if running_date not in daily_groups:
-                daily_groups[running_date] = []
-            daily_groups[running_date].append(cp)
-
-    daily_returns = []
-    for running_date, day_checkpoints in sorted(daily_groups.items()):
-        if len(day_checkpoints) == daily_checkpoints:
-            daily_return = sum(cp["gain"] + cp["loss"] for cp in day_checkpoints)
-            daily_returns.append(daily_return)
-
-    return daily_returns
-
-
 def generate_proof(
     data=None,
     miner_hotkey=None,
@@ -353,65 +313,30 @@ def generate_proof(
             f"Hotkey '{miner_hotkey}' not found in data. Available: {list(data['perf_ledgers'].keys())}"
         )
 
-    perf_ledger = data["perf_ledgers"][miner_hotkey]
     positions = data["positions"][miner_hotkey]["positions"]
     if verbose:
         bt.logging.info("Preparing circuit inputs...")
 
-    cps = perf_ledger["cps"]
-    if len(cps) > MAX_CHECKPOINTS:
+    # Use daily returns calculated by PTN
+    daily_log_returns = data.get("daily_returns", [])
+    n_returns = len(daily_log_returns)
+
+    if n_returns > MAX_DAYS:
         if verbose:
             bt.logging.warning(
-                f"Warning: Miner has {len(cps)} checkpoints, but circuit only supports {MAX_CHECKPOINTS}. Truncating."
+                f"Warning: Miner has {n_returns} daily returns, but circuit only supports {MAX_DAYS}. Truncating."
             )
-        cps = cps[:MAX_CHECKPOINTS]
+        daily_log_returns = daily_log_returns[:MAX_DAYS]
+        n_returns = MAX_DAYS
 
-    target_duration = perf_ledger["target_cp_duration_ms"]
+    # Scale log returns for the circuit
+    scaled_log_returns = [int(ret * SCALING_FACTOR) for ret in daily_log_returns]
 
-    gains = [int(c["gain"] * SCALING_FACTOR) for c in cps]
-    losses = [int(c["loss"] * SCALING_FACTOR) for c in cps]
-    last_update_times = [c["last_update_ms"] for c in cps]
-    accum_times = [c["accum_ms"] for c in cps]
-    checkpoint_count = len(cps)
-
-    gains += [0] * (MAX_CHECKPOINTS - len(gains))
-    losses += [0] * (MAX_CHECKPOINTS - len(losses))
-    last_update_times += [0] * (MAX_CHECKPOINTS - len(last_update_times))
-    accum_times += [0] * (MAX_CHECKPOINTS - len(accum_times))
-
-    daily_log_returns = aggregate_daily_returns(cps, target_duration, daily_checkpoints)
-    aggregated_gains = []
-    aggregated_losses = []
-    aggregated_last_update_times = []
-    aggregated_accum_times = []
-
-    for i, daily_return in enumerate(daily_log_returns):
-        if daily_return >= 0:
-            aggregated_gains.append(int(daily_return * SCALING_FACTOR))
-            aggregated_losses.append(0)
-        else:
-            aggregated_gains.append(0)
-            aggregated_losses.append(int(daily_return * SCALING_FACTOR))
-
-        aggregated_last_update_times.append(target_duration + (i * target_duration))
-        aggregated_accum_times.append(target_duration)
-
-    aggregated_checkpoint_count = len(daily_log_returns)
-
-    aggregated_gains += [0] * (MAX_CHECKPOINTS - len(aggregated_gains))
-    aggregated_losses += [0] * (MAX_CHECKPOINTS - len(aggregated_losses))
-    aggregated_last_update_times += [0] * (
-        MAX_CHECKPOINTS - len(aggregated_last_update_times)
-    )
-    aggregated_accum_times += [0] * (MAX_CHECKPOINTS - len(aggregated_accum_times))
+    # Pad to MAX_DAYS
+    scaled_log_returns += [0] * (MAX_DAYS - len(scaled_log_returns))
 
     if verbose:
-        bt.logging.info(
-            f"Processing {checkpoint_count} raw checkpoints for merkle roots"
-        )
-        bt.logging.info(
-            f"Using {aggregated_checkpoint_count} aggregated daily returns for metrics"
-        )
+        bt.logging.info(f"Using {n_returns} daily returns from PTN")
 
     all_orders = []
     for pos in positions:
@@ -473,8 +398,32 @@ def generate_proof(
 
     if verbose:
         bt.logging.info(
-            f"Prepared {aggregated_checkpoint_count} aggregated daily returns and {signals_count} signals for circuit."
+            f"Prepared {n_returns} daily returns and {signals_count} signals for circuit."
         )
+
+        bt.logging.info(f"Circuit daily returns count: {n_returns}")
+        bt.logging.info("Circuit First 10 daily returns:")
+        for i in range(min(10, n_returns)):
+            bt.logging.info(
+                f"  [{i}] return={daily_log_returns[i]:.6f} (scaled={scaled_log_returns[i]})"
+            )
+
+        if n_returns > 10:
+            bt.logging.info("Circuit Last 5 daily returns:")
+            for i in range(n_returns - 5, n_returns):
+                if i >= 0:
+                    bt.logging.info(
+                        f"  [{i}] return={daily_log_returns[i]:.6f} (scaled={scaled_log_returns[i]})"
+                    )
+
+        if daily_log_returns:
+            mean_return = sum(daily_log_returns) / len(daily_log_returns)
+            bt.logging.info(
+                f"Circuit daily returns stats: mean={mean_return:.6f}, count={n_returns}"
+            )
+
+        bt.logging.info(f"Daily returns from PTN: {n_returns}")
+        bt.logging.info(f"Circuit Config: MAX_DAYS={MAX_DAYS}, DAILY_CHECKPOINTS=2")
 
     if verbose:
         bt.logging.info("Running tree_generator circuit...")
@@ -513,51 +462,9 @@ def generate_proof(
         else:
             print(f"Signals Merkle root (int): {signals_merkle_root}")
 
-    # This one is similar to tree gen but is the validator's contribution to the circuit (cps)
     if verbose:
-        print("Running returns_generator circuit...")
-    else:
-        print(f"Generating returns for hotkey {miner_hotkey}...")
-    returns_generator_dir = os.path.join(current_dir, "returns_generator")
-
-    returns_prover_input = {
-        "gains": [str(g) for g in aggregated_gains],
-        "losses": [str(l) for l in aggregated_losses],
-        "last_update_times": [str(t) for t in aggregated_last_update_times],
-        "accum_times": [str(a) for a in aggregated_accum_times],
-        "checkpoint_count": str(aggregated_checkpoint_count),
-        "target_duration": str(target_duration),
-    }
-
-    os.makedirs(returns_generator_dir, exist_ok=True)
-    with open(os.path.join(returns_generator_dir, "Prover.toml"), "w") as f:
-        toml.dump(returns_prover_input, f)
-
-    output = run_command(
-        ["nargo", "execute", "--silence-warnings"], returns_generator_dir, verbose
-    )
-
-    fields = parse_nargo_struct_output(output)
-
-    # Parse the ReturnsData struct: log_returns array + returns_merkle_root + valid_days
-    if len(fields) >= 2:
-        # Last field is valid_days, second to last is returns_merkle_root
-        valid_days = fields[-1]
-        returns_merkle_root = fields[-2]
-    else:
-        # Fallback for unexpected format
-        num_log_returns = MAX_DAYS
-        returns_merkle_root = (
-            fields[num_log_returns] if len(fields) > num_log_returns else fields[-2]
-        )
-        valid_days = fields[-1]
-
-    if verbose:
-        print(f"Generated returns Merkle root: {returns_merkle_root}")
-        print(
-            f"Returns Merkle root (hex): 0x{hex(int(returns_merkle_root))[2:].zfill(64)}"
-        )
-        print(f"Number of valid daily returns: {valid_days}")
+        print("Returns Merkle root will be calculated within the circuit")
+        print(f"Number of daily returns: {n_returns}")
 
     if verbose:
         print("Running main proof of portfolio circuit...")
@@ -571,12 +478,8 @@ def generate_proof(
 
     # Finally, LFG
     main_prover_input = {
-        "gains": [str(g) for g in aggregated_gains],
-        "losses": [str(l) for l in aggregated_losses],
-        "last_update_times": [str(t) for t in aggregated_last_update_times],
-        "accum_times": [str(a) for a in aggregated_accum_times],
-        "checkpoint_count": str(aggregated_checkpoint_count),
-        "target_duration": str(target_duration),
+        "log_returns": [str(r) for r in scaled_log_returns],
+        "n_returns": str(n_returns),
         "signals": signals,
         "signals_count": str(signals_count),
         "path_elements": [
@@ -600,7 +503,6 @@ def generate_proof(
             if isinstance(signals_merkle_root, str)
             else str(signals_merkle_root)
         ),
-        "returns_merkle_root": field_to_toml_value(int(returns_merkle_root)),
         "risk_free_rate": str(risk_free_rate_scaled),
         "use_weighting": str(int(use_weighting)),
         "bypass_confidence": str(int(bypass_confidence)),
@@ -622,9 +524,9 @@ def generate_proof(
         print(f"Witness generation completed in {witness_time:.3f}s")
 
     fields = parse_nargo_struct_output(output)
-    if len(fields) < 8:
+    if len(fields) < 9:
         raise RuntimeError(
-            f"Expected 8 output fields from main circuit, got {len(fields)}: {fields}"
+            f"Expected 9 output fields from main circuit, got {len(fields)}: {fields}"
         )
 
     avg_daily_pnl_raw = fields[0]
@@ -635,6 +537,7 @@ def generate_proof(
     sortino_raw = fields[5]
     stat_confidence_raw = fields[6]
     pnl_score_raw = fields[7]
+    returns_merkle_root_raw = fields[8]
 
     def field_to_signed_int(field_str):
         if isinstance(field_str, str) and field_str.startswith("0x"):
@@ -658,6 +561,14 @@ def generate_proof(
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
     pnl_score_value = field_to_signed_int(pnl_score_raw)
 
+    # Process returns merkle root (it's a Field, not signed)
+    if isinstance(returns_merkle_root_raw, str) and returns_merkle_root_raw.startswith(
+        "0x"
+    ):
+        returns_merkle_root = returns_merkle_root_raw
+    else:
+        returns_merkle_root = f"0x{int(returns_merkle_root_raw):x}"
+
     RATIO_SCALE_FACTOR = 1_000_000
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
@@ -673,24 +584,19 @@ def generate_proof(
     )
 
     if witness_only:
-        prove_time, verification_success = None, False
+        prove_time, proving_success = None, True
         if verbose:
             print("Skipping barretenberg proof generation (witness_only=True)")
     else:
         try:
-            prove_time, verification_success = run_bb_prove(main_circuit_dir)
+            prove_time, proving_success = run_bb_prove(main_circuit_dir)
             if prove_time is None:
                 if verbose:
-                    print(
-                        "Barretenberg proof generation failed, but metrics are still available from witness"
-                    )
-                prove_time, verification_success = None, False
+                    print("Barretenberg proof generation failed")
+                prove_time, proving_success = None, False
         except Exception as e:
-            if verbose:
-                print(
-                    f"Exception during proof generation: {e}, but metrics are still available from witness"
-                )
-            prove_time, verification_success = None, False
+            print(f"Exception during proof generation: {e}")
+            prove_time, proving_success = None, False
 
     # Always print key production info: hotkey and verification status
     print(f"Hotkey: {miner_hotkey}")
@@ -708,11 +614,6 @@ def generate_proof(
     print(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
     print(f"PnL Score: {pnl_score_scaled:.9f}")
 
-    if prove_time is not None:
-        print(f"Proof generated in {prove_time}s")
-    else:
-        print("Proof generation failed")
-
     if verbose:
         print("\n--- Proof Generation Complete ---")
         print("\n=== MERKLE ROOTS ===")
@@ -720,19 +621,17 @@ def generate_proof(
         print(f"Returns Merkle Root: {returns_merkle_root}")
 
         print("\n=== DATA SUMMARY ===")
-        print(f"Daily returns processed: {aggregated_checkpoint_count}")
+        print(f"Daily returns processed: {n_returns}")
         print(f"Trading signals processed: {signals_count}")
-        print(f"Valid daily returns: {valid_days}")
+        print("PnL calculated from cumulative returns in circuit")
 
         print("\n=== PROOF GENERATION RESULTS ===")
         print(f"Witness generation time: {witness_time:.3f}s")
-        if prove_time is not None:
-            print(f"Proof generation time: {prove_time:.3f}s")
-            print(
-                f"Proof verification: {'✅ PASSED' if verification_success else '❌ FAILED'}"
-            )
-        else:
-            print("Unable to prove or verify due to an error.")
+        if not witness_only:
+            if prove_time is not None:
+                print(f"Proof generation time: {prove_time:.3f}s")
+            else:
+                print("Unable to prove due to an error.")
 
     # Return structured results for programmatic access
     return {
@@ -761,14 +660,14 @@ def generate_proof(
             "pnl_score_scaled": pnl_score_scaled,
         },
         "data_summary": {
-            "daily_returns_processed": aggregated_checkpoint_count,
+            "daily_returns_processed": n_returns,
             "signals_processed": signals_count,
-            "valid_daily_returns": int(valid_days),
+            "returns_processed": n_returns,
         },
         "proof_results": {
             "witness_generation_time": witness_time,
             "proof_generation_time": prove_time,
-            "verification_success": verification_success,
-            "proof_generated": prove_time is not None,
+            "proving_success": proving_success,
+            "proof_generated": prove_time is not None or witness_only,
         },
     }

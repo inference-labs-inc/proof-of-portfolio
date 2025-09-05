@@ -1,46 +1,31 @@
 use components::core::{
-    calmar::calmar, drawdown::daily_max_drawdown, omega::omega, pnl_score::pnl_score,
-    sharpe::sharpe, sortino::sortino, tstat::statistical_confidence,
+    calmar::calmar, drawdown::daily_max_drawdown, omega::omega, sharpe::sharpe, sortino::sortino,
+    tstat::statistical_confidence,
 };
-use components::core::cps_to_log_returns::{cps_to_log_returns, MAX_CHECKPOINTS, MAX_DAYS};
 use components::core::merkle::{
-    build_merkle_root, hash_return, hash_signal, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH,
-    merkle_inclusion_check, TradingSignal,
+    build_merkle_root, hash_return, hash_signal, merkle_inclusion_check, TradingSignal,
 };
 use components::utils::{
-    ann_excess_return::ann_excess_return, average::average, constants::ARRAY_SIZE,
-    variance::variance, weighting_distribution::weighting_distribution,
+    ann_excess_return::ann_excess_return,
+    average::average,
+    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
+    variance::variance,
+    weighting_distribution::weighting_distribution,
 };
 
 fn main(
-    gains: [i64; MAX_CHECKPOINTS],
-    losses: [i64; MAX_CHECKPOINTS],
-    last_update_times: [u64; MAX_CHECKPOINTS],
-    accum_times: [u64; MAX_CHECKPOINTS],
-    checkpoint_count: u32,
-    target_duration: u64,
+    log_returns: [i64; MAX_DAYS],
+    n_returns: u32,
     signals: [TradingSignal; MAX_SIGNALS],
     signals_count: u32,
     path_elements: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
-    returns_merkle_root: pub Field,
-    risk_free_rate: i64,
+    risk_free_rate: pub i64,
     use_weighting: bool,
-    bypass_confidence: bool,
+    bypass_confidence: pub bool,
     account_size: i64,
-) -> pub [Field; 8] {
-    // Convert checkpoints to log returns
-    let (log_returns, valid_days) = cps_to_log_returns(
-        gains,
-        losses,
-        last_update_times,
-        accum_times,
-        checkpoint_count,
-        target_duration,
-    );
-    let n_returns = valid_days;
-
+) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
     for i in 0..MAX_SIGNALS {
@@ -56,17 +41,6 @@ fn main(
         }
     }
     assert(all_verified);
-
-    // Build root from returns
-    let mut leaves = [0; MAX_RETURNS];
-    for i in 0..MAX_RETURNS {
-        if (i as u32) < n_returns {
-            leaves[i] = hash_return(log_returns[i]);
-        }
-    }
-    let _computed_returns_root = build_merkle_root(leaves, n_returns);
-    // Check that the computed root matches the expected root
-    //  assert(_computed_returns_root == returns_merkle_root);
 
     // Build array from returns
     let mut returns_array = [0; ARRAY_SIZE];
@@ -175,17 +149,26 @@ fn main(
         variance_val,
         ann_excess_return_val,
     );
-    let pnl_score_result = pnl_score(
-        gains,
-        losses,
-        last_update_times,
-        accum_times,
-        checkpoint_count,
-        target_duration,
-        weights,
-        use_weighting,
-        account_size,
-    );
+
+    // Calculate PnL from cumulative log returns
+    let mut cumulative_log_return: i64 = 0;
+    for i in 0..MAX_DAYS {
+        if (i as u32) < n_returns {
+            cumulative_log_return += log_returns[i];
+        }
+    }
+
+    // Convert log return to linear return and calculate PnL
+    let pnl_score_result = (account_size * cumulative_log_return) / SCALE;
+
+    // Build merkle root from returns
+    let mut leaves = [0; MAX_RETURNS];
+    for i in 0..MAX_RETURNS {
+        if (i as u32) < n_returns {
+            leaves[i] = hash_return(log_returns[i]);
+        }
+    }
+    let computed_returns_root = build_merkle_root(leaves, n_returns);
 
     [
         (avg_daily_pnl as u64) as Field,
@@ -196,5 +179,6 @@ fn main(
         (sortino_ratio as u64) as Field,
         (stat_confidence as u64) as Field,
         (pnl_score_result as u64) as Field,
+        computed_returns_root,
     ]
 }

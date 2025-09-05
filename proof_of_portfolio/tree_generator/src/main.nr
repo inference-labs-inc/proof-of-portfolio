@@ -1,4 +1,5 @@
-use components::core::merkle::{hash_signal, MERKLE_DEPTH, TradingSignal};
+use components::core::merkle::{hash_signal, TradingSignal};
+use components::utils::constants::MERKLE_DEPTH;
 use std::hash::pedersen_hash;
 
 global MAX_SIGNALS: u32 = 256;

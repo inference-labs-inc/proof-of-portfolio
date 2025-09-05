@@ -1,5 +1,4 @@
-use crate::core::cps_to_log_returns::MAX_CHECKPOINTS;
-use crate::utils::{average::average, constants::ARRAY_SIZE};
+use crate::utils::{average::average, constants::{ARRAY_SIZE, MAX_CHECKPOINTS}};
 
 pub fn pnl_score(
     gains: [i64; MAX_CHECKPOINTS],
