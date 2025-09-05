@@ -294,6 +294,7 @@ def generate_proof(
     bypass_confidence=False,
     daily_checkpoints=2,
     witness_only=False,
+    account_size=None,
 ):
     """
     Core proof generation logic.
@@ -605,6 +606,7 @@ def generate_proof(
         "risk_free_rate": str(risk_free_rate_scaled),
         "use_weighting": str(int(use_weighting)),
         "bypass_confidence": str(int(bypass_confidence)),
+        "account_size": str(account_size if account_size is not None else 1000000),
     }
 
     os.makedirs(main_circuit_dir, exist_ok=True)

@@ -60,6 +60,7 @@ def _prove_worker(
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
+    account_size=None,
 ):
     """
     Worker function to run proof generation in a separate process.
@@ -75,6 +76,7 @@ def _prove_worker(
             use_weighting=use_weighting,
             bypass_confidence=bypass_confidence,
             daily_checkpoints=daily_checkpoints,
+            account_size=account_size,
         )
 
         proof_results = result.get("proof_results", {})
@@ -158,6 +160,7 @@ def prove_sync(
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
+    account_size=None,
 ):
     """
     Synchronous wrapper for the prove function for backward compatibility.
@@ -178,4 +181,5 @@ def prove_sync(
         use_weighting,
         bypass_confidence,
         daily_checkpoints,
+        account_size,
     )
