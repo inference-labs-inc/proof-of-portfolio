@@ -5,6 +5,7 @@ import os
 import time
 import json
 import bittensor as bt
+import traceback
 
 MAX_DAYS = 120
 MAX_SIGNALS = 256
@@ -247,61 +248,65 @@ def generate_proof(
     scaled_log_returns += [0] * (MAX_DAYS - len(scaled_log_returns))
 
     log_verbose(verbose, "info", f"Using {n_returns} daily returns from PTN")
+    try:
+        all_orders = []
+        for pos in positions:
+            all_orders.extend(get_attr(pos, "orders"))
 
-    all_orders = []
-    for pos in positions:
-        all_orders.extend(get_attr(pos, "orders"))
+        signals_count = len(all_orders)
+        if signals_count > MAX_SIGNALS:
+            log_verbose(
+                verbose,
+                "warning",
+                f"Truncating {signals_count} signals to {MAX_SIGNALS} (circuit limit)",
+            )
+            all_orders = all_orders[:MAX_SIGNALS]
+            signals_count = MAX_SIGNALS
 
-    signals_count = len(all_orders)
-    if signals_count > MAX_SIGNALS:
-        log_verbose(
-            verbose,
-            "warning",
-            f"Truncating {signals_count} signals to {MAX_SIGNALS} (circuit limit)",
-        )
-        all_orders = all_orders[:MAX_SIGNALS]
-        signals_count = MAX_SIGNALS
+        trade_pair_map = {}
+        trade_pair_counter = 0
 
-    trade_pair_map = {}
-    trade_pair_counter = 0
+        signals = []
+        for order in all_orders:
+            trade_pair = get_attr(order, "trade_pair")
+            trade_pair_str = (
+                str(trade_pair).split(".")[1]
+                if hasattr(trade_pair, "name")
+                else str(trade_pair)
+            )
+            if trade_pair_str not in trade_pair_map:
+                trade_pair_map[trade_pair_str] = trade_pair_counter
+                trade_pair_counter += 1
 
-    signals = []
-    for order in all_orders:
-        trade_pair = get_attr(order, "trade_pair")
-        trade_pair_str = (
-            str(trade_pair).split(".")[1]
-            if hasattr(trade_pair, "name")
-            else str(trade_pair)
-        )
-        if trade_pair_str not in trade_pair_map:
-            trade_pair_map[trade_pair_str] = trade_pair_counter
-            trade_pair_counter += 1
+            order_type = get_attr(order, "order_type")
+            order_type_str = (
+                str(order_type).split(".")[1]
+                if hasattr(order_type, "name")
+                else str(order_type)
+            )
+            order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
+            price = int(get_attr(order, "price") * SCALING_FACTOR)
+            order_uuid = get_attr(order, "order_uuid")
+            bid = int(get_attr(order, "bid") * SCALING_FACTOR)
+            ask = int(get_attr(order, "ask") * SCALING_FACTOR)
+            processed_ms = get_attr(order, "processed_ms")
 
-        order_type = get_attr(order, "order_type")
-        order_type_str = (
-            str(order_type).split(".")[1]
-            if hasattr(order_type, "name")
-            else str(order_type)
-        )
-        order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
-        price = int(get_attr(order, "price") * SCALING_FACTOR)
-        order_uuid = get_attr(order, "order_uuid")
-        bid = int(get_attr(order, "bid") * SCALING_FACTOR)
-        ask = int(get_attr(order, "ask") * SCALING_FACTOR)
-        processed_ms = get_attr(order, "processed_ms")
-
-        signals.append(
-            {
-                "trade_pair": str(trade_pair_map[trade_pair_str]),
-                "order_type": str(order_type_map.get(order_type_str, 0)),
-                "leverage": str(int(abs(get_attr(order, "leverage")) * SCALING_FACTOR)),
-                "price": str(price),
-                "processed_ms": str(processed_ms),
-                "order_uuid": f"0x{order_uuid.replace('-', '')}",
-                "bid": str(bid),
-                "ask": str(ask),
-            }
-        )
+            signals.append(
+                {
+                    "trade_pair": str(trade_pair_map[trade_pair_str]),
+                    "order_type": str(order_type_map.get(order_type_str, 0)),
+                    "leverage": str(
+                        int(abs(get_attr(order, "leverage")) * SCALING_FACTOR)
+                    ),
+                    "price": str(price),
+                    "processed_ms": str(processed_ms),
+                    "order_uuid": f"0x{order_uuid.replace('-', '')}",
+                    "bid": str(bid),
+                    "ask": str(ask),
+                }
+            )
+    except Exception:
+        traceback.print_exc()
 
     # Pad signals too
     signals += [

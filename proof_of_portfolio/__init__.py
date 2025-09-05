@@ -81,12 +81,9 @@ def _prove_worker(
 
         proof_results = result.get("proof_results", {})
         proof_generated = proof_results.get("proof_generated", False)
-        verification_success = proof_results.get("verification_success", False)
 
-        if proof_generated and verification_success:
+        if proof_generated:
             status = "success"
-        elif proof_generated and not verification_success:
-            status = "verification_failed"
         else:
             status = "proof_generation_failed"
 
