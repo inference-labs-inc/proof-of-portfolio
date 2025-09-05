@@ -1,6 +1,4 @@
-use crate::utils::{
-    average::average, constants::ARRAY_SIZE,
-};
+use crate::utils::{average::average, constants::ARRAY_SIZE};
 
 pub fn variance(
     daily_returns: [i64; ARRAY_SIZE],
@@ -23,7 +21,13 @@ pub fn variance(
     }
 
     if proceed {
-        let mean = average(daily_returns, actual_len, weights, use_weighting, sum_of_weights);
+        let mean = average(
+            daily_returns,
+            actual_len,
+            weights,
+            use_weighting,
+            sum_of_weights,
+        );
         if use_weighting {
             let mut weighted_sum_sq_diff: i64 = 0;
 
@@ -48,7 +52,13 @@ pub fn variance(
                     sum_sq_diff += sq_diff;
                 }
             }
-            variance = sum_sq_diff / (actual_len as i64);
+
+            let denominator = if actual_len > ddof {
+                (actual_len - ddof) as i64
+            } else {
+                1
+            };
+            variance = sum_sq_diff / denominator;
         }
     }
     variance

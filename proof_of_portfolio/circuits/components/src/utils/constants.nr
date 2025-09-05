@@ -3,9 +3,9 @@ pub global SCALE: i64 = 10_000_000;
 pub global DAYS_IN_YEAR: i64 = 365;
 pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 60;
 
-// Risk-free rate (as basis points, e.g., 200 = 2%)
-pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 200;
-pub global DAILY_LOG_RISK_FREE_RATE: i64 = 1124;
+// Risk-free rate (as basis points, 419 = 4.19%
+pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 419;
+pub global DAILY_LOG_RISK_FREE_RATE: i64 = 2351; // (0.0419 / 365) * SCALE
 
 // Minimum values for ratio calculations (scaled for integer math)
 pub global SHARPE_STDDEV_MINIMUM: i64 = 100000; // 0.01 * 10^7

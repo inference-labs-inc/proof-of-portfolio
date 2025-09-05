@@ -10,6 +10,7 @@ pub fn pnl_score(
     target_duration: u64,
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
+    account_size: i64,
 ) -> i64 {
     let mut daily_pnl = [0; ARRAY_SIZE];
     let mut daily_count = 0;
@@ -17,7 +18,9 @@ pub fn pnl_score(
     for i in 0..MAX_CHECKPOINTS {
         if (i as u32) < checkpoint_count & daily_count < ARRAY_SIZE {
             if accum_times[i] >= target_duration {
-                daily_pnl[daily_count] = gains[i] + losses[i];
+                let log_return = gains[i] + losses[i];
+
+                daily_pnl[daily_count] = (log_return * account_size) / 10000000;
                 daily_count += 1;
             }
         }
@@ -69,6 +72,7 @@ fn test_pnl_score_basic() {
         86400,
         weights,
         false,
+        1000000,
     );
 
     assert(result == 75);
@@ -99,6 +103,7 @@ fn test_pnl_score_incomplete_days() {
         86400,
         weights,
         false,
+        1000000,
     );
 
     assert(result == 50);

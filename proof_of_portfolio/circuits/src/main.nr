@@ -28,6 +28,7 @@ fn main(
     risk_free_rate: i64,
     use_weighting: bool,
     bypass_confidence: bool,
+    account_size: i64,
 ) -> pub [Field; 8] {
     // Convert checkpoints to log returns
     let (log_returns, valid_days) = cps_to_log_returns(
@@ -183,6 +184,7 @@ fn main(
         target_duration,
         weights,
         use_weighting,
+        account_size,
     );
 
     [
