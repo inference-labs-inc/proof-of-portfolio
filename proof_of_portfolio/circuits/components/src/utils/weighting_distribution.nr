@@ -2,15 +2,19 @@ use crate::utils::constants::ARRAY_SIZE;
 
 fn exp_decay_scaled(neg_x_scaled: i64) -> i64 {
     let scale: i64 = 100000;
-    let x_pow_2 = neg_x_scaled * neg_x_scaled;
-    let x_pow_3 = x_pow_2 * neg_x_scaled;
 
-    let term1 = neg_x_scaled;
-    let term2 = x_pow_2 / (2 * scale);
-    let term3 = x_pow_3 / (6 * scale * scale);
-    let term4 = (x_pow_3 * neg_x_scaled) / (24 * scale * scale * scale);
+    if neg_x_scaled < -200000 {
+        scale / 1000
+    } else {
+        let x_pow_2 = neg_x_scaled * neg_x_scaled;
+        let x_pow_3 = x_pow_2 * neg_x_scaled;
 
-    scale + term1 + term2 + term3 + term4
+        let term1 = neg_x_scaled;
+        let term2 = x_pow_2 / (2 * scale);
+        let term3 = x_pow_3 / (6 * scale * scale);
+
+        scale + term1 + term2 + term3
+    }
 }
 
 pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {

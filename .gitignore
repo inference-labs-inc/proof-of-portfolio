@@ -12,7 +12,6 @@ data/*
 **/target/**
 circuits/*.gz
 circuits/proof
-circuits/vk
 circuits/Prover.toml
 
 # ZK proof artifacts
@@ -49,7 +48,6 @@ ehthumbs.db
 Thumbs.db
 **venv**
 **Prover.toml
-**vk**
 **.json
 proof-of-portfolio.code-workspace
 *.egg-info
