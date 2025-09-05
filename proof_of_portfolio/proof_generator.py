@@ -3,7 +3,6 @@ import toml
 import re
 import os
 import time
-import math
 import bittensor as bt
 
 # Constants for the circuit
@@ -566,10 +565,9 @@ def generate_proof(
         print(f"Generating witness for hotkey {miner_hotkey}...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
-    # Convert risk-free rate to daily log rate and scale for circuit
+    # Pass annual risk-free rate (to match ann_excess_return usage)
     annual_risk_free_decimal = annual_risk_free_percentage / 100
-    daily_log_risk_free_rate = math.log(1 + annual_risk_free_decimal) / 365
-    risk_free_rate_scaled = int(daily_log_risk_free_rate * SCALING_FACTOR)
+    risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
 
     # Finally, LFG
     main_prover_input = {
@@ -670,7 +668,9 @@ def generate_proof(
     omega_ratio_scaled = omega_ratio_raw / RATIO_SCALE_FACTOR
     sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
     stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
-    pnl_score_scaled = pnl_score_value / SCALING_FACTOR
+    pnl_score_scaled = (
+        pnl_score_value  # PnL is already in USD, don't divide by SCALING_FACTOR
+    )
 
     if witness_only:
         prove_time, verification_success = None, False

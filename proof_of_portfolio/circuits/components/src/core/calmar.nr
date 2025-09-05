@@ -1,6 +1,9 @@
 use crate::utils::{
     ann_excess_return::ann_excess_return,
-    constants::{ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR},
+    constants::{
+        ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR, SCALE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    },
 };
 use super::drawdown::daily_max_drawdown;
 
@@ -16,12 +19,14 @@ pub fn calmar(
     ann_excess_return_val: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
-        -100
+        CALMAR_NOCONFIDENCE_VALUE
     } else {
         let ann_excess_return = ann_excess_return_val;
-        let max_drawdown = daily_max_drawdown(log_returns, actual_len);
+        let drawdown_factor = daily_max_drawdown(log_returns, actual_len);
 
-        if max_drawdown == 0 {
+        let max_drawdown = SCALE - drawdown_factor;
+
+        if max_drawdown <= 0 {
             LARGE_POSITIVE_VALUE
         } else {
             (ann_excess_return * RATIO_SCALE_FACTOR) / max_drawdown
@@ -45,7 +50,17 @@ fn test_calmar_normal_case() {
     let avg = 25;
     let variance_val = 30625;
     let ann_excess = 9025;
-    let result = calmar(returns, 40, 100, weights, false, false, avg, variance_val, ann_excess);
+    let result = calmar(
+        returns,
+        40,
+        100,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }
 
@@ -59,7 +74,17 @@ fn test_calmar_insufficient_data() {
     let avg = 250;
     let variance_val = 1125000;
     let ann_excess = 91150;
-    let result = calmar(returns, 2, 100, weights, false, false, avg, variance_val, ann_excess);
+    let result = calmar(
+        returns,
+        2,
+        100,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result == 0);
 }
 
@@ -74,7 +99,17 @@ fn test_calmar_exactly_30_days() {
     let avg = 100;
     let variance_val = 0;
     let ann_excess = 36450;
-    let result = calmar(returns, 30, 50, weights, false, false, avg, variance_val, ann_excess);
+    let result = calmar(
+        returns,
+        30,
+        50,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }
 
@@ -89,6 +124,16 @@ fn test_calmar_negative_returns() {
     let avg = -100;
     let variance_val = 0;
     let ann_excess = -36500;
-    let result = calmar(returns, 50, 0, weights, false, false, avg, variance_val, ann_excess);
+    let result = calmar(
+        returns,
+        50,
+        0,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }

@@ -18,9 +18,9 @@ pub global SHARPE_SCALE_FACTOR: i64 = 1000000; // 1M for Sharpe precision
 pub global LARGE_POSITIVE_VALUE: i64 = 1000000000; // Used for ratios when denominator is zero/minimal
 pub global RATIO_SCALE_FACTOR: i64 = 1000000; // Standard 1M scaling for ratios
 
-// Default return values for insufficient confidence
-pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9
-pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9
+// Default return values for insufficient confidence (will be divided by RATIO_SCALE_FACTOR)
+pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100000000; // -100 * 10^6 -> -100 after scaling
+pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100000000; // -100 * 10^6 -> -100 after scaling
 pub global OMEGA_NOCONFIDENCE_VALUE: i64 = 0; // Omega uses 0.0 in subnet
-pub global SORTINO_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9
-pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = -100000000000; // -100 * 10^9
+pub global SORTINO_NOCONFIDENCE_VALUE: i64 = -100000000; // -100 * 10^6 -> -100 after scaling
+pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = -100000000; // -100 * 10^6 -> -100 after scaling

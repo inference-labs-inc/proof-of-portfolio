@@ -1,10 +1,15 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, OMEGA_SCALE_FACTOR, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR,
-    STATISTICAL_CONFIDENCE_MINIMUM_N,
+    ARRAY_SIZE, LARGE_POSITIVE_VALUE, OMEGA_LOSS_MINIMUM, OMEGA_NOCONFIDENCE_VALUE,
+    OMEGA_SCALE_FACTOR, RATIO_SCALE_FACTOR, STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 
-pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, weights: [i64; ARRAY_SIZE], use_weighting: bool, bypass_confidence: bool) -> i64 {
-    // Check minimum sample size for statistical confidence
+pub fn omega(
+    log_returns: [i64; ARRAY_SIZE],
+    actual_len: u32,
+    weights: [i64; ARRAY_SIZE],
+    use_weighting: bool,
+    bypass_confidence: bool,
+) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         OMEGA_NOCONFIDENCE_VALUE
     } else {
@@ -28,11 +33,13 @@ pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, weights: [i64; ARR
             let descaled_positive_sum = weighted_positive_sum / weight_scale;
             let descaled_negative_sum = weighted_negative_sum / weight_scale;
             let abs_weighted_negative_sum = -descaled_negative_sum;
-            if abs_weighted_negative_sum > 0 {
-                ((descaled_positive_sum * RATIO_SCALE_FACTOR) / abs_weighted_negative_sum) as i64
+
+            let effective_denominator = if abs_weighted_negative_sum >= OMEGA_LOSS_MINIMUM {
+                abs_weighted_negative_sum
             } else {
-                LARGE_POSITIVE_VALUE
-            }
+                OMEGA_LOSS_MINIMUM
+            };
+            ((descaled_positive_sum * RATIO_SCALE_FACTOR) / effective_denominator) as i64
         } else {
             let mut positive_sum: u64 = 0;
             let mut negative_sum: u64 = 0;
@@ -47,11 +54,12 @@ pub fn omega(log_returns: [i64; ARRAY_SIZE], actual_len: u32, weights: [i64; ARR
                 }
             }
 
-            if negative_sum > 0 {
-                ((positive_sum * RATIO_SCALE_FACTOR as u64) / negative_sum) as i64
+            let effective_denominator = if negative_sum >= OMEGA_LOSS_MINIMUM as u64 {
+                negative_sum
             } else {
-                LARGE_POSITIVE_VALUE
-            }
+                OMEGA_LOSS_MINIMUM as u64
+            };
+            ((positive_sum * RATIO_SCALE_FACTOR as u64) / effective_denominator) as i64
         }
     }
 }

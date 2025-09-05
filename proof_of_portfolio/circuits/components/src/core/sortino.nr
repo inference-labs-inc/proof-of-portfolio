@@ -30,7 +30,7 @@ pub fn sortino(
 
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                if log_returns[i] < (RISK_FREE_RATE / 365) {
                     downside_returns_sum += log_returns[i];
                     negative_count = negative_count + 1;
                 }
@@ -42,7 +42,7 @@ pub fn sortino(
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
-                    if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                    if log_returns[i] < (RISK_FREE_RATE / 365) {
                         let diff = log_returns[i] - downside_mean;
                         downside_variance_sum += ((diff * diff) as u64);
                     }

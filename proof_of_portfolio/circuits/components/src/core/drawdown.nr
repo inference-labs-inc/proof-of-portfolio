@@ -31,31 +31,37 @@ fn exp_scaled(x_scaled: i64) -> i64 {
 }
 
 pub fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], actual_len: u32) -> i64 {
-    let mut max_drawdown = 0;
+    let mut max_drawdown_factor = SCALE;
 
     if actual_len > 0 {
-        let mut current_sum: i64 = 0;
-        let mut current_max: i64 = -9223372036854775807;
+        let mut cumulative_sum: i64 = 0;
+        let mut running_max: i64 = 0;
 
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                current_sum += log_returns[i];
+                cumulative_sum += log_returns[i];
 
-                if current_sum > current_max {
-                    current_max = current_sum;
+                if cumulative_sum > running_max {
+                    running_max = cumulative_sum;
                 }
 
-                let drawdown_log = current_sum - current_max;
-                let exp_val = exp_scaled(drawdown_log);
-                let drawdown = SCALE - exp_val;
+                if running_max > 0 {
+                    let cumulative_value = exp_scaled(cumulative_sum);
+                    let max_value = exp_scaled(running_max);
 
-                if drawdown > max_drawdown {
-                    max_drawdown = drawdown;
+                    let drawdown_pct = ((cumulative_value - max_value) * SCALE) / max_value;
+
+                    let drawdown_factor = SCALE + drawdown_pct;
+
+                    if drawdown_factor < max_drawdown_factor {
+                        max_drawdown_factor = drawdown_factor;
+                    }
                 }
             }
         }
     }
-    max_drawdown
+
+    max_drawdown_factor
 }
 
 #[test]
@@ -66,7 +72,7 @@ fn test_drawdown_all_positive() {
     }
 
     let result = daily_max_drawdown(returns, 10);
-    assert(result == 0);
+    assert(result == SCALE);
 }
 
 #[test]
