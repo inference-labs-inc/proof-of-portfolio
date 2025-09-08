@@ -40,8 +40,11 @@ pub fn omega(
                 sum_weights_negative = OMEGA_LOSS_MINIMUM;
             }
 
-            let positive_sum = product_sum_positive * sum_weights_negative;
-            let negative_sum = -product_sum_negative * sum_weights_positive;
+            let positive_sum_u128 = (product_sum_positive as u128) * (sum_weights_negative as u128);
+            let negative_sum_u128 = ((-product_sum_negative) as u128) * (sum_weights_positive as u128);
+
+            let positive_sum = (positive_sum_u128 / 1000000) as i64;
+            let negative_sum = (negative_sum_u128 / 1000000) as i64;
 
             let effective_denominator = if negative_sum >= OMEGA_LOSS_MINIMUM {
                 negative_sum
