@@ -51,7 +51,8 @@ pub fn omega(
             } else {
                 OMEGA_LOSS_MINIMUM
             };
-            ((positive_sum * RATIO_SCALE_FACTOR) / effective_denominator) as i64
+            let final_calc = ((positive_sum as u128) * (RATIO_SCALE_FACTOR as u128)) / (effective_denominator as u128);
+            final_calc as i64
         } else {
             let mut positive_sum: u64 = 0;
             let mut negative_sum: u64 = 0;
