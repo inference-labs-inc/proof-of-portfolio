@@ -55,11 +55,7 @@ pub fn variance(
                 }
             }
 
-            let denominator = if actual_len > ddof {
-                (actual_len - ddof) as i64
-            } else {
-                1
-            };
+            let denominator = actual_len as i64;
             variance = sum_sq_diff / denominator;
         }
     }

@@ -28,7 +28,7 @@ pub fn weighting_distribution(actual_len: u32) -> [i64; ARRAY_SIZE] {
     for i in 0..ARRAY_SIZE {
         if (i as u32) < actual_len {
             let position_from_newest = (actual_len - 1) - (i as u32);
-            let neg_x_scaled = -(decay_rate * (position_from_newest as i64)) / 1000;
+            let neg_x_scaled = -(decay_rate * (position_from_newest as i64)) / 1;
             let exp_val_scaled = exp_decay_scaled(neg_x_scaled);
 
             let weighted_val = (weight_range * exp_val_scaled) / scale;

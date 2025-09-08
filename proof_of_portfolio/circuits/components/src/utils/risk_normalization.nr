@@ -1,20 +1,17 @@
 use crate::utils::constants::SCALE;
 
 pub fn mdd_augmentation(drawdown_decimal: i64) -> i64 {
-    let drawdown_factor = SCALE - drawdown_decimal;
+    let max_drawdown_percentage = 10;
 
-    if (drawdown_factor <= 0) | (drawdown_factor > SCALE) {
+    if (drawdown_decimal <= 0) | (drawdown_decimal >= SCALE) {
         0
     } else {
-        let drawdown_percentage = ((SCALE - drawdown_factor) * 100) / SCALE;
-        let max_drawdown_percentage = 10;
+        let dd_percent = (drawdown_decimal * 100) / SCALE;
 
-        if drawdown_percentage >= max_drawdown_percentage {
-            0
-        } else if drawdown_percentage <= 0 {
+        if dd_percent <= 0 | dd_percent >= max_drawdown_percentage {
             0
         } else {
-            SCALE / drawdown_percentage
+            SCALE / dd_percent
         }
     }
 }
