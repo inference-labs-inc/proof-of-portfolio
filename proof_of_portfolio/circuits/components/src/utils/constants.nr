@@ -12,7 +12,7 @@ pub global MERKLE_DEPTH: u32 = 8;
 pub global DAILY_CHECKPOINTS: u32 = 2;
 pub global SECONDS_PER_DAY: u64 = 86400;
 
-pub global SCALE: i64 = 1_000_000_000;
+pub global SCALE: i64 = 100_000_000;
 
 // Date and time constants
 pub global DAYS_IN_YEAR: i64 = 365;
