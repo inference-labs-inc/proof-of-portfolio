@@ -26,6 +26,7 @@ fn main(
     bypass_confidence: pub bool,
     account_size: i64,
     weights: [i64; ARRAY_SIZE],
+    calmar_cap: i64,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
@@ -141,6 +142,7 @@ fn main(
         avg_daily_return,
         variance_val,
         ann_excess_return_val,
+        calmar_cap,
     );
     let omega_ratio = omega(
         returns_array,

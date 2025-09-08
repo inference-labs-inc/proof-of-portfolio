@@ -33,46 +33,58 @@ pub fn omega(
                 }
             }
 
-            if sum_weights_positive == 0 {
-                sum_weights_positive = OMEGA_LOSS_MINIMUM;
-            }
-            if sum_weights_negative == 0 {
-                sum_weights_negative = OMEGA_LOSS_MINIMUM;
-            }
+            let mean_pos = if sum_weights_positive != 0 {
+                product_sum_positive / sum_weights_positive
+            } else {
+                0
+            };
+            let mean_neg = if sum_weights_negative != 0 {
+                (-product_sum_negative) / sum_weights_negative
+            } else {
+                0
+            };
 
-            let positive_sum_u128 = (product_sum_positive as u128) * (sum_weights_negative as u128);
-            let negative_sum_u128 = ((-product_sum_negative) as u128) * (sum_weights_positive as u128);
-
-            let positive_sum = (positive_sum_u128 / 1000000) as i64;
-            let negative_sum = (negative_sum_u128 / 1000000) as i64;
-
-            let effective_denominator = if negative_sum >= OMEGA_LOSS_MINIMUM {
-                negative_sum
+            let effective_denominator = if mean_neg >= OMEGA_LOSS_MINIMUM {
+                mean_neg
             } else {
                 OMEGA_LOSS_MINIMUM
             };
-            let final_calc = ((positive_sum as u128) * (RATIO_SCALE_FACTOR as u128)) / (effective_denominator as u128);
-            final_calc as i64
+            (mean_pos * RATIO_SCALE_FACTOR) / effective_denominator
         } else {
-            let mut positive_sum: u64 = 0;
-            let mut negative_sum: u64 = 0;
+            let mut positive_sum: i64 = 0;
+            let mut negative_sum: i64 = 0;
+            let mut count_pos: u32 = 0;
+            let mut count_neg: u32 = 0;
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     if log_returns[i] > 0 {
-                        positive_sum = positive_sum + (log_returns[i] as u64);
+                        positive_sum += log_returns[i];
+                        count_pos += 1;
                     } else if log_returns[i] < 0 {
-                        negative_sum = negative_sum + ((-log_returns[i]) as u64);
+                        negative_sum += (-log_returns[i]);
+                        count_neg += 1;
                     }
                 }
             }
 
-            let effective_denominator = if negative_sum >= OMEGA_LOSS_MINIMUM as u64 {
-                negative_sum
+            let mean_pos = if count_pos > 0 {
+                positive_sum / (count_pos as i64)
             } else {
-                OMEGA_LOSS_MINIMUM as u64
+                0
             };
-            ((positive_sum * RATIO_SCALE_FACTOR as u64) / effective_denominator) as i64
+            let mean_neg = if count_neg > 0 {
+                negative_sum / (count_neg as i64)
+            } else {
+                0
+            };
+
+            let effective_denominator = if mean_neg >= OMEGA_LOSS_MINIMUM {
+                mean_neg
+            } else {
+                OMEGA_LOSS_MINIMUM
+            };
+            (mean_pos * RATIO_SCALE_FACTOR) / effective_denominator
         }
     }
 }

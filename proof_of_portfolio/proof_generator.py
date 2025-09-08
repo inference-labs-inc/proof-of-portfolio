@@ -384,7 +384,9 @@ def generate_proof(
     # Pass annual risk-free rate (to match ann_excess_return usage)
     annual_risk_free_decimal = annual_risk_free_percentage / 100
     risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
+    calmar_cap = int(data.get("calmar_cap", 1) * SCALING_FACTOR)
 
+    account_size = data.get("account_size", 250000)
     # Finally, LFG
     main_prover_input = {
         "log_returns": [str(r) for r in scaled_log_returns],
@@ -416,7 +418,8 @@ def generate_proof(
         "use_weighting": "1",
         "weights": [str(w) for w in scaled_weights],
         "bypass_confidence": str(int(bypass_confidence)),
-        "account_size": str(account_size if account_size is not None else 1000000),
+        "account_size": str(account_size),
+        "calmar_cap": str(calmar_cap),
     }
 
     os.makedirs(main_circuit_dir, exist_ok=True)

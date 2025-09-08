@@ -18,6 +18,7 @@ pub fn calmar(
     avg_daily_return: i64,
     variance_val: i64,
     ann_excess_return_val: i64,
+    calmar_cap: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         CALMAR_NOCONFIDENCE_VALUE
@@ -29,13 +30,11 @@ pub fn calmar(
         if drawdown_normalization_factor == 0 {
             0
         } else {
-            let raw_calmar = ((base_return_percentage * drawdown_normalization_factor) / SCALE)
-                * RATIO_SCALE_FACTOR;
-            let calmar_cap = 10 * RATIO_SCALE_FACTOR;
+            let raw_calmar = (base_return_percentage * drawdown_normalization_factor) / SCALE;
             if raw_calmar > calmar_cap {
-                calmar_cap
+                calmar_cap * RATIO_SCALE_FACTOR
             } else {
-                raw_calmar
+                raw_calmar * RATIO_SCALE_FACTOR
             }
         }
     }
@@ -67,6 +66,7 @@ fn test_calmar_normal_case() {
         avg,
         variance_val,
         ann_excess,
+        1,
     );
     assert(result != 0);
 }
@@ -91,6 +91,7 @@ fn test_calmar_insufficient_data() {
         avg,
         variance_val,
         ann_excess,
+        1,
     );
     assert(result == 0);
 }
@@ -116,6 +117,7 @@ fn test_calmar_exactly_30_days() {
         avg,
         variance_val,
         ann_excess,
+        1,
     );
     assert(result != 0);
 }
@@ -141,6 +143,7 @@ fn test_calmar_negative_returns() {
         avg,
         variance_val,
         ann_excess,
+        1,
     );
     assert(result != 0);
 }
