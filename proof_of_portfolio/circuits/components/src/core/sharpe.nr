@@ -25,7 +25,7 @@ pub fn sharpe(
         let volatility = if actual_len < 2 {
             SCALE
         } else {
-            let annualized_variance = variance_val * 365;
+            let annualized_variance = variance_val * 365 * 1000000;
             sqrt(annualized_variance as u64) as i64
         };
         let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {

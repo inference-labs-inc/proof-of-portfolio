@@ -512,7 +512,7 @@ def generate_proof(
     bt.logging.info(f"Average Daily PnL: {avg_daily_pnl_scaled:.9f}")
     bt.logging.info(f"Sharpe Ratio: {sharpe_ratio_scaled:.9f}")
     # Convert drawdown factor to percentage: drawdown% = (1 - factor) * 100
-    drawdown_percentage = (1 - max_drawdown_scaled) * 100
+    drawdown_percentage = max_drawdown_scaled * 100
     bt.logging.info(
         f"Max Drawdown: {max_drawdown_scaled:.9f} ({drawdown_percentage:.6f}%)"
     )

@@ -4,6 +4,7 @@ use crate::utils::{
         ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR, SCALE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
+    risk_normalization::risk_normalization,
 };
 use super::drawdown::daily_max_drawdown;
 
@@ -21,15 +22,20 @@ pub fn calmar(
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         CALMAR_NOCONFIDENCE_VALUE
     } else {
-        let ann_excess_return = ann_excess_return_val;
-        let drawdown_factor = daily_max_drawdown(log_returns, actual_len);
+        let base_return_percentage = (avg_daily_return * 365 * 100) / SCALE;
+        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
+        let drawdown_normalization_factor = risk_normalization(max_drawdown_decimal);
 
-        let max_drawdown = SCALE - drawdown_factor;
-
-        if max_drawdown <= 0 {
-            LARGE_POSITIVE_VALUE
+        if drawdown_normalization_factor == 0 {
+            0
         } else {
-            (ann_excess_return * RATIO_SCALE_FACTOR) / max_drawdown
+            let raw_calmar = (base_return_percentage * drawdown_normalization_factor) / SCALE;
+            let calmar_cap = 10 * RATIO_SCALE_FACTOR;
+            if raw_calmar > calmar_cap {
+                calmar_cap
+            } else {
+                raw_calmar
+            }
         }
     }
 }

@@ -14,32 +14,41 @@ pub fn omega(
         OMEGA_NOCONFIDENCE_VALUE
     } else {
         if use_weighting {
-            let mut weighted_positive_sum: i64 = 0;
-            let mut weighted_negative_sum: i64 = 0;
-            let weight_scale: i64 = 100000;
+            let mut product_sum_positive: i64 = 0;
+            let mut product_sum_negative: i64 = 0;
+            let mut sum_weights_positive: i64 = 0;
+            let mut sum_weights_negative: i64 = 0;
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
-                    let weight = weights[i] as i64;
-                    let log_return = log_returns[i] as i64;
+                    let weight = weights[i];
+                    let log_return = log_returns[i];
                     if log_return > 0 {
-                        weighted_positive_sum += log_return * weight;
+                        product_sum_positive += log_return * weight;
+                        sum_weights_positive += weight;
                     } else if log_return < 0 {
-                        weighted_negative_sum += log_return * weight;
+                        product_sum_negative += log_return * weight;
+                        sum_weights_negative += weight;
                     }
                 }
             }
 
-            let descaled_positive_sum = weighted_positive_sum / weight_scale;
-            let descaled_negative_sum = weighted_negative_sum / weight_scale;
-            let abs_weighted_negative_sum = -descaled_negative_sum;
+            if sum_weights_positive == 0 {
+                sum_weights_positive = OMEGA_LOSS_MINIMUM;
+            }
+            if sum_weights_negative == 0 {
+                sum_weights_negative = OMEGA_LOSS_MINIMUM;
+            }
 
-            let effective_denominator = if abs_weighted_negative_sum >= OMEGA_LOSS_MINIMUM {
-                abs_weighted_negative_sum
+            let positive_sum = product_sum_positive * sum_weights_negative;
+            let negative_sum = -product_sum_negative * sum_weights_positive;
+
+            let effective_denominator = if negative_sum >= OMEGA_LOSS_MINIMUM {
+                negative_sum
             } else {
                 OMEGA_LOSS_MINIMUM
             };
-            ((descaled_positive_sum * RATIO_SCALE_FACTOR) / effective_denominator) as i64
+            ((positive_sum * RATIO_SCALE_FACTOR) / effective_denominator) as i64
         } else {
             let mut positive_sum: u64 = 0;
             let mut negative_sum: u64 = 0;

@@ -35,8 +35,8 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    let scaled_sq_diff = sq_diff / 1000;
-                    weighted_sum_sq_diff += scaled_sq_diff * weights[i];
+                    let pre_scaled_sq_diff = sq_diff / 1000000;
+                    weighted_sum_sq_diff += pre_scaled_sq_diff * weights[i];
                 }
             }
 
@@ -50,7 +50,7 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    let scaled_sq_diff = sq_diff / 1000;
+                    let scaled_sq_diff = sq_diff / 1000000;
                     sum_sq_diff += scaled_sq_diff;
                 }
             }

@@ -21,6 +21,7 @@ fn main(
     path_elements: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
+    returns_commitment: pub Field,
     risk_free_rate: pub i64,
     use_weighting: bool,
     bypass_confidence: pub bool,
@@ -102,7 +103,10 @@ fn main(
             let log_return = returns_array[i];
             let x_squared = (log_return * log_return) / SCALE;
             let x_cubed = (x_squared * log_return) / SCALE;
-            let exp_minus_one = log_return + (x_squared / 2) + (x_cubed / 6);
+            let x_fourth = (x_cubed * log_return) / SCALE;
+            let x_fifth = (x_fourth * log_return) / SCALE;
+            let exp_minus_one =
+                log_return + (x_squared / 2) + (x_cubed / 6) + (x_fourth / 24) + (x_fifth / 120);
             daily_pnl_array[i] = (exp_minus_one * account_size) / SCALE;
         }
     }
@@ -177,6 +181,9 @@ fn main(
         }
     }
     let computed_returns_root = build_merkle_root(leaves, n_returns);
+
+    // Verify returns commitment matches computed root
+    assert(returns_commitment == computed_returns_root);
 
     [
         (avg_daily_pnl as u64) as Field,
