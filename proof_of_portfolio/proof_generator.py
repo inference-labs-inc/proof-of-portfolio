@@ -408,7 +408,7 @@ def generate_proof(
     annual_risk_free_decimal = annual_risk_free_decimal
     risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
 
-    calmar_cap = int(calmar_ratio_cap * RATIO_SCALE_FACTOR)
+    calmar_cap = int(calmar_ratio_cap)
     account_size = data.get("account_size", 250000)
     # Finally, LFG
     main_prover_input = {
@@ -525,9 +525,7 @@ def generate_proof(
     omega_ratio_scaled = omega_ratio_raw / RATIO_SCALE_FACTOR
     sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
     stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
-    pnl_score_scaled = (
-        pnl_score_value  # PnL is already in USD, don't divide by SCALING_FACTOR
-    )
+    pnl_score_scaled = pnl_score_value / SCALING_FACTOR
 
     if witness_only:
         prove_time, proving_success = None, True
