@@ -21,7 +21,6 @@ fn main(
     path_elements: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
-    returns_commitment: pub Field,
     risk_free_rate: pub i64,
     use_weighting: bool,
     bypass_confidence: pub bool,
@@ -181,9 +180,6 @@ fn main(
         }
     }
     let computed_returns_root = build_merkle_root(leaves, n_returns);
-
-    // Verify returns commitment matches computed root
-    assert(returns_commitment == computed_returns_root);
 
     [
         (avg_daily_pnl as u64) as Field,
