@@ -31,7 +31,7 @@ fn exp_scaled(x_scaled: i64) -> i64 {
 }
 
 pub fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], actual_len: u32) -> i64 {
-    let mut max_drawdown_factor = SCALE;
+    let mut max_drawdown_decimal: i64 = 0;
 
     if actual_len > 0 {
         let mut cumulative_sum: i64 = 0;
@@ -45,21 +45,19 @@ pub fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], actual_len: u32) -> i6
                     running_max = cumulative_sum;
                 }
 
-                if running_max > 0 {
-                    let cumulative_value = exp_scaled(cumulative_sum);
-                    let max_value = exp_scaled(running_max);
-
-                    let drawdown_factor = (cumulative_value * SCALE) / max_value;
-
-                    if drawdown_factor < max_drawdown_factor {
-                        max_drawdown_factor = drawdown_factor;
+                let delta_scaled = cumulative_sum - running_max;
+                if delta_scaled < 0 {
+                    let exp_delta = exp_scaled(delta_scaled);
+                    let dd_decimal_i = SCALE - exp_delta;
+                    if dd_decimal_i > max_drawdown_decimal {
+                        max_drawdown_decimal = dd_decimal_i;
                     }
                 }
             }
         }
     }
 
-    SCALE - max_drawdown_factor
+    max_drawdown_decimal
 }
 
 #[test]
