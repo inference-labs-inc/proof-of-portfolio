@@ -29,7 +29,8 @@ pub fn calmar(
         if drawdown_normalization_factor == 0 {
             0
         } else {
-            let raw_calmar = (base_return_percentage * drawdown_normalization_factor) / SCALE;
+            let raw_calmar = ((base_return_percentage * drawdown_normalization_factor) / SCALE)
+                * RATIO_SCALE_FACTOR;
             let calmar_cap = 10 * RATIO_SCALE_FACTOR;
             if raw_calmar > calmar_cap {
                 calmar_cap

@@ -25,6 +25,7 @@ fn main(
     use_weighting: bool,
     bypass_confidence: pub bool,
     account_size: i64,
+    weights: [i64; ARRAY_SIZE],
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
@@ -51,7 +52,7 @@ fn main(
     }
 
     let weights = if use_weighting {
-        weighting_distribution(n_returns)
+        weights
     } else {
         // Equal weights when weighting is disabled
         let mut equal_weights = [0; ARRAY_SIZE];

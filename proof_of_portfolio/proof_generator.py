@@ -247,6 +247,11 @@ def generate_proof(
     # Pad to MAX_DAYS
     scaled_log_returns += [0] * (MAX_DAYS - len(scaled_log_returns))
 
+    weights_float = data.get("weights", [])
+
+    scaled_weights = [int(w * SCALING_FACTOR) for w in weights_float]
+    scaled_weights += [0] * (256 - len(scaled_weights))
+
     log_verbose(verbose, "info", f"Using {n_returns} daily returns from PTN")
     try:
         all_orders = []
@@ -408,7 +413,8 @@ def generate_proof(
             else str(signals_merkle_root)
         ),
         "risk_free_rate": str(risk_free_rate_scaled),
-        "use_weighting": str(int(use_weighting)),
+        "use_weighting": "1",
+        "weights": [str(w) for w in scaled_weights],
         "bypass_confidence": str(int(bypass_confidence)),
         "account_size": str(account_size if account_size is not None else 1000000),
     }
@@ -555,7 +561,7 @@ def generate_proof(
             "sharpe_ratio_scaled": sharpe_ratio_scaled,
             "max_drawdown_raw": max_drawdown_raw,
             "max_drawdown_scaled": max_drawdown_scaled,
-            "max_drawdown_percentage": (1 - max_drawdown_scaled) * 100,
+            "max_drawdown_percentage": max_drawdown_scaled * 100,
             "calmar_ratio_raw": calmar_ratio_raw,
             "calmar_ratio_scaled": calmar_ratio_scaled,
             "omega_ratio_raw": omega_ratio_raw,
