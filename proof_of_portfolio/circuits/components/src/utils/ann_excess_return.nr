@@ -3,9 +3,10 @@ use crate::utils::{average::average, constants::{ARRAY_SIZE, DAYS_IN_YEAR}};
 pub fn ann_excess_return(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    RISK_FREE_RATE: i64,
+    annual_risk_free: i64,
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
+    days_in_year: i64,
 ) -> i64 {
     let sum_of_weights = if use_weighting {
         let mut sum: i64 = 0;
@@ -25,8 +26,8 @@ pub fn ann_excess_return(
         use_weighting,
         sum_of_weights,
     );
-    let annualized = avg * DAYS_IN_YEAR;
-    annualized - RISK_FREE_RATE
+    let annualized = avg * days_in_year;
+    annualized - annual_risk_free
 }
 
 #[test]
@@ -37,7 +38,7 @@ fn test_ann_excess_return_positive() {
     returns[2] = 150;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = ann_excess_return(returns, 3, 10000, weights, false);
+    let result = ann_excess_return(returns, 3, 10000, weights, false, 365);
     assert(result > 0);
 }
 
@@ -49,7 +50,7 @@ fn test_ann_excess_return_negative() {
     returns[2] = -150;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = ann_excess_return(returns, 3, 10000, weights, false);
+    let result = ann_excess_return(returns, 3, 10000, weights, false, 365);
     assert(result < 0);
 }
 
@@ -61,7 +62,7 @@ fn test_ann_excess_return_equal_to_risk_free() {
     returns[2] = 100;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = ann_excess_return(returns, 3, 36500, weights, false);
+    let result = ann_excess_return(returns, 3, 36500, weights, false, 365);
     assert(result == 0);
 }
 
@@ -72,6 +73,6 @@ fn test_ann_excess_return_zero_risk_free() {
     returns[1] = 200;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = ann_excess_return(returns, 2, 0, weights, false);
+    let result = ann_excess_return(returns, 2, 0, weights, false, 365);
     assert(result == 54750);
 }

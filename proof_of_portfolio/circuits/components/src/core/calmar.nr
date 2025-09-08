@@ -1,7 +1,6 @@
 use crate::utils::{
-    ann_excess_return::ann_excess_return,
     constants::{
-        ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, LARGE_POSITIVE_VALUE, RATIO_SCALE_FACTOR, SCALE,
+        ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     risk_normalization::risk_normalization,
@@ -11,7 +10,7 @@ use super::drawdown::daily_max_drawdown;
 pub fn calmar(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    RISK_FREE_RATE: i64,
+    annual_risk_free: i64,
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
@@ -19,18 +18,21 @@ pub fn calmar(
     variance_val: i64,
     ann_excess_return_val: i64,
     calmar_cap: i64,
+    days_in_year: i64,
+    drawdown_max_percent: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         CALMAR_NOCONFIDENCE_VALUE
     } else {
-        let base_return_percentage = (avg_daily_return * 365 * 100) / SCALE;
+        let base_return_percentage = (avg_daily_return * days_in_year * 100) / SCALE;
         let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
-        let drawdown_normalization_factor = risk_normalization(max_drawdown_decimal);
+        let drawdown_normalization_factor =
+            risk_normalization(max_drawdown_decimal, drawdown_max_percent);
 
         if drawdown_normalization_factor == 0 {
             0
         } else {
-            let raw_calmar = (base_return_percentage * drawdown_normalization_factor) / SCALE;
+            let raw_calmar = base_return_percentage * drawdown_normalization_factor;
             if raw_calmar > calmar_cap {
                 calmar_cap * RATIO_SCALE_FACTOR
             } else {
@@ -67,6 +69,8 @@ fn test_calmar_normal_case() {
         variance_val,
         ann_excess,
         1,
+        365,
+        10,
     );
     assert(result != 0);
 }
@@ -92,6 +96,8 @@ fn test_calmar_insufficient_data() {
         variance_val,
         ann_excess,
         1,
+        365,
+        10,
     );
     assert(result == 0);
 }
@@ -118,6 +124,8 @@ fn test_calmar_exactly_30_days() {
         variance_val,
         ann_excess,
         1,
+        365,
+        10,
     );
     assert(result != 0);
 }
@@ -144,6 +152,8 @@ fn test_calmar_negative_returns() {
         variance_val,
         ann_excess,
         1,
+        365,
+        10,
     );
     assert(result != 0);
 }

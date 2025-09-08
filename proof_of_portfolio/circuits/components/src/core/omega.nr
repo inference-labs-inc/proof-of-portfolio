@@ -1,6 +1,5 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, LARGE_POSITIVE_VALUE, OMEGA_LOSS_MINIMUM, OMEGA_NOCONFIDENCE_VALUE,
-    OMEGA_SCALE_FACTOR, RATIO_SCALE_FACTOR, STATISTICAL_CONFIDENCE_MINIMUM_N,
+    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 
 pub fn omega(
@@ -9,6 +8,7 @@ pub fn omega(
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
+    omega_loss_min: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         OMEGA_NOCONFIDENCE_VALUE
@@ -44,10 +44,10 @@ pub fn omega(
                 0
             };
 
-            let effective_denominator = if mean_neg >= OMEGA_LOSS_MINIMUM {
+            let effective_denominator = if mean_neg >= omega_loss_min {
                 mean_neg
             } else {
-                OMEGA_LOSS_MINIMUM
+                omega_loss_min
             };
             (mean_pos * RATIO_SCALE_FACTOR) / effective_denominator
         } else {
@@ -79,10 +79,10 @@ pub fn omega(
                 0
             };
 
-            let effective_denominator = if mean_neg >= OMEGA_LOSS_MINIMUM {
+            let effective_denominator = if mean_neg >= omega_loss_min {
                 mean_neg
             } else {
-                OMEGA_LOSS_MINIMUM
+                omega_loss_min
             };
             (mean_pos * RATIO_SCALE_FACTOR) / effective_denominator
         }
@@ -97,7 +97,7 @@ fn test_omega_all_positive() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false);
+    let result = omega(returns, 5, weights, false, false, 10000000);
     assert(result == 10000000);
 }
 
@@ -109,7 +109,7 @@ fn test_omega_all_negative() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false);
+    let result = omega(returns, 5, weights, false, false, 10000000);
     assert(result == 0);
 }
 
@@ -122,7 +122,7 @@ fn test_omega_mixed_returns() {
     returns[3] = -300;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 4, weights, false, false);
+    let result = omega(returns, 4, weights, false, false, 10000000);
     assert(result == 22500000);
 }
 
@@ -134,6 +134,6 @@ fn test_omega_zero_returns() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false);
+    let result = omega(returns, 5, weights, false, false, 10000000);
     assert(result == 10000000);
 }

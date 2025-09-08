@@ -8,25 +8,28 @@ use components::core::merkle::{
 use components::utils::{
     ann_excess_return::ann_excess_return,
     average::average,
-    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
+    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH},
     variance::variance,
-    weighting_distribution::weighting_distribution,
 };
 
 fn main(
     log_returns: [i64; MAX_DAYS],
     n_returns: u32,
+    daily_pnl: [i64; ARRAY_SIZE],
+    n_pnl: u32,
     signals: [TradingSignal; MAX_SIGNALS],
     signals_count: u32,
     path_elements: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
-    risk_free_rate: pub i64,
     use_weighting: bool,
     bypass_confidence: pub bool,
-    account_size: i64,
     weights: [i64; ARRAY_SIZE],
     calmar_cap: i64,
+    days_in_year: i64,
+    omega_loss_min: i64,
+    annual_risk_free: i64,
+    drawdown_max_percent: i64,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
@@ -93,37 +96,18 @@ fn main(
     let ann_excess_return_val = ann_excess_return(
         returns_array,
         n_returns,
-        risk_free_rate,
+        annual_risk_free,
         weights,
         use_weighting,
+        days_in_year,
     );
 
-    let mut daily_pnl_array = [0; ARRAY_SIZE];
-    for i in 0..MAX_DAYS {
-        if (i as u32) < n_returns {
-            let log_return = returns_array[i];
-            let x_squared = (log_return * log_return) / SCALE;
-            let x_cubed = (x_squared * log_return) / SCALE;
-            let x_fourth = (x_cubed * log_return) / SCALE;
-            let x_fifth = (x_fourth * log_return) / SCALE;
-            let exp_minus_one =
-                log_return + (x_squared / 2) + (x_cubed / 6) + (x_fourth / 24) + (x_fifth / 120);
-            daily_pnl_array[i] = (exp_minus_one * account_size) / SCALE;
-        }
-    }
-
-    let avg_daily_pnl = average(
-        daily_pnl_array,
-        n_returns,
-        weights,
-        use_weighting,
-        sum_of_weights,
-    );
+    let avg_daily_pnl = average(daily_pnl, n_pnl, weights, use_weighting, sum_of_weights);
 
     let sharpe_ratio = sharpe(
         returns_array,
         n_returns,
-        risk_free_rate,
+        annual_risk_free,
         weights,
         use_weighting,
         bypass_confidence,
@@ -135,7 +119,7 @@ fn main(
     let calmar_ratio = calmar(
         returns_array,
         n_returns,
-        risk_free_rate,
+        annual_risk_free,
         weights,
         use_weighting,
         bypass_confidence,
@@ -143,6 +127,8 @@ fn main(
         variance_val,
         ann_excess_return_val,
         calmar_cap,
+        days_in_year,
+        drawdown_max_percent,
     );
     let omega_ratio = omega(
         returns_array,
@@ -150,11 +136,12 @@ fn main(
         weights,
         use_weighting,
         bypass_confidence,
+        omega_loss_min,
     );
     let sortino_ratio = sortino(
         returns_array,
         n_returns,
-        risk_free_rate,
+        annual_risk_free,
         weights,
         use_weighting,
         bypass_confidence,

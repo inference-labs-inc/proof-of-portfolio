@@ -7,6 +7,8 @@ import json
 import bittensor as bt
 import traceback
 
+
+ARRAY_SIZE = 256
 MAX_DAYS = 120
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
@@ -176,9 +178,21 @@ def generate_bb_proof(circuit_dir):
 
 def generate_proof(
     data=None,
+    daily_pnl=None,
     miner_hotkey=None,
     verbose=None,
     annual_risk_free_percentage=4.19,
+    calmar_ratio_cap=10,
+    days_in_year_crypto=365,
+    weighted_average_decay_max=1.0,
+    weighted_average_decay_min=0.15,
+    weighted_average_decay_rate=0.075,
+    omega_loss_minimum=0.01,
+    sharpe_stddev_minimum=0.01,
+    sortino_downside_minimum=0.01,
+    statistical_confidence_minimum_n_ceil=60,
+    annual_risk_free_decimal=0.0419,
+    drawdown_maxvalue_percentage=10,
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
@@ -199,7 +213,6 @@ def generate_proof(
         "info",
         f"Mode: {'Demo' if is_demo_mode else 'Production'}, verbose={verbose}",
     )
-
     try:
         if data is None:
             log_verbose(
@@ -209,6 +222,11 @@ def generate_proof(
                 data = json.load(f)
     except Exception as e:
         bt.logging.error(f"Failed to load data {e}")
+
+    if data is None:
+        raise ValueError(
+            "Failed to load data from validator_checkpoint.json in demo mode"
+        )
 
     if miner_hotkey is None:
         miner_hotkey = list(data["perf_ledgers"].keys())[0]
@@ -225,6 +243,11 @@ def generate_proof(
             f"Hotkey '{miner_hotkey}' not found in data. Available: {list(data['perf_ledgers'].keys())}"
         )
 
+    if daily_pnl is None:
+        raise ValueError("daily_pnl must be provided")
+    n_pnl = len(daily_pnl)
+    scaled_daily_pnl = [int(p * SCALING_FACTOR) for p in daily_pnl]
+    scaled_daily_pnl += [0] * (ARRAY_SIZE - n_pnl)
     positions = data["positions"][miner_hotkey]["positions"]
     log_verbose(verbose, "info", "Preparing circuit inputs...")
 
@@ -382,15 +405,17 @@ def generate_proof(
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
     # Pass annual risk-free rate (to match ann_excess_return usage)
-    annual_risk_free_decimal = annual_risk_free_percentage / 100
+    annual_risk_free_decimal = annual_risk_free_decimal
     risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
-    calmar_cap = int(data.get("calmar_cap", 1) * SCALING_FACTOR)
 
+    calmar_cap = int(calmar_ratio_cap * RATIO_SCALE_FACTOR)
     account_size = data.get("account_size", 250000)
     # Finally, LFG
     main_prover_input = {
         "log_returns": [str(r) for r in scaled_log_returns],
         "n_returns": str(n_returns),
+        "daily_pnl": [str(p) for p in scaled_daily_pnl],
+        "n_pnl": str(n_pnl),
         "signals": signals,
         "signals_count": str(signals_count),
         "path_elements": [
@@ -420,6 +445,16 @@ def generate_proof(
         "bypass_confidence": str(int(bypass_confidence)),
         "account_size": str(account_size),
         "calmar_cap": str(calmar_cap),
+        "days_in_year": str(days_in_year_crypto),
+        "weighted_decay_max": str(int(weighted_average_decay_max * SCALING_FACTOR)),
+        "weighted_decay_min": str(int(weighted_average_decay_min * SCALING_FACTOR)),
+        "weighted_decay_rate": str(int(weighted_average_decay_rate * SCALING_FACTOR)),
+        "omega_loss_min": str(int(omega_loss_minimum * SCALING_FACTOR)),
+        "sharpe_stddev_min": str(int(sharpe_stddev_minimum * SCALING_FACTOR)),
+        "sortino_downside_min": str(int(sortino_downside_minimum * SCALING_FACTOR)),
+        "stat_conf_min_n": str(statistical_confidence_minimum_n_ceil),
+        "annual_risk_free": str(int(annual_risk_free_decimal * SCALING_FACTOR)),
+        "drawdown_max_percent": str(drawdown_maxvalue_percentage),
     }
 
     os.makedirs(main_circuit_dir, exist_ok=True)
@@ -481,8 +516,6 @@ def generate_proof(
         returns_merkle_root = returns_merkle_root_raw
     else:
         returns_merkle_root = f"0x{int(returns_merkle_root_raw):x}"
-
-    RATIO_SCALE_FACTOR = 1_000_000
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
     avg_daily_pnl_ptn_scaled = avg_daily_pnl_scaled * 365 * 100
