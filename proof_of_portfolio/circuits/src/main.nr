@@ -29,6 +29,7 @@ fn main(
     days_in_year: i64,
     omega_loss_min: i64,
     annual_risk_free: i64,
+    daily_rf: i64,
     drawdown_max_percent: i64,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
@@ -137,6 +138,7 @@ fn main(
         use_weighting,
         bypass_confidence,
         omega_loss_min,
+        daily_rf,
     );
     let sortino_ratio = sortino(
         returns_array,
@@ -148,6 +150,7 @@ fn main(
         avg_daily_return,
         variance_val,
         ann_excess_return_val,
+        daily_rf,
     );
     let stat_confidence = statistical_confidence(
         returns_array,

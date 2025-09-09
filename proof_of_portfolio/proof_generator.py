@@ -4,6 +4,7 @@ import re
 import os
 import time
 import json
+import math
 import bittensor as bt
 import traceback
 
@@ -407,6 +408,9 @@ def generate_proof(
     # Pass annual risk-free rate (to match ann_excess_return usage)
     annual_risk_free_decimal = annual_risk_free_decimal
     risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
+    daily_rf_scaled = int(
+        math.log(1 + annual_risk_free_decimal) / days_in_year_crypto * SCALING_FACTOR
+    )
 
     calmar_cap = int(calmar_ratio_cap)
     account_size = data.get("account_size", 250000)
@@ -440,6 +444,7 @@ def generate_proof(
             else str(signals_merkle_root)
         ),
         "risk_free_rate": str(risk_free_rate_scaled),
+        "daily_rf": str(daily_rf_scaled),
         "use_weighting": "1",
         "weights": [str(w) for w in scaled_weights],
         "bypass_confidence": str(int(bypass_confidence)),

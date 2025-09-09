@@ -18,6 +18,7 @@ pub fn sortino(
     avg_daily_return: i64,
     variance_val: i64,
     ann_excess_return_val: i64,
+    daily_rf: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         SORTINO_NOCONFIDENCE_VALUE
@@ -31,7 +32,7 @@ pub fn sortino(
 
         for i in 0..ARRAY_SIZE {
             if (i as u32) < actual_len {
-                if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                if log_returns[i] < daily_rf {
                     downside_returns_sum += log_returns[i];
                     negative_count += 1;
                     if use_weighting {
@@ -57,7 +58,7 @@ pub fn sortino(
                 let mut weighted_sum_sq_diff: i64 = 0;
                 for i in 0..ARRAY_SIZE {
                     if (i as u32) < actual_len {
-                        if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                        if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
                             let sq_diff = (diff * diff) / 1000000;
                             weighted_sum_sq_diff += sq_diff * weights[i];
@@ -73,7 +74,7 @@ pub fn sortino(
                 let mut sum_sq_diff: i64 = 0;
                 for i in 0..ARRAY_SIZE {
                     if (i as u32) < actual_len {
-                        if log_returns[i] < DAILY_LOG_RISK_FREE_RATE {
+                        if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
                             let sq_diff = (diff * diff) / 1000000;
                             sum_sq_diff += sq_diff;
@@ -126,6 +127,7 @@ fn test_sortino_normal_case() {
         avg,
         variance_val,
         ann_excess,
+        0,
     );
     assert(result != 0);
 }
@@ -151,6 +153,7 @@ fn test_sortino_no_negative_returns() {
         avg,
         variance_val,
         ann_excess,
+        0,
     );
     assert(result == 0);
 }
@@ -176,6 +179,7 @@ fn test_sortino_all_negative_returns() {
         avg,
         variance_val,
         ann_excess,
+        0,
     );
     assert(result != 0);
 }
@@ -203,6 +207,7 @@ fn test_sortino_high_downside_volatility() {
         avg,
         variance_val,
         ann_excess,
+        0,
     );
     assert(result != 0);
 }
