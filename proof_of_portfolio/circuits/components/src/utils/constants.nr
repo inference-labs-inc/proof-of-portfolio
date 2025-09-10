@@ -22,22 +22,23 @@ pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 60;
 pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 419;
 pub global DAILY_LOG_RISK_FREE_RATE: i64 = 114794;
 
-// Minimum values for ratio calculations (scaled for integer math)
-pub global SHARPE_STDDEV_MINIMUM: i64 = 100_000;
-pub global OMEGA_LOSS_MINIMUM: i64 = 100_000;
-pub global SORTINO_DOWNSIDE_MINIMUM: i64 = 100_000;
+// Minimum values for ratio calculations (0.01 scaled by SCALE/1000)
+pub global SHARPE_STDDEV_MINIMUM: i64 = SCALE / 1000;
+pub global OMEGA_LOSS_MINIMUM: i64 = SCALE / 1000;
+pub global SORTINO_DOWNSIDE_MINIMUM: i64 = SCALE / 1000;
 
 // Scaling factors for precision in integer calculations
-pub global OMEGA_SCALE_FACTOR: i64 = 1000000000;
-pub global SHARPE_SCALE_FACTOR: i64 = 1000000;
-pub global LARGE_POSITIVE_VALUE: i64 = 1000000000;
-pub global RATIO_SCALE_FACTOR: i64 = 1000000; // RATIO_SCALE_FACTOR: 10^6 for ratio outputs
+pub global OMEGA_SCALE_FACTOR: i64 = SCALE * 10;
+pub global SHARPE_SCALE_FACTOR: i64 = SCALE / 100;
+pub global LARGE_POSITIVE_VALUE: i64 = SCALE * 10;
+pub global RATIO_SCALE_FACTOR: i64 = SCALE / 100; // RATIO_SCALE_FACTOR: 10^6 for ratio outputs
 
-pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100000000;
-pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100000000;
+// Test values for no-confidence matching PTN defaults
 pub global OMEGA_NOCONFIDENCE_VALUE: i64 = 0;
-pub global SORTINO_NOCONFIDENCE_VALUE: i64 = -100000000;
-pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = -100000000;
+pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100 * SCALE;
+pub global SORTINO_NOCONFIDENCE_VALUE: i64 = -100 * SCALE;
+pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100 * SCALE;
+pub global STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE: i64 = -100 * SCALE;
 
 // Position and trading constants
 pub global PRICE_SCALE: u64 = 1_000_000_000_000;

@@ -1,6 +1,6 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
-    STATISTICAL_CONFIDENCE_MINIMUM_N,
+    ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE,
+    STATISTICAL_CONFIDENCE_MINIMUM_N, CALMAR_NOCONFIDENCE_VALUE,
 };
 use super::drawdown::daily_max_drawdown;
 
@@ -12,9 +12,10 @@ pub fn calmar(
     calmar_cap: i64,
     days_in_year: i64,
     _drawdown_max_percent: i64,
+    noconfidence_value: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
-        CALMAR_NOCONFIDENCE_VALUE
+        noconfidence_value
     } else {
         let ann_excess_return = avg_daily_return * days_in_year;
         let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
@@ -45,7 +46,7 @@ fn test_calmar_normal_case() {
     }
 
     let avg = 25;
-    let result = calmar(returns, 40, false, avg, 1, 365, 10);
+    let result = calmar(returns, 40, false, avg, 1, 365, 10, CALMAR_NOCONFIDENCE_VALUE);
     assert(result != 0);
 }
 
@@ -56,7 +57,7 @@ fn test_calmar_insufficient_data() {
     returns[1] = -500;
 
     let avg = 250;
-    let result = calmar(returns, 2, false, avg, 1, 365, 10);
+    let result = calmar(returns, 2, false, avg, 1, 365, 10, CALMAR_NOCONFIDENCE_VALUE);
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
 
@@ -68,7 +69,7 @@ fn test_calmar_exactly_30_days() {
     }
 
     let avg = 100;
-    let result = calmar(returns, 30, false, avg, 1, 365, 10);
+    let result = calmar(returns, 30, false, avg, 1, 365, 10, CALMAR_NOCONFIDENCE_VALUE);
     assert(result != 0);
 }
 
@@ -80,7 +81,7 @@ fn test_calmar_negative_returns() {
     }
 
     let avg = -100;
-    let result = calmar(returns, 50, false, avg, 1, 365, 10);
+    let result = calmar(returns, 50, false, avg, 1, 365, 10, CALMAR_NOCONFIDENCE_VALUE);
     assert(result != 0);
 }
 
@@ -103,6 +104,7 @@ fn test_calmar_scaling() {
         calmar_cap,
         days_in_year,
         drawdown_max_percent,
+        CALMAR_NOCONFIDENCE_VALUE,
     );
 
     assert(result >= 0);
@@ -115,7 +117,7 @@ fn test_calmar_parity() {
     returns[1] = -1000000i64;
     returns[2] = 1000000i64;
     let avg = 666667i64;
-    let result = calmar(returns, 3u32, true, avg, 1i64, 365i64, 10i64);
+    let result = calmar(returns, 3u32, true, avg, 1i64, 365i64, 10i64, CALMAR_NOCONFIDENCE_VALUE);
     let expected = 1000000i64;
     let diff = if result > expected {
         result - expected
@@ -130,7 +132,7 @@ fn test_calmar_less_than_60_days() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 1000000i64;
     let avg = 1000000i64;
-    let result = calmar(returns, 59u32, false, avg, 1i64, 365i64, 10i64);
+    let result = calmar(returns, 59u32, false, avg, 1i64, 365i64, 10i64, CALMAR_NOCONFIDENCE_VALUE);
     assert(result == -100000000i64);
 }
 
@@ -138,7 +140,7 @@ fn test_calmar_less_than_60_days() {
 fn test_calmar_zero_variance() {
     let mut returns = [0; ARRAY_SIZE];
     let avg = 0i64;
-    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64, CALMAR_NOCONFIDENCE_VALUE);
     assert(result == 0i64);
 }
 
@@ -149,7 +151,7 @@ fn test_calmar_all_positive() {
         returns[i] = 1000000i64;
     }
     let avg = 1000000i64;
-    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64, CALMAR_NOCONFIDENCE_VALUE);
     assert(result == 0i64);
 }
 
@@ -160,6 +162,6 @@ fn test_calmar_all_negative() {
         returns[i] = -1000000i64;
     }
     let avg = -1000000i64;
-    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64, CALMAR_NOCONFIDENCE_VALUE);
     assert(result == 0i64);
 }

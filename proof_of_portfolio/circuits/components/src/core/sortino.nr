@@ -1,8 +1,8 @@
 use crate::utils::{
     constants::{
         ARRAY_SIZE, DAYS_IN_YEAR,
-        RATIO_SCALE_FACTOR, SCALE, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
-        STATISTICAL_CONFIDENCE_MINIMUM_N,
+        RATIO_SCALE_FACTOR, SCALE, SORTINO_DOWNSIDE_MINIMUM,
+        STATISTICAL_CONFIDENCE_MINIMUM_N, SORTINO_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
 };
@@ -18,9 +18,10 @@ pub fn sortino(
     _variance_val: i64,
     ann_excess_return_val: i64,
     daily_rf: i64,
+    noconfidence_value: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
-        SORTINO_NOCONFIDENCE_VALUE
+        noconfidence_value
     } else {
         let excess_return = ann_excess_return_val;
 
@@ -129,6 +130,7 @@ fn test_sortino_normal_case() {
         variance_val,
         ann_excess,
         0,
+        SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -155,6 +157,7 @@ fn test_sortino_no_negative_returns() {
         variance_val,
         ann_excess,
         0,
+        SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result == SORTINO_NOCONFIDENCE_VALUE);
 }
@@ -181,6 +184,7 @@ fn test_sortino_all_negative_returns() {
         variance_val,
         ann_excess,
         0,
+        SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -209,6 +213,7 @@ fn test_sortino_high_downside_volatility() {
         variance_val,
         ann_excess,
         0,
+        SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -238,6 +243,7 @@ fn test_sortino_scaling() {
         variance_val,
         ann_excess_return_val,
         daily_rf,
+        SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result > 0); // scaling test, result should be positive
 }

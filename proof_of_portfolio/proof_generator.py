@@ -13,8 +13,9 @@ ARRAY_SIZE = 256
 MAX_DAYS = 120
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
-SCALING_FACTOR = 10**8
-RATIO_SCALE_FACTOR = 1_000_000
+SCALE = 10**8  # Base scaling factor (10^8)
+SCALING_FACTOR = SCALE  # Alias for compatibility
+RATIO_SCALE_FACTOR = SCALE // 100  # 10^6 for ratio outputs
 PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
 
@@ -199,6 +200,11 @@ def generate_proof(
     daily_checkpoints=2,
     witness_only=False,
     account_size=None,
+    omega_noconfidence_value=0.0,
+    sharpe_noconfidence_value=-100,
+    sortino_noconfidence_value=-100,
+    calmar_noconfidence_value=-100,
+    statistical_confidence_noconfidence_value=-100,
 ):
     is_demo_mode = data is None
     if verbose is None:
@@ -460,6 +466,13 @@ def generate_proof(
         "stat_conf_min_n": str(statistical_confidence_minimum_n_ceil),
         "annual_risk_free": str(int(annual_risk_free_decimal * SCALING_FACTOR)),
         "drawdown_max_percent": str(drawdown_maxvalue_percentage),
+        "omega_noconfidence": str(int(omega_noconfidence_value * SCALING_FACTOR)),
+        "sharpe_noconfidence": str(int(sharpe_noconfidence_value * SCALING_FACTOR)),
+        "sortino_noconfidence": str(int(sortino_noconfidence_value * SCALING_FACTOR)),
+        "calmar_noconfidence": str(int(calmar_noconfidence_value * SCALING_FACTOR)),
+        "stat_confidence_noconfidence": str(
+            int(statistical_confidence_noconfidence_value * SCALING_FACTOR)
+        ),
     }
 
     os.makedirs(main_circuit_dir, exist_ok=True)

@@ -8,7 +8,7 @@ use components::core::merkle::{
 use components::utils::{
     ann_excess_return::ann_excess_return,
     average::average,
-    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH},
+    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
     variance::variance,
 };
 
@@ -31,6 +31,11 @@ fn main(
     annual_risk_free: i64,
     daily_rf: i64,
     drawdown_max_percent: i64,
+    omega_noconfidence: i64,
+    sharpe_noconfidence: i64,
+    sortino_noconfidence: i64,
+    calmar_noconfidence: i64,
+    stat_confidence_noconfidence: i64,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
@@ -62,7 +67,7 @@ fn main(
         // Equal weights when weighting is disabled
         let mut equal_weights = [0; ARRAY_SIZE];
         for i in 0..ARRAY_SIZE {
-            equal_weights[i] = 100000; // Scale value for equal weighting
+            equal_weights[i] = SCALE / 1000;
         }
         equal_weights
     };
@@ -115,6 +120,7 @@ fn main(
         avg_daily_return,
         variance_val,
         ann_excess_return_val,
+        sharpe_noconfidence,
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
@@ -125,6 +131,7 @@ fn main(
         calmar_cap,
         days_in_year,
         drawdown_max_percent,
+        calmar_noconfidence,
     );
     let omega_ratio = omega(
         returns_array,
@@ -134,6 +141,7 @@ fn main(
         bypass_confidence,
         omega_loss_min,
         daily_rf,
+        omega_noconfidence,
     );
     let sortino_ratio = sortino(
         returns_array,
@@ -146,6 +154,7 @@ fn main(
         variance_val,
         ann_excess_return_val,
         daily_rf,
+        sortino_noconfidence,
     );
     let stat_confidence = statistical_confidence(
         returns_array,
@@ -156,6 +165,7 @@ fn main(
         avg_daily_return,
         variance_val,
         ann_excess_return_val,
+        stat_confidence_noconfidence,
     );
 
     let pnl_score_result = avg_daily_pnl;

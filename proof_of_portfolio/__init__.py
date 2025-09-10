@@ -73,6 +73,11 @@ def _prove_worker(
     bypass_confidence=False,
     daily_checkpoints=2,
     account_size=None,
+    omega_noconfidence_value=0.0,
+    sharpe_noconfidence_value=-100,
+    sortino_noconfidence_value=-100,
+    calmar_noconfidence_value=-100,
+    statistical_confidence_noconfidence_value=-100,
 ):
     """
     Worker function to run proof generation in a separate process.
@@ -101,6 +106,11 @@ def _prove_worker(
             bypass_confidence=bypass_confidence,
             daily_checkpoints=daily_checkpoints,
             account_size=account_size,
+            omega_noconfidence_value=omega_noconfidence_value,
+            sharpe_noconfidence_value=sharpe_noconfidence_value,
+            sortino_noconfidence_value=sortino_noconfidence_value,
+            calmar_noconfidence_value=calmar_noconfidence_value,
+            statistical_confidence_noconfidence_value=statistical_confidence_noconfidence_value,
         )
 
         proof_results = result.get("proof_results", {})
@@ -194,6 +204,11 @@ def prove_sync(
     bypass_confidence=False,
     daily_checkpoints=2,
     account_size=None,
+    omega_noconfidence_value=0.0,
+    sharpe_noconfidence_value=-100,
+    sortino_noconfidence_value=-100,
+    calmar_noconfidence_value=-100,
+    statistical_confidence_noconfidence_value=-100,
 ):
     """
     Synchronous wrapper for the prove function for backward compatibility.
@@ -227,4 +242,9 @@ def prove_sync(
         bypass_confidence=bypass_confidence,
         daily_checkpoints=daily_checkpoints,
         account_size=account_size,
+        omega_noconfidence_value=omega_noconfidence_value,
+        sharpe_noconfidence_value=sharpe_noconfidence_value,
+        sortino_noconfidence_value=sortino_noconfidence_value,
+        calmar_noconfidence_value=calmar_noconfidence_value,
+        statistical_confidence_noconfidence_value=statistical_confidence_noconfidence_value,
     )

@@ -1,7 +1,7 @@
 use crate::utils::{
     constants::{
-        ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE, SHARPE_NOCONFIDENCE_VALUE,
-        SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N,
+        ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE,
+        SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SHARPE_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
 };
@@ -16,9 +16,10 @@ pub fn sharpe(
     _avg_daily_return: i64,
     variance_val: i64,
     ann_excess_return_val: i64,
+    noconfidence_value: i64,
 ) -> i64 {
     let result = if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
-        SHARPE_NOCONFIDENCE_VALUE
+        noconfidence_value
     } else {
         let excess_return = ann_excess_return_val;
         let volatility = if actual_len < 2 {
@@ -61,6 +62,7 @@ fn test_sharpe_normal_case() {
         avg,
         variance_val,
         ann_excess,
+        SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -85,7 +87,7 @@ fn test_sharpe_low_volatility() {
         false,
         avg,
         variance_val,
-        ann_excess,
+        ann_excess, SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
@@ -112,7 +114,7 @@ fn test_sharpe_high_volatility() {
         false,
         avg,
         variance_val,
-        ann_excess,
+        ann_excess, SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -139,6 +141,7 @@ fn test_sharpe_scaling() {
         avg_daily_return,
         variance_val,
         ann_excess_return_val,
+        SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result > 0); // scaling test, result should be positive
 }
