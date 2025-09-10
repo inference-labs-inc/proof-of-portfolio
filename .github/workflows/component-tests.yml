@@ -1,0 +1,28 @@
+name: Noir Component Tests
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Noir
+      run: |
+        curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+        echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+
+    - name: Verify Noir installation
+      run: nargo --version
+
+    - name: Make test script executable
+      run: chmod +x ./run_component_tests.sh
+
+    - name: Run component tests
+      run: ./run_component_tests.sh
