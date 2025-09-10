@@ -537,11 +537,11 @@ def generate_proof(
 
     avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
     avg_daily_pnl_ptn_scaled = avg_daily_pnl_scaled * 365 * 100
-    sharpe_ratio_scaled = sharpe_ratio_raw / RATIO_SCALE_FACTOR
+    sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
     calmar_ratio_scaled = calmar_ratio_raw / RATIO_SCALE_FACTOR
     omega_ratio_scaled = omega_ratio_raw / (RATIO_SCALE_FACTOR * RATIO_SCALE_FACTOR)
-    sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
+    sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
     stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
     pnl_score_scaled = pnl_score_value / SCALING_FACTOR
 
