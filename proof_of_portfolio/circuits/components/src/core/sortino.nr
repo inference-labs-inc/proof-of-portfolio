@@ -1,8 +1,7 @@
 use crate::utils::{
-    ann_excess_return::ann_excess_return,
     constants::{
-        ARRAY_SIZE, DAILY_LOG_RISK_FREE_RATE, DAYS_IN_YEAR, LARGE_POSITIVE_VALUE,
-        RATIO_SCALE_FACTOR, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
+        ARRAY_SIZE, DAYS_IN_YEAR,
+        RATIO_SCALE_FACTOR, SCALE, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     sqrt::sqrt,
@@ -11,12 +10,12 @@ use crate::utils::{
 pub fn sortino(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    RISK_FREE_RATE: i64,
+    _RISK_FREE_RATE: i64,
     weights: [i64; ARRAY_SIZE],
     use_weighting: bool,
     bypass_confidence: bool,
-    avg_daily_return: i64,
-    variance_val: i64,
+    _avg_daily_return: i64,
+    _variance_val: i64,
     ann_excess_return_val: i64,
     daily_rf: i64,
 ) -> i64 {
@@ -43,7 +42,7 @@ pub fn sortino(
             }
         }
 
-        if negative_count > 1 {
+        if negative_count > 0 {
             let downside_mean = if use_weighting {
                 if sum_w_down != 0 {
                     weighted_sum_down / sum_w_down
@@ -60,7 +59,7 @@ pub fn sortino(
                     if (i as u32) < actual_len {
                         if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
-                            let sq_diff = (diff * diff) / 1000000;
+                            let sq_diff = diff * diff;
                             weighted_sum_sq_diff += sq_diff * weights[i];
                         }
                     }
@@ -76,7 +75,7 @@ pub fn sortino(
                     if (i as u32) < actual_len {
                         if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
-                            let sq_diff = (diff * diff) / 1000000;
+                            let sq_diff = diff * diff;
                             sum_sq_diff += sq_diff;
                         }
                     }
@@ -88,7 +87,7 @@ pub fn sortino(
                 }
             };
 
-            let annualized_variance = downside_variance_pre * (DAYS_IN_YEAR as i64) * 1000000;
+            let annualized_variance = downside_variance_pre * (DAYS_IN_YEAR as i64);
             let downside_volatility = sqrt(annualized_variance as u64) as i64;
 
             let effective_downside_volatility = if downside_volatility > SORTINO_DOWNSIDE_MINIMUM {
@@ -155,7 +154,7 @@ fn test_sortino_no_negative_returns() {
         ann_excess,
         0,
     );
-    assert(result == 0);
+    assert(result == SORTINO_NOCONFIDENCE_VALUE);
 }
 
 #[test]
@@ -210,4 +209,33 @@ fn test_sortino_high_downside_volatility() {
         0,
     );
     assert(result != 0);
+}
+
+#[test]
+fn test_sortino_scaling() {
+    let mut log_returns = [0; ARRAY_SIZE];
+    log_returns[0] = SCALE / 100; // 0.01 * SCALE
+    log_returns[1] = -SCALE / 200; // -0.005 * SCALE
+    let actual_len = 60u32;
+    let risk_free_rate = 0;
+    let weights = [100000; ARRAY_SIZE];
+    let use_weighting = false;
+    let bypass_confidence = true;
+    let avg_daily_return = SCALE / 36500; // 0.01% daily for 1% annual approx
+    let variance_val = 0;
+    let ann_excess_return_val = SCALE / 100; // 1%
+    let daily_rf = 0;
+    let result = sortino(
+        log_returns,
+        actual_len,
+        risk_free_rate,
+        weights,
+        use_weighting,
+        bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
+        daily_rf,
+    );
+    assert(result > 0); // scaling test, result should be positive
 }

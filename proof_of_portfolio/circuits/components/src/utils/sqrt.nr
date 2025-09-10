@@ -9,26 +9,30 @@ unconstrained fn compute_sqrt(n: u64) -> u64 {
     } else if n <= 15 {
         3
     } else {
-        let mut x = if n < 100 {
-            n / 3
-        } else if n < 10000 {
-            n / 10
-        } else {
-            n / 100
-        };
+        // Better initial guess
+        let mut x = n;
+        let mut bit = 1;
+
+        // Find the highest set bit for a better initial guess
+        for _ in 0..32 {
+            bit = bit << 1;
+            if bit > n {
+                break;
+            }
+        }
+        x = bit >> 1;
 
         if x == 0 {
             x = 1;
         }
 
-        let mut prev = 0;
-        for _ in 0..150 {
-            if x != prev {
-                if x > 0 {
-                    prev = x;
-                    x = (x + n / x) / 2;
-                }
+        // Newton-Raphson iteration
+        for _ in 0..20 {
+            let next = (x + n / x) / 2;
+            if next >= x {
+                break;
             }
+            x = next;
         }
 
         x

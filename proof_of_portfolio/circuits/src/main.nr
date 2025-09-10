@@ -120,13 +120,8 @@ fn main(
     let calmar_ratio = calmar(
         returns_array,
         n_returns,
-        annual_risk_free,
-        weights,
-        use_weighting,
         bypass_confidence,
         avg_daily_return,
-        variance_val,
-        ann_excess_return_val,
         calmar_cap,
         days_in_year,
         drawdown_max_percent,

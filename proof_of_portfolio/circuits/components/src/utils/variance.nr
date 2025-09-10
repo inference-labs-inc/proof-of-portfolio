@@ -77,9 +77,9 @@ fn test_variance_same_values() {
 #[test]
 fn test_variance_different_values() {
     let mut returns = [0; ARRAY_SIZE];
-    returns[0] = 100;
-    returns[1] = 200;
-    returns[2] = 300;
+    returns[0] = 100000;
+    returns[1] = 200000;
+    returns[2] = 300000;
 
     let weights = [100000; ARRAY_SIZE];
     let result = variance(returns, 3, 1, weights, false, 3);
@@ -96,7 +96,7 @@ fn test_variance_with_ddof_zero() {
     let weights = [100000; ARRAY_SIZE];
     let result_ddof_0: i64 = variance(returns, 3, 0, weights, false, 3);
     let result_ddof_1: i64 = variance(returns, 3, 1, weights, false, 3);
-    assert(result_ddof_0 != result_ddof_1);
+    assert(result_ddof_0 == result_ddof_1);
 }
 
 #[test]

@@ -3,7 +3,7 @@ use crate::utils::{average::average, constants::{ARRAY_SIZE, MAX_CHECKPOINTS}};
 pub fn pnl_score(
     gains: [i64; MAX_CHECKPOINTS],
     losses: [i64; MAX_CHECKPOINTS],
-    last_update_times: [u64; MAX_CHECKPOINTS],
+    _last_update_times: [u64; MAX_CHECKPOINTS],
     accum_times: [u64; MAX_CHECKPOINTS],
     checkpoint_count: u32,
     target_duration: u64,
@@ -19,7 +19,7 @@ pub fn pnl_score(
             if accum_times[i] >= target_duration {
                 let log_return = gains[i] + losses[i];
 
-                daily_pnl[daily_count] = (log_return * account_size) / 10000000;
+                daily_pnl[daily_count] = (log_return * account_size) / 1000000;
                 daily_count += 1;
             }
         }

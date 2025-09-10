@@ -1,4 +1,4 @@
-use crate::utils::{average::average, constants::{ARRAY_SIZE, DAYS_IN_YEAR}};
+use crate::utils::{average::average, constants::ARRAY_SIZE};
 
 pub fn ann_excess_return(
     log_returns: [i64; ARRAY_SIZE],

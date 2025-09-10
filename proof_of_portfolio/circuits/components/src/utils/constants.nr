@@ -12,7 +12,7 @@ pub global MERKLE_DEPTH: u32 = 8;
 pub global DAILY_CHECKPOINTS: u32 = 2;
 pub global SECONDS_PER_DAY: u64 = 86400;
 
-pub global SCALE: i64 = 100_000_000;
+pub global SCALE: i64 = 100_000_000; // SCALE: 10^8 for fixed-point precision
 
 // Date and time constants
 pub global DAYS_IN_YEAR: i64 = 365;
@@ -31,7 +31,7 @@ pub global SORTINO_DOWNSIDE_MINIMUM: i64 = 10_000_000;
 pub global OMEGA_SCALE_FACTOR: i64 = 1000000000;
 pub global SHARPE_SCALE_FACTOR: i64 = 1000000;
 pub global LARGE_POSITIVE_VALUE: i64 = 1000000000;
-pub global RATIO_SCALE_FACTOR: i64 = 1000000;
+pub global RATIO_SCALE_FACTOR: i64 = 1000000; // RATIO_SCALE_FACTOR: 10^6 for ratio outputs
 
 pub global CALMAR_NOCONFIDENCE_VALUE: i64 = -100000000;
 pub global SHARPE_NOCONFIDENCE_VALUE: i64 = -100000000;

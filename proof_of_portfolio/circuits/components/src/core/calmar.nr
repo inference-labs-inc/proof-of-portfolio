@@ -10,13 +10,8 @@ use super::drawdown::daily_max_drawdown;
 pub fn calmar(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    annual_risk_free: i64,
-    weights: [i64; ARRAY_SIZE],
-    use_weighting: bool,
     bypass_confidence: bool,
     avg_daily_return: i64,
-    variance_val: i64,
-    ann_excess_return_val: i64,
     calmar_cap: i64,
     days_in_year: i64,
     drawdown_max_percent: i64,
@@ -25,7 +20,7 @@ pub fn calmar(
         CALMAR_NOCONFIDENCE_VALUE
     } else {
         let base_return_percentage = (avg_daily_return * days_in_year * 100) / SCALE;
-        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
+        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len) / SCALE;
         let drawdown_normalization_factor =
             risk_normalization(max_drawdown_decimal, drawdown_max_percent);
 
@@ -54,24 +49,8 @@ fn test_calmar_normal_case() {
         returns[i] = if i % 2 == 0 { 200 } else { -150 };
     }
 
-    let weights = [100000; ARRAY_SIZE];
     let avg = 25;
-    let variance_val = 30625;
-    let ann_excess = 9025;
-    let result = calmar(
-        returns,
-        40,
-        100,
-        weights,
-        false,
-        false,
-        avg,
-        variance_val,
-        ann_excess,
-        1,
-        365,
-        10,
-    );
+    let result = calmar(returns, 40, false, avg, 1, 365, 10);
     assert(result != 0);
 }
 
@@ -81,25 +60,9 @@ fn test_calmar_insufficient_data() {
     returns[0] = 1000;
     returns[1] = -500;
 
-    let weights = [100000; ARRAY_SIZE];
     let avg = 250;
-    let variance_val = 1125000;
-    let ann_excess = 91150;
-    let result = calmar(
-        returns,
-        2,
-        100,
-        weights,
-        false,
-        false,
-        avg,
-        variance_val,
-        ann_excess,
-        1,
-        365,
-        10,
-    );
-    assert(result == 0);
+    let result = calmar(returns, 2, false, avg, 1, 365, 10);
+    assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
 
 #[test]
@@ -109,24 +72,8 @@ fn test_calmar_exactly_30_days() {
         returns[i] = 100;
     }
 
-    let weights = [100000; ARRAY_SIZE];
     let avg = 100;
-    let variance_val = 0;
-    let ann_excess = 36450;
-    let result = calmar(
-        returns,
-        30,
-        50,
-        weights,
-        false,
-        false,
-        avg,
-        variance_val,
-        ann_excess,
-        1,
-        365,
-        10,
-    );
+    let result = calmar(returns, 30, false, avg, 1, 365, 10);
     assert(result != 0);
 }
 
@@ -137,23 +84,87 @@ fn test_calmar_negative_returns() {
         returns[i] = -100;
     }
 
-    let weights = [100000; ARRAY_SIZE];
     let avg = -100;
-    let variance_val = 0;
-    let ann_excess = -36500;
-    let result = calmar(
-        returns,
-        50,
-        0,
-        weights,
-        false,
-        false,
-        avg,
-        variance_val,
-        ann_excess,
-        1,
-        365,
-        10,
-    );
+    let result = calmar(returns, 50, false, avg, 1, 365, 10);
     assert(result != 0);
+}
+
+#[test]
+fn test_calmar_scaling() {
+    let mut log_returns = [0; ARRAY_SIZE];
+    log_returns[0] = SCALE / 100;
+    log_returns[1] = -SCALE / 200;
+    let actual_len = 60u32;
+    let bypass_confidence = true;
+    let avg_daily_return = SCALE / 100;
+    let calmar_cap = 10;
+    let days_in_year = 365;
+    let drawdown_max_percent = 10;
+    let result = calmar(
+        log_returns,
+        actual_len,
+        bypass_confidence,
+        avg_daily_return,
+        calmar_cap,
+        days_in_year,
+        drawdown_max_percent,
+    );
+
+    assert(result >= 0);
+}
+
+#[test]
+fn test_calmar_parity() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 2000000i64;
+    returns[1] = -1000000i64;
+    returns[2] = 1000000i64;
+    let avg = 666667i64;
+    let result = calmar(returns, 3u32, true, avg, 1i64, 365i64, 10i64);
+    let expected = 1000000i64;
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+    assert(diff >= 0);
+}
+
+#[test]
+fn test_calmar_less_than_60_days() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 1000000i64;
+    let avg = 1000000i64;
+    let result = calmar(returns, 59u32, false, avg, 1i64, 365i64, 10i64);
+    assert(result == -100000000i64);
+}
+
+#[test]
+fn test_calmar_zero_variance() {
+    let mut returns = [0; ARRAY_SIZE];
+    let avg = 0i64;
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    assert(result == 0i64);
+}
+
+#[test]
+fn test_calmar_all_positive() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..60 {
+        returns[i] = 1000000i64;
+    }
+    let avg = 1000000i64;
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    assert(result == 0i64);
+}
+
+#[test]
+fn test_calmar_all_negative() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..60 {
+        returns[i] = -1000000i64;
+    }
+    let avg = -1000000i64;
+    let result = calmar(returns, 60u32, true, avg, 1i64, 365i64, 10i64);
+    assert(result == 0i64);
 }

@@ -1,20 +1,19 @@
 use crate::utils::{
-    ann_excess_return::ann_excess_return,
-    ann_volatility::ann_volatility,
-    sqrt::sqrt,
     constants::{
-        ARRAY_SIZE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE, RATIO_SCALE_FACTOR
+        ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE, SHARPE_NOCONFIDENCE_VALUE,
+        SHARPE_STDDEV_MINIMUM, STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
+    sqrt::sqrt,
 };
 
 pub fn sharpe(
-    daily_returns: [i64; ARRAY_SIZE],
+    _daily_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    risk_free_rate: i64,
-    weights: [i64; ARRAY_SIZE],
-    use_weighting: bool,
+    _risk_free_rate: i64,
+    _weights: [i64; ARRAY_SIZE],
+    _use_weighting: bool,
     bypass_confidence: bool,
-    avg_daily_return: i64,
+    _avg_daily_return: i64,
     variance_val: i64,
     ann_excess_return_val: i64,
 ) -> i64 {
@@ -25,7 +24,7 @@ pub fn sharpe(
         let volatility = if actual_len < 2 {
             SCALE
         } else {
-            let annualized_variance = variance_val * 365 * 1000000;
+            let annualized_variance = variance_val * 365;
             sqrt(annualized_variance as u64) as i64
         };
         let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {
@@ -52,7 +51,17 @@ fn test_sharpe_normal_case() {
     let avg = 320;
     let variance_val = 200000;
     let ann_excess = 116700;
-    let result = sharpe(returns, 5, 100, weights, false, false, avg, variance_val, ann_excess);
+    let result = sharpe(
+        returns,
+        5,
+        100,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
 }
 
@@ -67,8 +76,18 @@ fn test_sharpe_low_volatility() {
     let avg = 50;
     let variance_val = 0;
     let ann_excess = 18240;
-    let result = sharpe(returns, 10, 10, weights, false, false, avg, variance_val, ann_excess);
-    assert(result == 0);
+    let result = sharpe(
+        returns,
+        10,
+        10,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
+    assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
 
 #[test]
@@ -84,6 +103,42 @@ fn test_sharpe_high_volatility() {
     let avg = 600;
     let variance_val = 8400000;
     let ann_excess = 218800;
-    let result = sharpe(returns, 5, 200, weights, false, false, avg, variance_val, ann_excess);
+    let result = sharpe(
+        returns,
+        5,
+        200,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+    );
     assert(result != 0);
+}
+
+#[test]
+fn test_sharpe_scaling() {
+    let mut daily_returns = [0; ARRAY_SIZE];
+    daily_returns[0] = SCALE / 100; // 0.01 * SCALE
+    let actual_len = 60u32;
+    let risk_free_rate = 0;
+    let weights = [100000; ARRAY_SIZE];
+    let use_weighting = false;
+    let bypass_confidence = true;
+    let avg_daily_return = SCALE / 36500; // 0.01% daily for 1% annual approx
+    let variance_val = SCALE / 100; // example variance scaled
+    let ann_excess_return_val = SCALE / 100; // 1%
+    let result = sharpe(
+        daily_returns,
+        actual_len,
+        risk_free_rate,
+        weights,
+        use_weighting,
+        bypass_confidence,
+        avg_daily_return,
+        variance_val,
+        ann_excess_return_val,
+    );
+    assert(result > 0); // scaling test, result should be positive
 }

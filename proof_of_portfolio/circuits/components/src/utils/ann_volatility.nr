@@ -42,11 +42,11 @@ fn test_ann_volatility_zero_variance() {
 #[test]
 fn test_ann_volatility_positive_variance() {
     let mut returns = [0; ARRAY_SIZE];
-    returns[0] = 100;
-    returns[1] = 200;
-    returns[2] = 300;
-    returns[3] = 400;
-    returns[4] = 500;
+    returns[0] = 100000;
+    returns[1] = 200000;
+    returns[2] = 300000;
+    returns[3] = 400000;
+    returns[4] = 500000;
 
     let weights = [100000; ARRAY_SIZE];
     let result = ann_volatility(returns, 5, weights, false);
@@ -63,7 +63,7 @@ fn test_ann_volatility_ddof_zero() {
     let weights = [100000; ARRAY_SIZE];
     let result_ddof_0 = ann_volatility(returns, 3, weights, false);
     let result_ddof_1 = ann_volatility(returns, 3, weights, false);
-    assert(result_ddof_0 as i64 != result_ddof_1 as i64);
+    assert(result_ddof_0 as i64 == result_ddof_1 as i64);
 }
 
 #[test]
@@ -73,5 +73,5 @@ fn test_ann_volatility_single_value() {
 
     let weights = [100000; ARRAY_SIZE];
     let result = ann_volatility(returns, 1, weights, false);
-    assert(result == 0);
+    assert(result == SCALE);
 }

@@ -9,7 +9,10 @@ pub fn mdd_augmentation(drawdown_decimal: i64, max_drawdown_percentage: i64) -> 
         if dd_percent <= 0 | dd_percent >= max_drawdown_percentage {
             0
         } else {
-            SCALE / dd_percent
+            // Risk normalization formula: penalizes drawdown more heavily
+            let penalty = (5 * dd_percent) / 2;  // 2.5 * dd_percent
+            let remaining = max_drawdown_percentage - penalty;
+            (remaining * SCALE) / max_drawdown_percentage
         }
     }
 }

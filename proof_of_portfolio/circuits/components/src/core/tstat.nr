@@ -1,10 +1,8 @@
 use crate::utils::{
-    average::average,
     constants::{
-        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR,
+        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR,
     },
     sqrt::sqrt,
-    variance::variance,
 };
 
 pub fn statistical_confidence(
@@ -15,7 +13,7 @@ pub fn statistical_confidence(
     bypass_confidence: bool,
     avg_daily_return: i64,
     variance_val: i64,
-    ann_excess_return_val: i64,
+    _ann_excess_return_val: i64,
 ) -> i64 {
     // Check minimum sample size for statistical confidence
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
@@ -31,10 +29,10 @@ pub fn statistical_confidence(
 }
 
 fn compute_t_statistic(
-    log_returns: [i64; ARRAY_SIZE],
+    _log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
-    weights: [i64; ARRAY_SIZE],
-    use_weighting: bool,
+    _weights: [i64; ARRAY_SIZE],
+    _use_weighting: bool,
     avg_daily_return: i64,
     variance_val: i64,
 ) -> i64 {
@@ -83,7 +81,7 @@ fn test_tstat_insufficient_data() {
     let variance_val = 0;
     let ann_excess = 365000;
     let result = statistical_confidence(returns, 1, weights, false, false, avg, variance_val, ann_excess);
-    assert(result == 0);
+    assert(result == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
 }
 
 #[test]
@@ -98,7 +96,7 @@ fn test_tstat_zero_variance() {
     let variance_val = 0;
     let ann_excess = 36500;
     let result = statistical_confidence(returns, 5, weights, false, false, avg, variance_val, ann_excess);
-    assert(result == 0);
+    assert(result == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
 }
 
 #[test]
