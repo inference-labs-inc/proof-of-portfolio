@@ -47,16 +47,24 @@ pub fn omega(
                 omega_loss_min
             };
 
-            // Apply cross-multiplication like in PTN reference implementation
-            let positive_sum_weighted = product_sum_positive * sum_weights_negative;
-            let negative_sum_weighted = product_sum_negative * sum_weights_positive;
+            // Apply cross-multiplication with scaling to prevent overflow
+            // Scale down both factors before multiplication, then scale back up
+            let scale_down = SCALE / 1000; // Scale down by 1000 to prevent overflow
+            let product_sum_positive_scaled = product_sum_positive / scale_down;
+            let product_sum_negative_scaled = product_sum_negative / scale_down;
 
-            let effective_denominator = if (-negative_sum_weighted) >= omega_loss_min {
+            let positive_sum_weighted = product_sum_positive_scaled * sum_weights_negative;
+            let negative_sum_weighted = product_sum_negative_scaled * sum_weights_positive;
+
+            let effective_denominator = if (-negative_sum_weighted) >= (omega_loss_min / scale_down) {
                 -negative_sum_weighted
             } else {
-                omega_loss_min
+                omega_loss_min / scale_down
             };
-            (positive_sum_weighted * RATIO_SCALE_FACTOR) / effective_denominator
+
+            // Apply scale_down correction to RATIO_SCALE_FACTOR
+            let adjusted_ratio_scale = RATIO_SCALE_FACTOR * scale_down;
+            (positive_sum_weighted * adjusted_ratio_scale) / effective_denominator
         } else {
             let mut positive_sum: i64 = 0;
             let mut negative_sum: i64 = 0;
