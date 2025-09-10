@@ -18,8 +18,8 @@ pub fn omega(
         if use_weighting {
             let mut product_sum_positive: i64 = 0;
             let mut product_sum_negative: i64 = 0;
-            let mut sum_weights_positive: i64 = 0;
-            let mut sum_weights_negative: i64 = 0;
+            let mut sum_weights_positive_raw: i64 = 0;
+            let mut sum_weights_negative_raw: i64 = 0;
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
@@ -27,31 +27,36 @@ pub fn omega(
                     let log_return = log_returns[i];
                     if log_return > 0 {
                         product_sum_positive += log_return * weight;
-                        sum_weights_positive += weight;
+                        sum_weights_positive_raw += weight;
                     } else {
                         product_sum_negative += log_return * weight;
-                        sum_weights_negative += weight;
+                        sum_weights_negative_raw += weight;
                     }
                 }
             }
 
-            let mean_pos = if sum_weights_positive != 0 {
-                product_sum_positive / sum_weights_positive
-            } else {
-                0
-            };
-            let mean_neg = if sum_weights_negative != 0 {
-                (-product_sum_negative) / sum_weights_negative
-            } else {
-                0
-            };
-
-            let effective_denominator = if mean_neg >= omega_loss_min {
-                mean_neg
+            // Apply max with omega_loss_min like in Python reference
+            let sum_weights_positive = if sum_weights_positive_raw >= omega_loss_min {
+                sum_weights_positive_raw
             } else {
                 omega_loss_min
             };
-            (mean_pos * RATIO_SCALE_FACTOR) / effective_denominator
+            let sum_weights_negative = if sum_weights_negative_raw >= omega_loss_min {
+                sum_weights_negative_raw
+            } else {
+                omega_loss_min
+            };
+
+            // Apply cross-multiplication like in PTN reference implementation
+            let positive_sum_weighted = product_sum_positive * sum_weights_negative;
+            let negative_sum_weighted = product_sum_negative * sum_weights_positive;
+
+            let effective_denominator = if (-negative_sum_weighted) >= omega_loss_min {
+                -negative_sum_weighted
+            } else {
+                omega_loss_min
+            };
+            (positive_sum_weighted * RATIO_SCALE_FACTOR) / effective_denominator
         } else {
             let mut positive_sum: i64 = 0;
             let mut negative_sum: i64 = 0;
