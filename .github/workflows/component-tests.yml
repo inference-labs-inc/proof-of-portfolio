@@ -16,6 +16,7 @@ jobs:
     - name: Install Noir
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+        noirup
         echo "$HOME/.nargo/bin" >> $GITHUB_PATH
 
     - name: Verify Noir installation
