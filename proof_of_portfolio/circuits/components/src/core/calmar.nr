@@ -1,9 +1,6 @@
-use crate::utils::{
-    constants::{
-        ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
-        STATISTICAL_CONFIDENCE_MINIMUM_N,
-    },
-    risk_normalization::risk_normalization,
+use crate::utils::constants::{
+    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
+    STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 use super::drawdown::daily_max_drawdown;
 
@@ -14,24 +11,22 @@ pub fn calmar(
     avg_daily_return: i64,
     calmar_cap: i64,
     days_in_year: i64,
-    drawdown_max_percent: i64,
+    _drawdown_max_percent: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         CALMAR_NOCONFIDENCE_VALUE
     } else {
-        let base_return_percentage = (avg_daily_return * days_in_year * 100) / SCALE;
-        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len) / SCALE;
-        let drawdown_normalization_factor =
-            risk_normalization(max_drawdown_decimal, drawdown_max_percent);
+        let ann_excess_return = avg_daily_return * days_in_year;
+        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
 
-        if drawdown_normalization_factor == 0 {
+        if (max_drawdown_decimal == 0) | (ann_excess_return <= 0) {
             0
         } else {
-            let raw_calmar = base_return_percentage * drawdown_normalization_factor;
-            if raw_calmar > calmar_cap {
+            let raw_calmar = (ann_excess_return * RATIO_SCALE_FACTOR) / max_drawdown_decimal;
+            if raw_calmar > (calmar_cap * RATIO_SCALE_FACTOR) {
                 calmar_cap * RATIO_SCALE_FACTOR
             } else {
-                raw_calmar * RATIO_SCALE_FACTOR
+                raw_calmar
             }
         }
     }
