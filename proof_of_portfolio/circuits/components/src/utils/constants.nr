@@ -22,10 +22,10 @@ pub global STATISTICAL_CONFIDENCE_MINIMUM_N: u32 = 60;
 pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 419;
 pub global DAILY_LOG_RISK_FREE_RATE: i64 = 114794;
 
-// Minimum values for ratio calculations (0.01 scaled by SCALE/1000)
-pub global SHARPE_STDDEV_MINIMUM: i64 = SCALE / 1000;
-pub global OMEGA_LOSS_MINIMUM: i64 = SCALE / 1000;
-pub global SORTINO_DOWNSIDE_MINIMUM: i64 = SCALE / 1000;
+// Minimum values for ratio calculations (0.01 scaled by SCALE/100)
+pub global SHARPE_STDDEV_MINIMUM: i64 = SCALE / 100;
+pub global OMEGA_LOSS_MINIMUM: i64 = SCALE / 100;
+pub global SORTINO_DOWNSIDE_MINIMUM: i64 = SCALE / 100;
 
 // Scaling factors for precision in integer calculations
 pub global OMEGA_SCALE_FACTOR: i64 = SCALE * 10;
