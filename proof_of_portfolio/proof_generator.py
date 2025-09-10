@@ -527,7 +527,7 @@ def generate_proof(
     sharpe_ratio_scaled = sharpe_ratio_raw / RATIO_SCALE_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
     calmar_ratio_scaled = calmar_ratio_raw / RATIO_SCALE_FACTOR
-    omega_ratio_scaled = omega_ratio_raw / RATIO_SCALE_FACTOR
+    omega_ratio_scaled = omega_ratio_raw / (RATIO_SCALE_FACTOR * RATIO_SCALE_FACTOR)
     sortino_ratio_scaled = sortino_ratio_raw / RATIO_SCALE_FACTOR
     stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
     pnl_score_scaled = pnl_score_value / SCALING_FACTOR
