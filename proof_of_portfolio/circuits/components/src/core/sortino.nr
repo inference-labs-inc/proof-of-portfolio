@@ -60,7 +60,8 @@ pub fn sortino(
                         if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
                             let sq_diff = diff * diff;
-                            weighted_sum_sq_diff += sq_diff * weights[i];
+                            let scaled_sq_diff = sq_diff / SCALE;
+                            weighted_sum_sq_diff += scaled_sq_diff * weights[i];
                         }
                     }
                 }
@@ -76,7 +77,8 @@ pub fn sortino(
                         if log_returns[i] < daily_rf {
                             let diff = log_returns[i] - downside_mean;
                             let sq_diff = diff * diff;
-                            sum_sq_diff += sq_diff;
+                            let scaled_sq_diff = sq_diff / SCALE;
+                            sum_sq_diff += scaled_sq_diff;
                         }
                     }
                 }
