@@ -100,7 +100,7 @@ pub fn sortino(
 
             (excess_return * RATIO_SCALE_FACTOR) / effective_downside_volatility
         } else {
-            (excess_return * RATIO_SCALE_FACTOR) / SORTINO_DOWNSIDE_MINIMUM
+            0
         }
     }
 }

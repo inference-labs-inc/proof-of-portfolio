@@ -1,4 +1,4 @@
-use crate::utils::{average::average, constants::ARRAY_SIZE};
+use crate::utils::{average::average, constants::{ARRAY_SIZE, SCALE}};
 
 pub fn variance(
     daily_returns: [i64; ARRAY_SIZE],
@@ -35,7 +35,7 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    let pre_scaled_sq_diff = sq_diff / 1000000;
+                    let pre_scaled_sq_diff = sq_diff / SCALE;
                     weighted_sum_sq_diff += pre_scaled_sq_diff * weights[i];
                 }
             }
@@ -50,7 +50,7 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    let scaled_sq_diff = sq_diff / 1000000;
+                    let scaled_sq_diff = sq_diff / SCALE;
                     sum_sq_diff += scaled_sq_diff;
                 }
             }

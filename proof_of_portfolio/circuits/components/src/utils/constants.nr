@@ -23,9 +23,9 @@ pub global ANNUAL_RISK_FREE_RATE_BP: i64 = 419;
 pub global DAILY_LOG_RISK_FREE_RATE: i64 = 114794;
 
 // Minimum values for ratio calculations (scaled for integer math)
-pub global SHARPE_STDDEV_MINIMUM: i64 = 10_000_000;
-pub global OMEGA_LOSS_MINIMUM: i64 = 10_000_000;
-pub global SORTINO_DOWNSIDE_MINIMUM: i64 = 10_000_000;
+pub global SHARPE_STDDEV_MINIMUM: i64 = 100_000;
+pub global OMEGA_LOSS_MINIMUM: i64 = 100_000;
+pub global SORTINO_DOWNSIDE_MINIMUM: i64 = 100_000;
 
 // Scaling factors for precision in integer calculations
 pub global OMEGA_SCALE_FACTOR: i64 = 1000000000;
