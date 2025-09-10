@@ -47,24 +47,28 @@ pub fn omega(
                 omega_loss_min
             };
 
-            // Apply cross-multiplication with scaling to prevent overflow
-            // Scale down both factors before multiplication, then scale back up
-            let scale_down = SCALE / 1000; // Scale down by 1000 to prevent overflow
-            let product_sum_positive_scaled = product_sum_positive / scale_down;
-            let product_sum_negative_scaled = product_sum_negative / scale_down;
+            // Apply PTN cross-multiplication with overflow-safe scaling
+            // positive_sum = product_sum_positive * sum_weights_negative
+            // negative_sum = product_sum_negative * sum_weights_positive
+            // final = (positive_sum * RATIO_SCALE_FACTOR) / max(abs(negative_sum), omega_loss_min)
 
-            let positive_sum_weighted = product_sum_positive_scaled * sum_weights_negative;
-            let negative_sum_weighted = product_sum_negative_scaled * sum_weights_positive;
+            // To avoid overflow, we can rearrange: (a*b*c)/d = (a*c)*(b/d) when b > d
+            let positive_cross = product_sum_positive * sum_weights_negative;
+            let negative_cross = product_sum_negative * sum_weights_positive;
 
-            let effective_denominator = if (-negative_sum_weighted) >= (omega_loss_min / scale_down) {
-                -negative_sum_weighted
+            let abs_negative = if negative_cross >= 0 { negative_cross } else { -negative_cross };
+            let effective_denominator = if abs_negative >= omega_loss_min {
+                abs_negative
             } else {
-                omega_loss_min / scale_down
+                omega_loss_min
             };
 
-            // Apply scale_down correction to RATIO_SCALE_FACTOR
-            let adjusted_ratio_scale = RATIO_SCALE_FACTOR * scale_down;
-            (positive_sum_weighted * adjusted_ratio_scale) / effective_denominator
+            // Avoid overflow by doing division first when possible
+            if effective_denominator >= RATIO_SCALE_FACTOR {
+                positive_cross / (effective_denominator / RATIO_SCALE_FACTOR)
+            } else {
+                (positive_cross / effective_denominator) * RATIO_SCALE_FACTOR
+            }
         } else {
             let mut positive_sum: i64 = 0;
             let mut negative_sum: i64 = 0;
