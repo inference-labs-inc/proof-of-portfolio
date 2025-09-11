@@ -65,9 +65,9 @@ pub fn downside_variance(
                 for i in 0..ARRAY_SIZE {
                     if (i as u32) < downside_count {
                         let diff = downside_returns[i] - downside_avg;
-                        let weighted_sq_diff = (diff * diff * downside_weights[i]) / SCALE;
+                        let weighted_sq_diff = ((diff / 100) * (diff / 100) * downside_weights[i]) / (SCALE / 10000);
                         sum_sq_diff += weighted_sq_diff;
-                        sum_weights_sq += (downside_weights[i] * downside_weights[i]) / SCALE;
+                        sum_weights_sq += (downside_weights[i] / 100 * downside_weights[i] / 100) * (SCALE / 10000);
                     }
                 }
 
@@ -81,7 +81,7 @@ pub fn downside_variance(
                 for i in 0..ARRAY_SIZE {
                     if (i as u32) < downside_count {
                         let diff = downside_returns[i] - downside_avg;
-                        sum_sq_diff += (diff * diff) / SCALE;
+                        sum_sq_diff += ((diff / 100) * (diff / 100)) / (SCALE / 10000);
                     }
                 }
                 downside_variance = sum_sq_diff / ((downside_count - ddof) as i64);
