@@ -18,8 +18,8 @@ use components::utils::{
 fn main(
     log_returns: [i64; MAX_DAYS],
     n_returns: u32,
-    checkpoint_returns: [i64; MAX_CHECKPOINTS],
     checkpoint_count: u32,
+    checkpoint_mdds: [i64; MAX_CHECKPOINTS],
     daily_pnl: [i64; ARRAY_SIZE],
     n_pnl: u32,
     signals: [TradingSignal; MAX_SIGNALS],
@@ -136,8 +136,8 @@ fn main(
         avg_daily_return,
         days_in_year,
         calmar_noconfidence,
-        checkpoint_returns,
         checkpoint_count,
+        checkpoint_mdds,
     );
     let omega_ratio = omega(
         returns_array,
