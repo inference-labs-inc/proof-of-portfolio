@@ -9,6 +9,7 @@ use components::utils::{
     ann_excess_return::ann_excess_return,
     average::average,
     constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
+    downside_variance::downside_variance,
     variance::variance,
 };
 
@@ -30,7 +31,6 @@ fn main(
     omega_loss_min: i64,
     annual_risk_free: i64,
     daily_rf: i64,
-    drawdown_max_percent: i64,
     omega_noconfidence: i64,
     sharpe_noconfidence: i64,
     sortino_noconfidence: i64,
@@ -99,6 +99,14 @@ fn main(
         use_weighting,
         sum_of_weights,
     );
+    let downside_variance_val = downside_variance(
+        returns_array,
+        n_returns,
+        1,
+        weights,
+        use_weighting,
+        daily_rf,
+    );
     let ann_excess_return_val = ann_excess_return(
         returns_array,
         n_returns,
@@ -111,13 +119,8 @@ fn main(
     let avg_daily_pnl = average(daily_pnl, n_pnl, weights, use_weighting, sum_of_weights);
 
     let sharpe_ratio = sharpe(
-        returns_array,
         n_returns,
-        annual_risk_free,
-        weights,
-        use_weighting,
         bypass_confidence,
-        avg_daily_return,
         variance_val,
         ann_excess_return_val,
         sharpe_noconfidence,
@@ -130,7 +133,6 @@ fn main(
         avg_daily_return,
         calmar_cap,
         days_in_year,
-        drawdown_max_percent,
         calmar_noconfidence,
     );
     let omega_ratio = omega(
@@ -140,20 +142,13 @@ fn main(
         use_weighting,
         bypass_confidence,
         omega_loss_min,
-        daily_rf,
         omega_noconfidence,
     );
     let sortino_ratio = sortino(
-        returns_array,
         n_returns,
-        annual_risk_free,
-        weights,
-        use_weighting,
         bypass_confidence,
-        avg_daily_return,
-        variance_val,
+        downside_variance_val,
         ann_excess_return_val,
-        daily_rf,
         sortino_noconfidence,
     );
     let stat_confidence = statistical_confidence(

@@ -465,7 +465,6 @@ def generate_proof(
         "sortino_downside_min": str(int(sortino_downside_minimum * SCALING_FACTOR)),
         "stat_conf_min_n": str(statistical_confidence_minimum_n_ceil),
         "annual_risk_free": str(int(annual_risk_free_decimal * SCALING_FACTOR)),
-        "drawdown_max_percent": str(drawdown_maxvalue_percentage),
         "omega_noconfidence": str(int(omega_noconfidence_value * SCALING_FACTOR)),
         "sharpe_noconfidence": str(int(sharpe_noconfidence_value * SCALING_FACTOR)),
         "sortino_noconfidence": str(int(sortino_noconfidence_value * SCALING_FACTOR)),

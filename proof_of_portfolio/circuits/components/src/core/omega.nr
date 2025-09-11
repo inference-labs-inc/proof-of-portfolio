@@ -1,6 +1,6 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE,
-    STATISTICAL_CONFIDENCE_MINIMUM_N, OMEGA_NOCONFIDENCE_VALUE,
+    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
+    STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 
 pub fn omega(
@@ -10,7 +10,6 @@ pub fn omega(
     use_weighting: bool,
     bypass_confidence: bool,
     omega_loss_min: i64,
-    _daily_rf: i64,
     noconfidence_value: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
@@ -110,7 +109,15 @@ fn test_omega_all_positive() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false, 10000000, 0, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        5,
+        weights,
+        false,
+        false,
+        10000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0);
 }
 
@@ -122,7 +129,15 @@ fn test_omega_all_negative() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false, 10000000, 0, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        5,
+        weights,
+        false,
+        false,
+        10000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0);
 }
 
@@ -135,7 +150,15 @@ fn test_omega_mixed_returns() {
     returns[3] = -300;
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 4, weights, false, false, 10000000, 0, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        4,
+        weights,
+        false,
+        false,
+        10000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0);
 }
 
@@ -147,7 +170,15 @@ fn test_omega_zero_returns() {
     }
 
     let weights = [100000; ARRAY_SIZE];
-    let result = omega(returns, 5, weights, false, false, 10000000, 0, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        5,
+        weights,
+        false,
+        false,
+        10000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0);
 }
 
@@ -159,7 +190,15 @@ fn test_omega_ptn_parity() {
     returns[2] = 0;
     returns[3] = 15000000;
     let weights = [0; ARRAY_SIZE];
-    let result = omega(returns, 4, weights, false, true, 10000000, 0, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        4,
+        weights,
+        false,
+        true,
+        10000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 1250000);
 }
 
@@ -173,7 +212,7 @@ fn test_omega_scaling() {
     let use_weighting = false;
     let bypass_confidence = true;
     let omega_loss_min = SCALE / 10;
-    let daily_rf = 0;
+
     let result = omega(
         log_returns,
         actual_len,
@@ -181,7 +220,6 @@ fn test_omega_scaling() {
         use_weighting,
         bypass_confidence,
         omega_loss_min,
-        daily_rf,
         OMEGA_NOCONFIDENCE_VALUE,
     );
     assert(result > 0);
@@ -194,7 +232,15 @@ fn test_omega_parity() {
     returns[1] = -2000000i64;
     returns[2] = 1500000i64;
     let weights = [100000i64; ARRAY_SIZE];
-    let result = omega(returns, 3u32, weights, false, true, 10000000i64, 0i64, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        3u32,
+        weights,
+        false,
+        true,
+        10000000i64,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     let expected = 250000i64;
     let diff = if result > expected {
         result - expected
@@ -209,7 +255,15 @@ fn test_omega_less_than_60_days() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 1000000i64;
     let weights = [100000i64; ARRAY_SIZE];
-    let result = omega(returns, 59u32, weights, false, false, 10000000i64, 0i64, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        59u32,
+        weights,
+        false,
+        false,
+        10000000i64,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0i64);
 }
 
@@ -217,6 +271,14 @@ fn test_omega_less_than_60_days() {
 fn test_omega_zero_variance() {
     let mut returns = [0; ARRAY_SIZE];
     let weights = [100000i64; ARRAY_SIZE];
-    let result = omega(returns, 60u32, weights, false, true, 10000000i64, 0i64, OMEGA_NOCONFIDENCE_VALUE);
+    let result = omega(
+        returns,
+        60u32,
+        weights,
+        false,
+        true,
+        10000000i64,
+        OMEGA_NOCONFIDENCE_VALUE,
+    );
     assert(result == 0i64);
 }
