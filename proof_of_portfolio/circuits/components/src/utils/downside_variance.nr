@@ -73,7 +73,7 @@ pub fn downside_variance(
 
                 let denominator = downside_sum_weights - (sum_weights_sq / downside_sum_weights);
                 if denominator > 0 {
-                    downside_variance = (sum_sq_diff * SCALE) / denominator;
+                    downside_variance = sum_sq_diff / denominator;
                 } else {
                     downside_variance = SCALE;
                 }
