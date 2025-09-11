@@ -8,7 +8,9 @@ use components::core::merkle::{
 use components::utils::{
     ann_excess_return::ann_excess_return,
     average::average,
-    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
+    constants::{
+        ARRAY_SIZE, MAX_CHECKPOINTS, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE,
+    },
     downside_variance::downside_variance,
     variance::variance,
 };
@@ -16,6 +18,8 @@ use components::utils::{
 fn main(
     log_returns: [i64; MAX_DAYS],
     n_returns: u32,
+    checkpoint_returns: [i64; MAX_CHECKPOINTS],
+    checkpoint_count: u32,
     daily_pnl: [i64; ARRAY_SIZE],
     n_pnl: u32,
     signals: [TradingSignal; MAX_SIGNALS],
@@ -132,6 +136,8 @@ fn main(
         avg_daily_return,
         days_in_year,
         calmar_noconfidence,
+        checkpoint_returns,
+        checkpoint_count,
     );
     let omega_ratio = omega(
         returns_array,

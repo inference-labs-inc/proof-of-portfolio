@@ -1,6 +1,6 @@
 use crate::utils::constants::{ARRAY_SIZE, SCALE};
 
-fn exp_scaled(x_scaled: i64) -> i64 {
+pub fn exp_scaled(x_scaled: i64) -> i64 {
     let scale: i64 = SCALE;
     let mut abs_x = x_scaled;
     if x_scaled < 0 {

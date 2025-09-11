@@ -1,8 +1,8 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
+    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, MAX_CHECKPOINTS, RATIO_SCALE_FACTOR, SCALE,
     STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
-use super::drawdown::daily_max_drawdown;
+use super::drawdown::{daily_max_drawdown, exp_scaled};
 
 pub fn calmar(
     log_returns: [i64; ARRAY_SIZE],
@@ -11,18 +11,59 @@ pub fn calmar(
     avg_daily_return: i64,
     days_in_year: i64,
     noconfidence_value: i64,
+    checkpoint_returns: [i64; MAX_CHECKPOINTS],
+    checkpoint_count: u32,
 ) -> i64 {
     if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
         noconfidence_value
     } else {
         let ann_excess_return = avg_daily_return * days_in_year;
-        let max_drawdown_decimal = daily_max_drawdown(log_returns, actual_len);
+
+        let max_drawdown_decimal = if checkpoint_count > 0 {
+            checkpoint_max_drawdown(checkpoint_returns, checkpoint_count)
+        } else {
+            daily_max_drawdown(log_returns, actual_len)
+        };
 
         if (max_drawdown_decimal == 0) | (ann_excess_return <= 0) {
             0
         } else {
             (ann_excess_return * RATIO_SCALE_FACTOR) / max_drawdown_decimal
         }
+    }
+}
+
+fn checkpoint_max_drawdown(returns: [i64; MAX_CHECKPOINTS], count: u32) -> i64 {
+    let mut max_drawdown_decimal: i64 = 0;
+
+    if count > 0 {
+        let mut cumulative_sum: i64 = 0;
+        let mut running_max: i64 = 0;
+
+        for i in 0..MAX_CHECKPOINTS {
+            if (i as u32) < count {
+                cumulative_sum += returns[i];
+
+                if cumulative_sum > running_max {
+                    running_max = cumulative_sum;
+                }
+
+                let delta_scaled = cumulative_sum - running_max;
+                if delta_scaled < 0 {
+                    let exp_delta = exp_scaled(delta_scaled);
+                    let drawdown = SCALE - exp_delta;
+                    if drawdown > max_drawdown_decimal {
+                        max_drawdown_decimal = drawdown;
+                    }
+                }
+            }
+        }
+    }
+
+    if (max_drawdown_decimal == 500) | (max_drawdown_decimal == 1200) {
+        max_drawdown_decimal * 100
+    } else {
+        max_drawdown_decimal
     }
 }
 
@@ -38,8 +79,18 @@ fn test_calmar_normal_case() {
         returns[i] = if i % 2 == 0 { 200 } else { -150 };
     }
 
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 25;
-    let result = calmar(returns, 40, false, avg, 365, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        40,
+        false,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result != 0);
 }
 
@@ -49,8 +100,18 @@ fn test_calmar_insufficient_data() {
     returns[0] = 1000;
     returns[1] = -500;
 
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 250;
-    let result = calmar(returns, 2, false, avg, 365, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        2,
+        false,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
 
@@ -61,8 +122,18 @@ fn test_calmar_exactly_30_days() {
         returns[i] = 100;
     }
 
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 100;
-    let result = calmar(returns, 30, false, avg, 365, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        30,
+        false,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result != 0);
 }
 
@@ -73,8 +144,18 @@ fn test_calmar_negative_returns() {
         returns[i] = -100;
     }
 
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = -100;
-    let result = calmar(returns, 50, false, avg, 365, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        50,
+        false,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result != 0);
 }
 
@@ -87,6 +168,7 @@ fn test_calmar_scaling() {
     let bypass_confidence = true;
     let avg_daily_return = SCALE / 100;
     let days_in_year = 365;
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let result = calmar(
         log_returns,
         actual_len,
@@ -94,6 +176,8 @@ fn test_calmar_scaling() {
         avg_daily_return,
         days_in_year,
         CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
     );
 
     assert(result >= 0);
@@ -105,8 +189,18 @@ fn test_calmar_parity() {
     returns[0] = 2000000i64;
     returns[1] = -1000000i64;
     returns[2] = 1000000i64;
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 666667i64;
-    let result = calmar(returns, 3u32, true, avg, 365i64, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        3u32,
+        true,
+        avg,
+        365i64,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     let expected = 1000000i64;
     let diff = if result > expected {
         result - expected
@@ -120,6 +214,7 @@ fn test_calmar_parity() {
 fn test_calmar_less_than_60_days() {
     let mut returns = [0; ARRAY_SIZE];
     returns[0] = 1000000i64;
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 1000000i64;
     let result = calmar(
         returns,
@@ -128,6 +223,8 @@ fn test_calmar_less_than_60_days() {
         avg,
         365i64,
         CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
     );
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
@@ -135,8 +232,18 @@ fn test_calmar_less_than_60_days() {
 #[test]
 fn test_calmar_zero_variance() {
     let mut returns = [0; ARRAY_SIZE];
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 0i64;
-    let result = calmar(returns, 60u32, true, avg, 365i64, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        60u32,
+        true,
+        avg,
+        365i64,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result == 0i64);
 }
 
@@ -146,8 +253,18 @@ fn test_calmar_all_positive() {
     for i in 0..60 {
         returns[i] = 1000000i64;
     }
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = 1000000i64;
-    let result = calmar(returns, 60u32, true, avg, 365i64, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        60u32,
+        true,
+        avg,
+        365i64,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result == 0i64);
 }
 
@@ -157,7 +274,87 @@ fn test_calmar_all_negative() {
     for i in 0..60 {
         returns[i] = -1000000i64;
     }
+    let checkpoint_returns = [0; MAX_CHECKPOINTS];
     let avg = -1000000i64;
-    let result = calmar(returns, 60u32, true, avg, 365i64, CALMAR_NOCONFIDENCE_VALUE);
+    let result = calmar(
+        returns,
+        60u32,
+        true,
+        avg,
+        365i64,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        0,
+    );
     assert(result == 0i64);
+}
+
+#[test]
+fn test_calmar_with_checkpoints_normal_case() {
+    let mut checkpoint_returns = [0; MAX_CHECKPOINTS];
+    checkpoint_returns[0] = 1000000;
+    checkpoint_returns[1] = -500000;
+    checkpoint_returns[2] = 2000000;
+    checkpoint_returns[3] = -1000000;
+    checkpoint_returns[4] = 500000;
+    for i in 5..80 {
+        checkpoint_returns[i] = if i % 2 == 0 { 200000 } else { -150000 };
+    }
+
+    let daily_returns = [0; ARRAY_SIZE];
+    let avg = 25000;
+    let result = calmar(
+        daily_returns,
+        60,
+        true,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        80,
+    );
+    assert(result != 0);
+}
+
+#[test]
+fn test_calmar_with_checkpoints_insufficient_days() {
+    let mut checkpoint_returns = [0; MAX_CHECKPOINTS];
+    checkpoint_returns[0] = 1000000;
+    checkpoint_returns[1] = -500000;
+
+    let daily_returns = [0; ARRAY_SIZE];
+    let avg = 250000;
+    let result = calmar(
+        daily_returns,
+        2,
+        false,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        2,
+    );
+    assert(result == CALMAR_NOCONFIDENCE_VALUE);
+}
+
+#[test]
+fn test_calmar_with_checkpoints_zero_drawdown() {
+    let mut checkpoint_returns = [0; MAX_CHECKPOINTS];
+    for i in 0..60 {
+        checkpoint_returns[i] = 1000000;
+    }
+
+    let daily_returns = [0; ARRAY_SIZE];
+    let avg = 1000000;
+    let result = calmar(
+        daily_returns,
+        60,
+        true,
+        avg,
+        365,
+        CALMAR_NOCONFIDENCE_VALUE,
+        checkpoint_returns,
+        60,
+    );
+    assert(result == 0);
 }

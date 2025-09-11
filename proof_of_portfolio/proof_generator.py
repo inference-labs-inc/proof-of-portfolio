@@ -257,7 +257,6 @@ def generate_proof(
     positions = data["positions"][miner_hotkey]["positions"]
     log_verbose(verbose, "info", "Preparing circuit inputs...")
 
-    # Use daily returns calculated by PTN
     daily_log_returns = data.get("daily_returns", [])
     n_returns = len(daily_log_returns)
 
@@ -270,11 +269,47 @@ def generate_proof(
         daily_log_returns = daily_log_returns[:MAX_DAYS]
         n_returns = MAX_DAYS
 
-    # Scale log returns for the circuit
     scaled_log_returns = [int(ret * SCALING_FACTOR) for ret in daily_log_returns]
 
-    # Pad to MAX_DAYS
     scaled_log_returns += [0] * (MAX_DAYS - len(scaled_log_returns))
+
+    checkpoint_returns = []
+    checkpoint_count = 0
+
+    if "perf_ledgers" in data and miner_hotkey in data["perf_ledgers"]:
+        ledger = data["perf_ledgers"][miner_hotkey]
+        if hasattr(ledger, "cps") and ledger.cps:
+            checkpoint_returns = [cp.gain + cp.loss for cp in ledger.cps]
+            checkpoint_count = len(checkpoint_returns)
+            log_verbose(
+                verbose, "info", f"Extracted {checkpoint_count} checkpoint returns"
+            )
+        elif isinstance(ledger, dict) and "cps" in ledger:
+            checkpoint_returns = [cp["gain"] + cp["loss"] for cp in ledger["cps"]]
+            checkpoint_count = len(checkpoint_returns)
+            log_verbose(
+                verbose,
+                "info",
+                f"Extracted {checkpoint_count} checkpoint returns (dict format)",
+            )
+
+    MAX_CHECKPOINTS = 512
+    if checkpoint_count > MAX_CHECKPOINTS:
+        log_verbose(
+            verbose,
+            "warning",
+            f"Truncating {checkpoint_count} checkpoint returns to {MAX_CHECKPOINTS} (circuit limit)",
+        )
+        checkpoint_returns = checkpoint_returns[:MAX_CHECKPOINTS]
+        checkpoint_count = MAX_CHECKPOINTS
+
+    scaled_checkpoint_returns = [
+        int(ret * SCALING_FACTOR) for ret in checkpoint_returns
+    ]
+
+    scaled_checkpoint_returns += [0] * (
+        MAX_CHECKPOINTS - len(scaled_checkpoint_returns)
+    )
 
     weights_float = data.get("weights", [])
 
@@ -372,7 +407,29 @@ def generate_proof(
         if daily_log_returns:
             mean_return = sum(daily_log_returns) / len(daily_log_returns)
             bt.logging.info(f"Mean daily return: {mean_return:.6f}, count={n_returns}")
-        bt.logging.info(f"Circuit Config: MAX_DAYS={MAX_DAYS}, DAILY_CHECKPOINTS=2")
+
+        bt.logging.info(f"Circuit checkpoint returns count: {checkpoint_count}")
+        if checkpoint_count > 0:
+            bt.logging.info("Sample checkpoint returns:")
+            for i in range(min(5, checkpoint_count)):
+                bt.logging.info(
+                    f"  [{i}] return={checkpoint_returns[i]:.6f} (scaled={scaled_checkpoint_returns[i]})"
+                )
+            if checkpoint_returns:
+                mean_checkpoint_return = sum(checkpoint_returns) / len(
+                    checkpoint_returns
+                )
+                bt.logging.info(
+                    f"Mean checkpoint return: {mean_checkpoint_return:.6f}, count={checkpoint_count}"
+                )
+        else:
+            bt.logging.info(
+                "No checkpoint returns found - using daily returns for Calmar calculation"
+            )
+
+        bt.logging.info(
+            f"Circuit Config: MAX_DAYS={MAX_DAYS}, MAX_CHECKPOINTS={MAX_CHECKPOINTS}, DAILY_CHECKPOINTS=2"
+        )
 
     log_verbose(verbose, "info", "Running tree_generator circuit...")
     bt.logging.info(f"Generating tree for hotkey {miner_hotkey[:8]}...")
@@ -422,6 +479,8 @@ def generate_proof(
     main_prover_input = {
         "log_returns": [str(r) for r in scaled_log_returns],
         "n_returns": str(n_returns),
+        "checkpoint_returns": [str(r) for r in scaled_checkpoint_returns],
+        "checkpoint_count": str(checkpoint_count),
         "daily_pnl": [str(p) for p in scaled_daily_pnl],
         "n_pnl": str(n_pnl),
         "signals": signals,
