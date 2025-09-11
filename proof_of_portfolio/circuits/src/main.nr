@@ -26,7 +26,6 @@ fn main(
     use_weighting: bool,
     bypass_confidence: pub bool,
     weights: [i64; ARRAY_SIZE],
-    calmar_cap: i64,
     days_in_year: i64,
     omega_loss_min: i64,
     annual_risk_free: i64,
@@ -131,7 +130,6 @@ fn main(
         n_returns,
         bypass_confidence,
         avg_daily_return,
-        calmar_cap,
         days_in_year,
         calmar_noconfidence,
     );

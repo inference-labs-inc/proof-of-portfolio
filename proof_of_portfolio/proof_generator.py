@@ -184,7 +184,6 @@ def generate_proof(
     miner_hotkey=None,
     verbose=None,
     annual_risk_free_percentage=4.19,
-    calmar_ratio_cap=10,
     days_in_year_crypto=365,
     weighted_average_decay_max=1.0,
     weighted_average_decay_min=0.15,
@@ -418,7 +417,6 @@ def generate_proof(
         math.log(1 + annual_risk_free_decimal) / days_in_year_crypto * SCALING_FACTOR
     )
 
-    calmar_cap = int(calmar_ratio_cap)
     account_size = data.get("account_size", 250000)
     # Finally, LFG
     main_prover_input = {
@@ -455,7 +453,6 @@ def generate_proof(
         "weights": [str(w) for w in scaled_weights],
         "bypass_confidence": str(int(bypass_confidence)),
         "account_size": str(account_size),
-        "calmar_cap": str(calmar_cap),
         "days_in_year": str(days_in_year_crypto),
         "weighted_decay_max": str(int(weighted_average_decay_max * SCALING_FACTOR)),
         "weighted_decay_min": str(int(weighted_average_decay_min * SCALING_FACTOR)),
