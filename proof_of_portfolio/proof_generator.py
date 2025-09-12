@@ -14,7 +14,6 @@ MAX_DAYS = 120
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
 SCALE = 10**8  # Base scaling factor (10^8) - used for all ratio outputs
-SCALING_FACTOR = SCALE  # Alias for compatibility
 PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
 
@@ -26,6 +25,16 @@ def log_verbose(verbose, level, message):
 def get_attr(obj, attr):
     """Get attribute from object or dictionary"""
     return getattr(obj, attr) if hasattr(obj, attr) else obj[attr]
+
+
+def scale_to_int(value):
+    """Convert float to scaled integer"""
+    return int(value * SCALE)
+
+
+def scale_from_int(value):
+    """Convert scaled integer back to float"""
+    return value / SCALE
 
 
 def run_command(command, cwd):
@@ -251,7 +260,7 @@ def generate_proof(
     if daily_pnl is None:
         raise ValueError("daily_pnl must be provided")
     n_pnl = len(daily_pnl)
-    scaled_daily_pnl = [int(p * SCALING_FACTOR) for p in daily_pnl]
+    scaled_daily_pnl = [scale_to_int(p) for p in daily_pnl]
     scaled_daily_pnl += [0] * (ARRAY_SIZE - n_pnl)
     positions = data["positions"][miner_hotkey]["positions"]
     log_verbose(verbose, "info", "Preparing circuit inputs...")
@@ -268,7 +277,7 @@ def generate_proof(
         daily_log_returns = daily_log_returns[:MAX_DAYS]
         n_returns = MAX_DAYS
 
-    scaled_log_returns = [int(ret * SCALING_FACTOR) for ret in daily_log_returns]
+    scaled_log_returns = [int(ret * SCALE) for ret in daily_log_returns]
 
     scaled_log_returns += [0] * (MAX_DAYS - len(scaled_log_returns))
 
@@ -308,21 +317,19 @@ def generate_proof(
         checkpoint_mdds = checkpoint_mdds[:MAX_CHECKPOINTS]
         checkpoint_count = MAX_CHECKPOINTS
 
-    scaled_checkpoint_returns = [
-        int(ret * SCALING_FACTOR) for ret in checkpoint_returns
-    ]
-    scaled_checkpoint_mdds = [int(mdd * SCALING_FACTOR) for mdd in checkpoint_mdds]
+    scaled_checkpoint_returns = [int(ret * SCALE) for ret in checkpoint_returns]
+    scaled_checkpoint_mdds = [int(mdd * SCALE) for mdd in checkpoint_mdds]
 
     scaled_checkpoint_returns += [0] * (
         MAX_CHECKPOINTS - len(scaled_checkpoint_returns)
     )
-    scaled_checkpoint_mdds += [SCALING_FACTOR] * (  # Default to 1.0 (no drawdown)
+    scaled_checkpoint_mdds += [SCALE] * (  # Default to 1.0 (no drawdown)
         MAX_CHECKPOINTS - len(scaled_checkpoint_mdds)
     )
 
     weights_float = data.get("weights", [])
 
-    scaled_weights = [int(w * SCALING_FACTOR) for w in weights_float]
+    scaled_weights = [int(w * SCALE) for w in weights_float]
     scaled_weights += [0] * (256 - len(scaled_weights))
 
     log_verbose(verbose, "info", f"Using {n_returns} daily returns from PTN")
@@ -363,19 +370,17 @@ def generate_proof(
                 else str(order_type)
             )
             order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
-            price = int(get_attr(order, "price") * SCALING_FACTOR)
+            price = int(get_attr(order, "price") * SCALE)
             order_uuid = get_attr(order, "order_uuid")
-            bid = int(get_attr(order, "bid") * SCALING_FACTOR)
-            ask = int(get_attr(order, "ask") * SCALING_FACTOR)
+            bid = int(get_attr(order, "bid") * SCALE)
+            ask = int(get_attr(order, "ask") * SCALE)
             processed_ms = get_attr(order, "processed_ms")
 
             signals.append(
                 {
                     "trade_pair": str(trade_pair_map[trade_pair_str]),
                     "order_type": str(order_type_map.get(order_type_str, 0)),
-                    "leverage": str(
-                        int(abs(get_attr(order, "leverage")) * SCALING_FACTOR)
-                    ),
+                    "leverage": str(int(abs(get_attr(order, "leverage")) * SCALE)),
                     "price": str(price),
                     "processed_ms": str(processed_ms),
                     "order_uuid": f"0x{order_uuid.replace('-', '')}",
@@ -478,9 +483,9 @@ def generate_proof(
 
     # Pass annual risk-free rate (to match ann_excess_return usage)
     annual_risk_free_decimal = annual_risk_free_decimal
-    risk_free_rate_scaled = int(annual_risk_free_decimal * SCALING_FACTOR)
+    risk_free_rate_scaled = int(annual_risk_free_decimal * SCALE)
     daily_rf_scaled = int(
-        math.log(1 + annual_risk_free_decimal) / days_in_year_crypto * SCALING_FACTOR
+        math.log(1 + annual_risk_free_decimal) / days_in_year_crypto * SCALE
     )
 
     account_size = data.get("account_size", 250000)
@@ -523,20 +528,20 @@ def generate_proof(
         "bypass_confidence": str(int(bypass_confidence)),
         "account_size": str(account_size),
         "days_in_year": str(days_in_year_crypto),
-        "weighted_decay_max": str(int(weighted_average_decay_max * SCALING_FACTOR)),
-        "weighted_decay_min": str(int(weighted_average_decay_min * SCALING_FACTOR)),
-        "weighted_decay_rate": str(int(weighted_average_decay_rate * SCALING_FACTOR)),
-        "omega_loss_min": str(int(omega_loss_minimum * SCALING_FACTOR)),
-        "sharpe_stddev_min": str(int(sharpe_stddev_minimum * SCALING_FACTOR)),
-        "sortino_downside_min": str(int(sortino_downside_minimum * SCALING_FACTOR)),
+        "weighted_decay_max": str(int(weighted_average_decay_max * SCALE)),
+        "weighted_decay_min": str(int(weighted_average_decay_min * SCALE)),
+        "weighted_decay_rate": str(int(weighted_average_decay_rate * SCALE)),
+        "omega_loss_min": str(int(omega_loss_minimum * SCALE)),
+        "sharpe_stddev_min": str(int(sharpe_stddev_minimum * SCALE)),
+        "sortino_downside_min": str(int(sortino_downside_minimum * SCALE)),
         "stat_conf_min_n": str(statistical_confidence_minimum_n_ceil),
-        "annual_risk_free": str(int(annual_risk_free_decimal * SCALING_FACTOR)),
-        "omega_noconfidence": str(int(omega_noconfidence_value * SCALING_FACTOR)),
-        "sharpe_noconfidence": str(int(sharpe_noconfidence_value * SCALING_FACTOR)),
-        "sortino_noconfidence": str(int(sortino_noconfidence_value * SCALING_FACTOR)),
-        "calmar_noconfidence": str(int(calmar_noconfidence_value * SCALING_FACTOR)),
+        "annual_risk_free": str(int(annual_risk_free_decimal * SCALE)),
+        "omega_noconfidence": str(int(omega_noconfidence_value * SCALE)),
+        "sharpe_noconfidence": str(int(sharpe_noconfidence_value * SCALE)),
+        "sortino_noconfidence": str(int(sortino_noconfidence_value * SCALE)),
+        "calmar_noconfidence": str(int(calmar_noconfidence_value * SCALE)),
         "stat_confidence_noconfidence": str(
-            int(statistical_confidence_noconfidence_value * SCALING_FACTOR)
+            int(statistical_confidence_noconfidence_value * SCALE)
         ),
     }
 
@@ -600,15 +605,15 @@ def generate_proof(
     else:
         returns_merkle_root = f"0x{int(returns_merkle_root_raw):x}"
 
-    avg_daily_pnl_scaled = avg_daily_pnl_value / SCALING_FACTOR
+    avg_daily_pnl_scaled = scale_from_int(avg_daily_pnl_value)
     avg_daily_pnl_ptn_scaled = avg_daily_pnl_scaled * 365 * 100
-    sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
-    max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
-    calmar_ratio_scaled = calmar_ratio_raw / SCALE
+    sharpe_ratio_scaled = scale_from_int(sharpe_ratio_raw)
+    max_drawdown_scaled = scale_from_int(max_drawdown_raw)
+    calmar_ratio_scaled = scale_from_int(calmar_ratio_raw)
     omega_ratio_scaled = omega_ratio_raw / (SCALE * SCALE * 1000)
-    sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
-    stat_confidence_scaled = stat_confidence_raw / SCALE
-    pnl_score_scaled = pnl_score_value / SCALING_FACTOR
+    sortino_ratio_scaled = scale_from_int(sortino_ratio_raw)
+    stat_confidence_scaled = scale_from_int(stat_confidence_raw)
+    pnl_score_scaled = scale_from_int(pnl_score_value)
 
     if witness_only:
         prove_time, proving_success = None, True
