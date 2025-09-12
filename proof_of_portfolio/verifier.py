@@ -8,15 +8,24 @@ import shutil
 
 def ensure_bb_installed():
     """Ensure bb is installed before verification."""
-    if not shutil.which("bb"):
-        bt.logging.info("Installing bb (Barretenberg) for proof verification...")
-        try:
-            post_install_main()
-            bt.logging.info("bb installed successfully!")
-        except Exception as e:
-            bt.logging.error(f"Failed to install bb: {e}")
-            return False
-    return True
+    bb_path = shutil.which("bb")
+    if not bb_path:
+        # Check common installation path
+        home = os.path.expanduser("~")
+        bb_path = os.path.join(home, ".bb", "bb")
+        if not os.path.exists(bb_path):
+            bt.logging.info("Installing bb (Barretenberg) for proof verification...")
+            try:
+                post_install_main()
+                bt.logging.info("bb installed successfully!")
+                # After installation, bb should be at ~/.bb/bb
+                if not os.path.exists(bb_path):
+                    bt.logging.error(f"bb not found at expected path: {bb_path}")
+                    return None
+            except Exception as e:
+                bt.logging.error(f"Failed to install bb: {e}")
+                return None
+    return bb_path if os.path.exists(bb_path) else shutil.which("bb")
 
 
 def verify(proof_hex, public_inputs_hex):
@@ -30,7 +39,8 @@ def verify(proof_hex, public_inputs_hex):
     Returns:
         bool: True if verification succeeds, False otherwise
     """
-    if not ensure_bb_installed():
+    bb_path = ensure_bb_installed()
+    if not bb_path:
         bt.logging.error("Failed to install required dependencies for verification")
         return False
 
@@ -58,7 +68,7 @@ def verify(proof_hex, public_inputs_hex):
 
             result = subprocess.run(
                 [
-                    "bb",
+                    bb_path,
                     "verify",
                     "-k",
                     vk_path,
