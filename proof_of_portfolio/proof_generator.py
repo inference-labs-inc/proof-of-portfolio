@@ -669,6 +669,28 @@ def generate_proof(
             else:
                 bt.logging.info("Unable to prove due to an error.")
 
+    # Read proof and public inputs files to return as hex strings
+    proof_hex = None
+    public_inputs_hex = None
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    main_circuit_dir = os.path.join(current_dir, "circuits")
+
+    if prove_time is not None or witness_only:
+        proof_path = os.path.join(main_circuit_dir, "proof", "proof")
+        public_inputs_path = os.path.join(main_circuit_dir, "proof", "public_inputs")
+
+        try:
+            if os.path.exists(proof_path):
+                with open(proof_path, "rb") as f:
+                    proof_hex = f.read().hex()
+
+            if os.path.exists(public_inputs_path):
+                with open(public_inputs_path, "rb") as f:
+                    public_inputs_hex = f.read().hex()
+        except Exception as e:
+            bt.logging.error(f"Error reading proof files: {str(e)}")
+
     # Return structured results for programmatic access
     return {
         "merkle_roots": {
@@ -705,5 +727,7 @@ def generate_proof(
             "proof_generation_time": prove_time,
             "proving_success": proving_success,
             "proof_generated": prove_time is not None or witness_only,
+            "proof_hex": proof_hex,
+            "public_inputs_hex": public_inputs_hex,
         },
     }
