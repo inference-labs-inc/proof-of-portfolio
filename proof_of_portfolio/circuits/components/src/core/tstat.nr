@@ -1,6 +1,6 @@
 use crate::utils::{
     constants::{
-        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, RATIO_SCALE_FACTOR,
+        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE,
         STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
@@ -50,9 +50,9 @@ fn compute_t_statistic(
         let standard_error = std_dev / n_sqrt;
 
         if standard_error == 0 {
-            RATIO_SCALE_FACTOR
+            SCALE
         } else {
-            (avg * RATIO_SCALE_FACTOR) / standard_error
+            (avg * SCALE) / standard_error
         }
     }
 }

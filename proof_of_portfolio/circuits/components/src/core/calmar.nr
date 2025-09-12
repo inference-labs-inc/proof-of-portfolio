@@ -1,6 +1,5 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, MAX_CHECKPOINTS, RATIO_SCALE_FACTOR, SCALE,
-    STATISTICAL_CONFIDENCE_MINIMUM_N,
+    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, MAX_CHECKPOINTS, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 use super::drawdown::daily_max_drawdown;
 
@@ -28,7 +27,7 @@ pub fn calmar(
         if (max_drawdown_decimal == 0) | (ann_excess_return <= 0) {
             0
         } else {
-            (ann_excess_return * RATIO_SCALE_FACTOR) / max_drawdown_decimal
+            (ann_excess_return * SCALE) / max_drawdown_decimal
         }
     }
 }
@@ -366,16 +365,16 @@ fn test_calmar_10_percent_accuracy() {
     );
 
     // Expected calculation:
-    // SCALE = 100000000, RATIO_SCALE_FACTOR = 1000000
+    // SCALE = 100000000
     // checkpoint_mdds[0] = 911000
     // min_mdd = 911000 (minimum value found)
     // max_drawdown_decimal = SCALE - min_mdd = 100000000 - 911000 = 99089000
     // ann_excess_return = 76 * 365 = 27740
-    // calmar = (27740 * RATIO_SCALE_FACTOR) / max_drawdown_decimal
-    // calmar = (27740 * 1000000) / 99089000 = 27740000000 / 99089000 ~= 279.9
+    // calmar = (27740 * SCALE) / max_drawdown_decimal
+    // calmar = (27740 * 100000000) / 99089000 = 2774000000000 / 99089000 ~= 27990
 
-    let expected = 280;
-    let tolerance = expected / 10; // 10% tolerance = 28
+    let expected = 27990; // 100x larger due to SCALE vs SCALE
+    let tolerance = expected / 10; // 10% tolerance = 2799
 
     let diff = if result > expected {
         result - expected

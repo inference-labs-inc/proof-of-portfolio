@@ -13,9 +13,8 @@ ARRAY_SIZE = 256
 MAX_DAYS = 120
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
-SCALE = 10**8  # Base scaling factor (10^8)
+SCALE = 10**8  # Base scaling factor (10^8) - used for all ratio outputs
 SCALING_FACTOR = SCALE  # Alias for compatibility
-RATIO_SCALE_FACTOR = SCALE // 100  # 10^6 for ratio outputs
 PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
 
@@ -605,10 +604,10 @@ def generate_proof(
     avg_daily_pnl_ptn_scaled = avg_daily_pnl_scaled * 365 * 100
     sharpe_ratio_scaled = sharpe_ratio_raw / SCALING_FACTOR
     max_drawdown_scaled = max_drawdown_raw / SCALING_FACTOR
-    calmar_ratio_scaled = calmar_ratio_raw / RATIO_SCALE_FACTOR
-    omega_ratio_scaled = omega_ratio_raw / (RATIO_SCALE_FACTOR * RATIO_SCALE_FACTOR)
+    calmar_ratio_scaled = calmar_ratio_raw / SCALE
+    omega_ratio_scaled = omega_ratio_raw / (SCALE * SCALE)
     sortino_ratio_scaled = sortino_ratio_raw / SCALING_FACTOR
-    stat_confidence_scaled = stat_confidence_raw / RATIO_SCALE_FACTOR
+    stat_confidence_scaled = stat_confidence_raw / SCALE
     pnl_score_scaled = pnl_score_value / SCALING_FACTOR
 
     if witness_only:

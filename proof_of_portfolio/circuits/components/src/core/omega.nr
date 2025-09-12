@@ -1,6 +1,5 @@
 use crate::utils::constants::{
-    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, RATIO_SCALE_FACTOR, SCALE,
-    STATISTICAL_CONFIDENCE_MINIMUM_N,
+    ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 
 pub fn omega(
@@ -65,7 +64,7 @@ pub fn omega(
                 omega_loss_min_scaled
             };
 
-            let adjusted_ratio_scale = RATIO_SCALE_FACTOR * scale_factor;
+            let adjusted_ratio_scale = SCALE * scale_factor;
 
             if effective_denominator >= adjusted_ratio_scale {
                 positive_cross / (effective_denominator / adjusted_ratio_scale)
@@ -96,7 +95,7 @@ pub fn omega(
             } else {
                 omega_loss_min
             };
-            (positive_sum * RATIO_SCALE_FACTOR) / effective_denominator
+            (positive_sum * SCALE) / effective_denominator
         }
     }
 }
@@ -199,7 +198,7 @@ fn test_omega_ptn_parity() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
     );
-    assert(result == 1250000);
+    assert(result == 125000000);
 }
 
 #[test]
@@ -241,13 +240,13 @@ fn test_omega_parity() {
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
     );
-    let expected = 250000i64;
+    let expected = 25000000i64;
     let diff = if result > expected {
         result - expected
     } else {
         expected - result
     };
-    assert(diff < 1000);
+    assert(diff < 100000);
 }
 
 #[test]

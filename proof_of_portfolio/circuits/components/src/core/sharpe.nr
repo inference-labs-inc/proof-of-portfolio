@@ -1,6 +1,6 @@
 use crate::utils::{
     constants::{
-        ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM,
+        ARRAY_SIZE, SCALE, SHARPE_NOCONFIDENCE_VALUE, SHARPE_STDDEV_MINIMUM,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     sqrt::sqrt,
@@ -31,7 +31,7 @@ pub fn sharpe(
             volatility
         };
 
-        (excess_return * RATIO_SCALE_FACTOR) / effective_volatility
+        (excess_return * SCALE) / effective_volatility
     };
     result
 }
@@ -131,8 +131,8 @@ fn test_sharpe_10_percent_accuracy() {
         SHARPE_NOCONFIDENCE_VALUE,
     );
 
-    let expected = 1584829;
-    let tolerance = 15000;
+    let expected = 158482900;
+    let tolerance = 1500000;
 
     let diff = if result > expected {
         result - expected

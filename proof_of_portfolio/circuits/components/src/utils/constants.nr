@@ -31,7 +31,7 @@ pub global SORTINO_DOWNSIDE_MINIMUM: i64 = SCALE / 100;
 pub global OMEGA_SCALE_FACTOR: i64 = SCALE * 10;
 pub global SHARPE_SCALE_FACTOR: i64 = SCALE / 100;
 pub global LARGE_POSITIVE_VALUE: i64 = SCALE * 10;
-pub global RATIO_SCALE_FACTOR: i64 = SCALE / 100; // RATIO_SCALE_FACTOR: 10^6 for ratio outputs
+// SCALE removed - use SCALE directly (10^8)
 
 // Test values for no-confidence matching PTN defaults
 pub global OMEGA_NOCONFIDENCE_VALUE: i64 = 0;

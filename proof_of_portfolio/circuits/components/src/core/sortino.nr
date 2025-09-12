@@ -1,6 +1,6 @@
 use crate::utils::{
     constants::{
-        ARRAY_SIZE, RATIO_SCALE_FACTOR, SCALE, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
+        ARRAY_SIZE, SCALE, SORTINO_DOWNSIDE_MINIMUM, SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     },
     sqrt::sqrt,
@@ -33,7 +33,7 @@ pub fn sortino(
             downside_volatility
         };
 
-        (excess_return * RATIO_SCALE_FACTOR) / effective_downside_volatility
+        (excess_return * SCALE) / effective_downside_volatility
     }
 }
 
@@ -94,8 +94,8 @@ fn test_sortino_all_negative_returns() {
         SORTINO_NOCONFIDENCE_VALUE,
     );
 
-    let expected = -30216;
-    let tolerance = 10;
+    let expected = -3021600;
+    let tolerance = 1000;
     let diff = if result > expected {
         result - expected
     } else {
@@ -160,8 +160,8 @@ fn test_sortino_10_percent_accuracy() {
         SORTINO_NOCONFIDENCE_VALUE,
     );
 
-    let expected = 2914604;
-    let tolerance = 15000;
+    let expected = 291460400;
+    let tolerance = 1500000;
 
     let diff = if result > expected {
         result - expected
