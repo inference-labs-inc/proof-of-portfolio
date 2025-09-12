@@ -2,6 +2,21 @@ import os
 import subprocess
 import tempfile
 import bittensor as bt
+from .post_install import main as post_install_main
+import shutil
+
+
+def ensure_bb_installed():
+    """Ensure bb is installed before verification."""
+    if not shutil.which("bb"):
+        bt.logging.info("Installing bb (Barretenberg) for proof verification...")
+        try:
+            post_install_main()
+            bt.logging.info("bb installed successfully!")
+        except Exception as e:
+            bt.logging.error(f"Failed to install bb: {e}")
+            return False
+    return True
 
 
 def verify(proof_hex, public_inputs_hex):
@@ -15,6 +30,10 @@ def verify(proof_hex, public_inputs_hex):
     Returns:
         bool: True if verification succeeds, False otherwise
     """
+    if not ensure_bb_installed():
+        bt.logging.error("Failed to install required dependencies for verification")
+        return False
+
     try:
         proof_data = bytes.fromhex(proof_hex)
         public_inputs_data = bytes.fromhex(public_inputs_hex)
