@@ -610,7 +610,7 @@ def generate_proof(
     sharpe_ratio_scaled = scale_from_int(sharpe_ratio_raw)
     max_drawdown_scaled = scale_from_int(max_drawdown_raw)
     calmar_ratio_scaled = scale_from_int(calmar_ratio_raw)
-    omega_ratio_scaled = scale_from_int(omega_ratio_raw)
+    omega_ratio_scaled = scale_from_int(omega_ratio_raw) / 1000000
     sortino_ratio_scaled = scale_from_int(sortino_ratio_raw)
     stat_confidence_scaled = scale_from_int(stat_confidence_raw)
     pnl_score_scaled = scale_from_int(pnl_score_value)
