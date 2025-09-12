@@ -5,7 +5,7 @@ import shutil
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
-from .verifier import verify as verify, verify_proof_data as verify_proof_data
+from .verifier import verify as verify
 
 _dependencies_checked = False
 
