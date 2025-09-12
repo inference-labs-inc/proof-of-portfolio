@@ -20,8 +20,10 @@ pub fn sharpe(
         let volatility = if actual_len < 2 {
             SCALE
         } else {
-            let annualized_variance = variance_val * 365;
-            sqrt(annualized_variance as u64) as i64
+            let scaled_annualized_variance = (variance_val as u64) * 365;
+            let scaled_volatility = sqrt(scaled_annualized_variance);
+            let scale_sqrt = sqrt(SCALE as u64);
+            ((scaled_volatility * (SCALE as u64) / scale_sqrt) as i64)
         };
         let effective_volatility = if volatility < SHARPE_STDDEV_MINIMUM {
             SHARPE_STDDEV_MINIMUM
@@ -98,11 +100,11 @@ fn test_sharpe_high_volatility() {
 #[test]
 fn test_sharpe_scaling() {
     let mut daily_returns = [0; ARRAY_SIZE];
-    daily_returns[0] = SCALE / 100; // 0.01 * SCALE
+    daily_returns[0] = SCALE / 100;
     let actual_len = 60u32;
     let bypass_confidence = true;
-    let variance_val = SCALE / 100; // example variance scaled
-    let ann_excess_return_val = SCALE / 100; // 1%
+    let variance_val = SCALE / 100;
+    let ann_excess_return_val = SCALE / 100;
     let result = sharpe(
         actual_len,
         bypass_confidence,
@@ -110,5 +112,33 @@ fn test_sharpe_scaling() {
         ann_excess_return_val,
         SHARPE_NOCONFIDENCE_VALUE,
     );
-    assert(result > 0); // scaling test, result should be positive
+    assert(result > 0);
+}
+
+#[test]
+fn test_sharpe_10_percent_accuracy() {
+    let actual_len = 60u32;
+    let bypass_confidence = true;
+
+    let variance_val = 32444;
+    let ann_excess_return_val = 54082036;
+
+    let result = sharpe(
+        actual_len,
+        bypass_confidence,
+        variance_val,
+        ann_excess_return_val,
+        SHARPE_NOCONFIDENCE_VALUE,
+    );
+
+    let expected = 1584829;
+    let tolerance = 15000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
 }

@@ -18,12 +18,13 @@ pub fn sortino(
     } else {
         let excess_return = ann_excess_return_val;
 
-        // Use passed downside variance, same logic as Sharpe but with downside variance
         let downside_volatility = if actual_len < 2 {
             SCALE
         } else {
-            let annualized_downside_variance = downside_variance_val * 365;
-            sqrt(annualized_downside_variance as u64) as i64
+            let scaled_annualized_downside_variance = (downside_variance_val as u64) * 365;
+            let scaled_downside_volatility = sqrt(scaled_annualized_downside_variance);
+            let scale_sqrt = sqrt(SCALE as u64);
+            ((scaled_downside_volatility * (SCALE as u64) / scale_sqrt) as i64)
         };
 
         let effective_downside_volatility = if downside_volatility < SORTINO_DOWNSIDE_MINIMUM {
@@ -93,7 +94,14 @@ fn test_sortino_all_negative_returns() {
         SORTINO_NOCONFIDENCE_VALUE,
     );
 
-    assert(result == -182500);
+    let expected = -30216;
+    let tolerance = 10;
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+    assert(diff <= tolerance);
 }
 
 #[test]
@@ -120,12 +128,12 @@ fn test_sortino_high_downside_volatility() {
 #[test]
 fn test_sortino_scaling() {
     let mut log_returns = [0; ARRAY_SIZE];
-    log_returns[0] = SCALE / 100; // 0.01 * SCALE
-    log_returns[1] = -SCALE / 200; // -0.005 * SCALE
+    log_returns[0] = SCALE / 100;
+    log_returns[1] = -SCALE / 200;
     let actual_len = 60u32;
     let bypass_confidence = true;
-    let downside_variance_val = SCALE / 1000; // Small downside variance
-    let ann_excess_return_val = SCALE / 100; // 1%
+    let downside_variance_val = SCALE / 1000;
+    let ann_excess_return_val = SCALE / 100;
     let result = sortino(
         actual_len,
         bypass_confidence,
@@ -134,4 +142,32 @@ fn test_sortino_scaling() {
         SORTINO_NOCONFIDENCE_VALUE,
     );
     assert(result > 0);
+}
+
+#[test]
+fn test_sortino_10_percent_accuracy() {
+    let actual_len = 60u32;
+    let bypass_confidence = true;
+
+    let downside_variance_val = 9433;
+    let ann_excess_return_val = 54082036;
+
+    let result = sortino(
+        actual_len,
+        bypass_confidence,
+        downside_variance_val,
+        ann_excess_return_val,
+        SORTINO_NOCONFIDENCE_VALUE,
+    );
+
+    let expected = 2914604;
+    let tolerance = 15000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
 }

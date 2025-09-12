@@ -53,6 +53,51 @@ pub fn sqrt(n: u64) -> u64 {
 }
 
 #[test]
+fn test_sqrt_sharpe_critical_value() {
+    let result = sqrt(11842060);
+    let expected = 3441;
+    let tolerance = expected / 100; // 1% tolerance
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+}
+
+#[test]
+fn test_sqrt_sortino_critical_value() {
+    let result = sqrt(3561670);
+    let expected = 1887;
+    let tolerance = expected / 100; // 1% tolerance
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+}
+
+#[test]
+fn test_sqrt_large_sharpe_case() {
+    let result = sqrt(365000000);
+    let expected = 19104;
+    let tolerance = expected / 100; // 1% tolerance
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+}
+
+#[test]
 fn test_sqrt_perfect_squares() {
     assert(sqrt(0) == 0);
     assert(sqrt(1) == 1);
