@@ -10,7 +10,7 @@ import traceback
 
 
 ARRAY_SIZE = 256
-MAX_DAYS = 120
+MAX_DAYS = 256
 MAX_SIGNALS = 256
 MERKLE_DEPTH = 8
 SCALE = 10**8  # Base scaling factor (10^8) - used for all ratio outputs
