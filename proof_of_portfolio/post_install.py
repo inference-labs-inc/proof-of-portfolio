@@ -86,7 +86,6 @@ def install_nargo():
 
     print("Installing nargo...")
     try:
-
         home = Path.home()
         noirup_cmd = str(home / ".nargo" / "bin" / "noirup")
 
@@ -153,7 +152,6 @@ def install_bb():
 
     print("Installing bb...")
     try:
-
         home = Path.home()
         bbup_cmd = str(home / ".bb" / "bbup")
 
@@ -161,12 +159,39 @@ def install_bb():
             print(f"bbup not found at {bbup_cmd}")
             return False
 
-        result = subprocess.run(
-            [bbup_cmd, "--version", "0.87.0"], capture_output=True, text=True
-        )
-        if result.returncode != 0:
-            print(f"bbup failed: {result.stderr}")
-        return result.returncode == 0
+        # Use version 0.87.0 as specified
+        versions_to_try = ["0.87.0"]
+
+        for version in versions_to_try:
+            print(f"Trying bb version {version}...")
+            result = subprocess.run(
+                [bbup_cmd, "--version", version], capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                # Test if bb actually works
+                bb_path = str(home / ".bb" / "bb")
+                if Path(bb_path).exists():
+                    test_result = subprocess.run(
+                        [bb_path, "--version"],
+                        capture_output=True,
+                        text=True,
+                    )
+                    if test_result.returncode == 0:
+                        print(f"Successfully installed bb version {version}")
+                        return True
+                    elif (
+                        "GLIBC" in test_result.stderr or "GLIBCXX" in test_result.stderr
+                    ):
+                        print(
+                            f"Version {version} has incompatible GLIBC requirements, trying older version..."
+                        )
+                        continue
+            else:
+                print(f"Failed to install version {version}: {result.stderr}")
+
+        print("Could not find a compatible bb version")
+        return False
     except Exception as e:
         print(f"Error installing bb: {e}")
         return False
