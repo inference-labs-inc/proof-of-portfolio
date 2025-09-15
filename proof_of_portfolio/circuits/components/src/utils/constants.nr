@@ -1,6 +1,6 @@
 // Core array and data structure sizes
 pub global ARRAY_SIZE: u32 = 256;
-pub global MAX_DAYS: u32 = 120;
+pub global MAX_DAYS: u32 = 256;
 pub global MAX_RETURNS: u32 = 256;
 pub global MAX_SIGNALS: u32 = 512;
 pub global MAX_CHECKPOINTS: u32 = 512;
