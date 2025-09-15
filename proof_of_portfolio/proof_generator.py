@@ -7,6 +7,8 @@ import json
 import math
 import bittensor as bt
 import traceback
+import requests
+import base64
 
 
 ARRAY_SIZE = 256
@@ -154,6 +156,61 @@ def field_to_signed_int(field_str):
     return val - 2**64 if val >= 2**63 else val
 
 
+def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
+    """
+    Upload proof to the API endpoint.
+
+    Args:
+        proof_hex: Proof as hex string
+        public_inputs_hex: Public inputs as hex string
+        wallet: Bittensor wallet for signing
+        testnet: Whether this is a testnet proof
+
+    Returns:
+        API response dictionary or None if failed
+    """
+    if not wallet or not proof_hex or not public_inputs_hex:
+        bt.logging.warning("Missing wallet, proof, or public inputs for upload")
+        return None
+
+    try:
+        # Sign timestamp
+        timestamp = str(int(time.time()))
+        signature = wallet.hotkey.sign(timestamp.encode())
+        signature_b64 = base64.b64encode(signature).decode()
+
+        # Prepare request
+        url = "https://api.omron.ai/ptn/upload-proof"
+        headers = {
+            "x-signature": signature_b64,
+            "x-timestamp": timestamp,
+            "x-origin-ss58": wallet.hotkey.ss58_address,
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "testnet": testnet,
+            "proof": proof_hex,
+            "public_signals": public_inputs_hex,
+        }
+
+        bt.logging.info(f"Uploading proof for {wallet.hotkey.ss58_address[:8]}...")
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+
+        if response.status_code == 200:
+            bt.logging.success("✅ Proof uploaded successfully!")
+            return response.json()
+        else:
+            bt.logging.error(
+                f"❌ Proof upload failed: {response.status_code} - {response.text}"
+            )
+            return None
+
+    except Exception as e:
+        bt.logging.error(f"Error uploading proof: {str(e)}")
+        return None
+
+
 def generate_bb_proof(circuit_dir):
     try:
         subprocess.run(["bb", "--version"], capture_output=True, check=True)
@@ -212,6 +269,8 @@ def generate_proof(
     sortino_noconfidence_value=-100,
     calmar_noconfidence_value=-100,
     statistical_confidence_noconfidence_value=-100,
+    wallet=None,
+    testnet=True,
 ):
     is_demo_mode = data is None
     if verbose is None:
@@ -692,6 +751,11 @@ def generate_proof(
         except Exception as e:
             bt.logging.error(f"Error reading proof files: {str(e)}")
 
+    # Upload proof if wallet provided and proof generation was successful
+    upload_result = None
+    if wallet and proof_hex and public_inputs_hex and not witness_only:
+        upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
+
     # Return structured results for programmatic access
     return {
         "merkle_roots": {
@@ -730,5 +794,6 @@ def generate_proof(
             "proof_generated": prove_time is not None or witness_only,
             "proof_hex": proof_hex,
             "public_inputs_hex": public_inputs_hex,
+            "upload_result": upload_result,
         },
     }
