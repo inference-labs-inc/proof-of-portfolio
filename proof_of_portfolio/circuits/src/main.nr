@@ -16,6 +16,7 @@ use components::utils::{
 };
 
 fn main(
+    hotkey: pub str<48>, // Public hotkey identifier (SS58 addresses are 48 chars)
     log_returns: [i64; MAX_DAYS],
     n_returns: u32,
     checkpoint_count: u32,
@@ -27,18 +28,18 @@ fn main(
     path_elements: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     path_indices: [[Field; MERKLE_DEPTH]; MAX_SIGNALS],
     signals_merkle_root: pub Field,
-    use_weighting: bool,
+    use_weighting: pub bool,
     bypass_confidence: pub bool,
     weights: [i64; ARRAY_SIZE],
-    days_in_year: i64,
-    omega_loss_min: i64,
-    annual_risk_free: i64,
-    daily_rf: i64,
-    omega_noconfidence: i64,
-    sharpe_noconfidence: i64,
-    sortino_noconfidence: i64,
-    calmar_noconfidence: i64,
-    stat_confidence_noconfidence: i64,
+    days_in_year: pub i64,
+    omega_loss_min: pub i64,
+    annual_risk_free: pub i64,
+    daily_rf: pub i64,
+    omega_noconfidence: pub i64,
+    sharpe_noconfidence: pub i64,
+    sortino_noconfidence: pub i64,
+    calmar_noconfidence: pub i64,
+    stat_confidence_noconfidence: pub i64,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;

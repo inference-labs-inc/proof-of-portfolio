@@ -491,6 +491,7 @@ def generate_proof(
     account_size = data.get("account_size", 250000)
     # Finally, LFG
     main_prover_input = {
+        "hotkey": str(miner_hotkey),
         "log_returns": [str(r) for r in scaled_log_returns],
         "n_returns": str(n_returns),
         "checkpoint_returns": [str(r) for r in scaled_checkpoint_returns],
