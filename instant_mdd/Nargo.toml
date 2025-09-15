@@ -1,0 +1,4 @@
+[package]
+name = "instant_mdd"
+type = "bin"
+authors = ["Inference Labs Inc"]

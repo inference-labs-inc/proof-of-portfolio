@@ -6,6 +6,11 @@ import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
 from .verifier import verify as verify
+import subprocess
+from pathlib import Path
+from .post_install import main as post_install_main
+from .proof_generator import generate_proof
+
 
 _dependencies_checked = False
 
@@ -32,8 +37,6 @@ def ensure_dependencies():
         print("This may take a few minutes on first run.")
 
         try:
-            from .post_install import main as post_install_main
-
             post_install_main()
             print("Dependencies installed successfully!")
         except Exception as e:
@@ -83,8 +86,6 @@ def _prove_worker(
     Worker function to run proof generation in a separate process.
     """
     try:
-        from .proof_generator import generate_proof
-
         result = generate_proof(
             data=miner_data,
             daily_pnl=daily_pnl,
@@ -180,6 +181,103 @@ async def prove(
                 "message": str(e),
                 "proof_generated": False,
             }
+
+
+@requires_dependencies
+def prove_instant_mdd(hotkey, ledger_element):
+    """
+    Generate zero-knowledge proof for instant maximum drawdown calculation.
+
+    Args:
+        hotkey: Miner's hotkey for identification
+        ledger_element: PerfLedger object containing checkpoint data
+
+    Returns:
+        Dictionary with proof results including drawdown calculation
+    """
+
+    SCALE = 10_000_000
+    MAX_ARRAY_SIZE = 1024
+
+    # Extract MDD values from ledger checkpoints
+    if (
+        not ledger_element
+        or not hasattr(ledger_element, "cps")
+        or len(ledger_element.cps) == 0
+    ):
+        return {
+            "status": "no_data",
+            "hotkey": hotkey,
+            "exceeds_threshold": False,
+            "drawdown_percentage": 0,
+        }
+
+    # Convert checkpoint MDD values to scaled integers
+    mdd_values = []
+    for cp in ledger_element.cps:
+        if hasattr(cp, "mdd"):
+            scaled_mdd = int(cp.mdd * SCALE)
+            mdd_values.append(scaled_mdd)
+
+    # Pad array to MAX_ARRAY_SIZE
+    while len(mdd_values) < MAX_ARRAY_SIZE:
+        mdd_values.append(0)
+
+    n_checkpoints = min(len(ledger_element.cps), MAX_ARRAY_SIZE)
+
+    # 10% threshold (from ValiConfig.DRAWDOWN_MAXVALUE_PERCENTAGE)
+    max_drawdown_threshold = 10  # 10% as integer
+
+    try:
+        # Get the instant_mdd circuit path
+        circuit_path = Path(__file__).parent.parent / "instant_mdd"
+
+        # Create Prover.toml with input data
+        prover_toml_path = circuit_path / "Prover.toml"
+        with open(prover_toml_path, "w") as f:
+            f.write(f'hotkey = "{hotkey}"\n')
+            f.write(f"mdd_values = {mdd_values}\n")
+            f.write(f'n_checkpoints = "{n_checkpoints}"\n')
+            f.write(f'max_drawdown_threshold = "{max_drawdown_threshold}"\n')
+
+        # Execute nargo
+        result = subprocess.run(
+            ["nargo", "execute"], capture_output=True, text=True, cwd=str(circuit_path)
+        )
+
+        if result.returncode != 0:
+            return {
+                "status": "execution_failed",
+                "hotkey": hotkey,
+                "error": result.stderr,
+            }
+
+        # Parse output
+        if "Circuit output:" in result.stdout:
+            output_line = result.stdout.split("Circuit output: ")[1].strip()
+
+            # Parse tuple output (exceeds_threshold, drawdown_percentage)
+            if output_line.startswith("(") and output_line.endswith(")"):
+                output_line = output_line[1:-1]  # Remove parentheses
+                parts = output_line.split(", ")
+                if len(parts) == 2:
+                    exceeds_threshold = parts[0].strip() == "true"
+                    drawdown_percentage = int(
+                        parts[1].strip()
+                    )  # Already unscaled from circuit
+
+                    return {
+                        "status": "success",
+                        "hotkey": hotkey,
+                        "exceeds_threshold": exceeds_threshold,
+                        "drawdown_percentage": drawdown_percentage,
+                        "n_checkpoints": n_checkpoints,
+                    }
+
+        return {"status": "parse_failed", "hotkey": hotkey, "raw_output": result.stdout}
+
+    except Exception as e:
+        return {"status": "error", "hotkey": hotkey, "message": str(e)}
 
 
 def prove_sync(
