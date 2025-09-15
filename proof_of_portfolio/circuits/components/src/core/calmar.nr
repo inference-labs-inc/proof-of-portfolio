@@ -1,6 +1,4 @@
-use crate::utils::constants::{
-    ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, MAX_CHECKPOINTS, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N,
-};
+use crate::utils::constants::{ARRAY_SIZE, CALMAR_NOCONFIDENCE_VALUE, MAX_CHECKPOINTS, SCALE};
 use super::drawdown::daily_max_drawdown;
 
 pub fn calmar(
@@ -12,8 +10,9 @@ pub fn calmar(
     noconfidence_value: i64,
     checkpoint_count: u32,
     checkpoint_mdds: [i64; MAX_CHECKPOINTS],
+    minimum_n: u32,
 ) -> i64 {
-    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
     } else {
         let ann_excess_return = avg_daily_return * days_in_year;
@@ -72,6 +71,7 @@ fn test_calmar_normal_case() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result != 0);
 }
@@ -93,6 +93,7 @@ fn test_calmar_insufficient_data() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
@@ -115,6 +116,7 @@ fn test_calmar_exactly_30_days() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result != 0);
 }
@@ -137,6 +139,7 @@ fn test_calmar_negative_returns() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result != 0);
 }
@@ -160,6 +163,7 @@ fn test_calmar_scaling() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
 
     assert(result >= 0);
@@ -182,6 +186,7 @@ fn test_calmar_parity() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     let expected = 1000000i64;
     let diff = if result > expected {
@@ -207,6 +212,7 @@ fn test_calmar_less_than_60_days() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
@@ -225,6 +231,7 @@ fn test_calmar_zero_variance() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result == 0i64);
 }
@@ -246,6 +253,7 @@ fn test_calmar_all_positive() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result == 0i64);
 }
@@ -267,6 +275,7 @@ fn test_calmar_all_negative() {
         CALMAR_NOCONFIDENCE_VALUE,
         0,
         checkpoint_mdds,
+        60,
     );
     assert(result == 0i64);
 }
@@ -297,6 +306,7 @@ fn test_calmar_with_checkpoints_normal_case() {
         CALMAR_NOCONFIDENCE_VALUE,
         1,
         checkpoint_mdds,
+        60,
     );
     assert(result != 0);
 }
@@ -319,6 +329,7 @@ fn test_calmar_with_checkpoints_insufficient_days() {
         CALMAR_NOCONFIDENCE_VALUE,
         2,
         checkpoint_mdds,
+        60,
     );
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
 }
@@ -342,6 +353,7 @@ fn test_calmar_with_checkpoints_zero_drawdown() {
         CALMAR_NOCONFIDENCE_VALUE,
         60,
         checkpoint_mdds,
+        60,
     );
     assert(result == 0);
 }
@@ -362,6 +374,7 @@ fn test_calmar_10_percent_accuracy() {
         CALMAR_NOCONFIDENCE_VALUE,
         1,
         checkpoint_mdds,
+        60,
     );
 
     // Expected calculation:

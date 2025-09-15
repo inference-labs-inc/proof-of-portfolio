@@ -10,8 +10,9 @@ pub fn omega(
     bypass_confidence: bool,
     omega_loss_min: i64,
     noconfidence_value: i64,
+    minimum_n: u32,
 ) -> i64 {
-    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
     } else {
         if use_weighting {
@@ -122,6 +123,7 @@ fn test_omega_all_positive() {
         false,
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0);
 }
@@ -142,6 +144,7 @@ fn test_omega_all_negative() {
         false,
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0);
 }
@@ -163,6 +166,7 @@ fn test_omega_mixed_returns() {
         false,
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0);
 }
@@ -183,6 +187,7 @@ fn test_omega_zero_returns() {
         false,
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0);
 }
@@ -203,6 +208,7 @@ fn test_omega_ptn_parity() {
         true,
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 125000000);
 }
@@ -226,6 +232,7 @@ fn test_omega_scaling() {
         bypass_confidence,
         omega_loss_min,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result > 0);
 }
@@ -245,6 +252,7 @@ fn test_omega_parity() {
         true,
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     let expected = 25000000i64;
     let diff = if result > expected {
@@ -268,6 +276,7 @@ fn test_omega_less_than_60_days() {
         false,
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0i64);
 }
@@ -284,6 +293,7 @@ fn test_omega_zero_variance() {
         true,
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0i64);
 }

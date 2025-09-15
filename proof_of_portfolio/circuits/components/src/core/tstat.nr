@@ -1,6 +1,6 @@
 use crate::utils::{
     constants::{
-        ARRAY_SIZE, STATISTICAL_CONFIDENCE_MINIMUM_N, SCALE,
+        ARRAY_SIZE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N,
         STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
     },
     sqrt::sqrt,
@@ -16,17 +16,34 @@ pub fn statistical_confidence(
     variance_val: i64,
     _ann_excess_return_val: i64,
     noconfidence_value: i64,
+    minimum_n: u32,
 ) -> i64 {
     // Check minimum sample size for statistical confidence
-    if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    if !bypass_confidence & actual_len < minimum_n {
         if actual_len < 2 {
             noconfidence_value
         } else {
             // Allow computation for sample sizes between 2 and minimum, but with reduced confidence
-            compute_t_statistic(log_returns, actual_len, weights, use_weighting, avg_daily_return, variance_val, noconfidence_value)
+            compute_t_statistic(
+                log_returns,
+                actual_len,
+                weights,
+                use_weighting,
+                avg_daily_return,
+                variance_val,
+                noconfidence_value,
+            )
         }
     } else {
-        compute_t_statistic(log_returns, actual_len, weights, use_weighting, avg_daily_return, variance_val, noconfidence_value)
+        compute_t_statistic(
+            log_returns,
+            actual_len,
+            weights,
+            use_weighting,
+            avg_daily_return,
+            variance_val,
+            noconfidence_value,
+        )
     }
 }
 
@@ -70,7 +87,18 @@ fn test_tstat_normal_case() {
     let avg = 320;
     let variance_val = 200000;
     let ann_excess = 116700;
-    let result = statistical_confidence(returns, 5, weights, false, false, avg, variance_val, ann_excess, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
+    let result = statistical_confidence(
+        returns,
+        5,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
     assert(result != 0);
 }
 
@@ -83,7 +111,18 @@ fn test_tstat_insufficient_data() {
     let avg = 1000;
     let variance_val = 0;
     let ann_excess = 365000;
-    let result = statistical_confidence(returns, 1, weights, false, false, avg, variance_val, ann_excess, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
+    let result = statistical_confidence(
+        returns,
+        1,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
     assert(result == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
 }
 
@@ -98,7 +137,18 @@ fn test_tstat_zero_variance() {
     let avg = 100;
     let variance_val = 0;
     let ann_excess = 36500;
-    let result = statistical_confidence(returns, 5, weights, false, false, avg, variance_val, ann_excess, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
+    let result = statistical_confidence(
+        returns,
+        5,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
     assert(result == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
 }
 
@@ -112,6 +162,17 @@ fn test_tstat_exactly_two_samples() {
     let avg = 250;
     let variance_val = 1125000;
     let ann_excess = 91150;
-    let result = statistical_confidence(returns, 2, weights, false, false, avg, variance_val, ann_excess, STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
+    let result = statistical_confidence(
+        returns,
+        2,
+        weights,
+        false,
+        false,
+        avg,
+        variance_val,
+        ann_excess,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
     assert(result != 0);
 }

@@ -40,6 +40,7 @@ fn main(
     sortino_noconfidence: pub i64,
     calmar_noconfidence: pub i64,
     stat_confidence_noconfidence: pub i64,
+    stat_conf_min_n: pub u32,
 ) -> pub [Field; 9] {
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
@@ -128,6 +129,7 @@ fn main(
         variance_val,
         ann_excess_return_val,
         sharpe_noconfidence,
+        stat_conf_min_n,
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
@@ -139,6 +141,7 @@ fn main(
         calmar_noconfidence,
         checkpoint_count,
         checkpoint_mdds,
+        stat_conf_min_n,
     );
     let omega_ratio = omega(
         returns_array,
@@ -148,6 +151,7 @@ fn main(
         bypass_confidence,
         omega_loss_min,
         omega_noconfidence,
+        stat_conf_min_n,
     );
     let sortino_ratio = sortino(
         n_returns,
@@ -155,6 +159,7 @@ fn main(
         downside_variance_val,
         ann_excess_return_val,
         sortino_noconfidence,
+        stat_conf_min_n,
     );
     let stat_confidence = statistical_confidence(
         returns_array,
@@ -166,6 +171,7 @@ fn main(
         variance_val,
         ann_excess_return_val,
         stat_confidence_noconfidence,
+        stat_conf_min_n,
     );
 
     let pnl_score_result = avg_daily_pnl;

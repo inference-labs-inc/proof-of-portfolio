@@ -12,8 +12,9 @@ pub fn sharpe(
     variance_val: i64,
     ann_excess_return_val: i64,
     noconfidence_value: i64,
+    minimum_n: u32,
 ) -> i64 {
-    let result = if !bypass_confidence & actual_len < STATISTICAL_CONFIDENCE_MINIMUM_N {
+    let result = if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
     } else {
         let excess_return = ann_excess_return_val;
@@ -53,6 +54,7 @@ fn test_sharpe_normal_case() {
         variance_val,
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result != 0);
 }
@@ -72,6 +74,7 @@ fn test_sharpe_low_volatility() {
         variance_val,
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
@@ -93,6 +96,7 @@ fn test_sharpe_high_volatility() {
         variance_val,
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result != 0);
 }
@@ -111,6 +115,7 @@ fn test_sharpe_scaling() {
         variance_val,
         ann_excess_return_val,
         SHARPE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result > 0);
 }
@@ -129,6 +134,7 @@ fn test_sharpe_10_percent_accuracy() {
         variance_val,
         ann_excess_return_val,
         SHARPE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
 
     let expected = 158482900;
