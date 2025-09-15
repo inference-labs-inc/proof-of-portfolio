@@ -10,6 +10,8 @@ import subprocess
 from pathlib import Path
 from .post_install import main as post_install_main
 from .proof_generator import generate_proof
+import json
+import time
 
 
 _dependencies_checked = False
@@ -183,6 +185,102 @@ async def prove(
             }
 
 
+def save_instant_mdd_results(results, hotkey):
+    """
+    Save instant MDD proof results to disk in ~/.pop/instant_mdd/ directory.
+
+    Args:
+        results: The instant MDD results dictionary to save
+        hotkey: The miner's hotkey for filename
+    """
+    try:
+        pop_dir = Path.home() / ".pop" / "instant_mdd"
+        pop_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = int(time.time())
+        filename = f"{hotkey}_{timestamp}.json"
+        filepath = pop_dir / filename
+
+        with open(filepath, "w") as f:
+            json.dump(results, f, indent=2, default=str)
+
+        print(f"Instant MDD results saved to {filepath}")
+        return str(filepath)
+
+    except Exception as e:
+        print(f"Error saving instant MDD results: {str(e)}")
+        return None
+
+
+def get_latest_instant_mdd_for_miner(hotkey):
+    """
+    Get the latest instant MDD result for a specific miner.
+
+    Args:
+        hotkey: The miner's hotkey
+
+    Returns:
+        dict with latest instant MDD result, or None if not found
+    """
+    try:
+        pop_dir = Path.home() / ".pop" / "instant_mdd"
+        if not pop_dir.exists():
+            return None
+
+        matching_files = list(pop_dir.glob(f"{hotkey}_*.json"))
+        if not matching_files:
+            return None
+
+        latest_file = max(matching_files, key=lambda f: f.stat().st_mtime)
+
+        with open(latest_file, "r") as f:
+            results = json.load(f)
+
+        return results
+
+    except Exception as e:
+        print(f"Error getting latest instant MDD for {hotkey}: {str(e)}")
+        return None
+
+
+def get_all_instant_mdd_for_miner(hotkey):
+    """
+    Get all instant MDD results for a specific miner.
+
+    Args:
+        hotkey: The miner's hotkey
+
+    Returns:
+        list of instant MDD result dictionaries sorted by timestamp (newest first)
+    """
+    try:
+        pop_dir = Path.home() / ".pop" / "instant_mdd"
+        if not pop_dir.exists():
+            return []
+
+        matching_files = list(pop_dir.glob(f"{hotkey}_*.json"))
+        if not matching_files:
+            return []
+
+        results = []
+        for file_path in matching_files:
+            try:
+                with open(file_path, "r") as f:
+                    result = json.load(f)
+                    result["_filepath"] = str(file_path)
+                    result["_timestamp"] = int(file_path.stem.split("_")[1])
+                    results.append(result)
+            except Exception as e:
+                print(f"Error reading {file_path}: {str(e)}")
+                continue
+
+        return sorted(results, key=lambda x: x["_timestamp"], reverse=True)
+
+    except Exception as e:
+        print(f"Error getting all instant MDD for {hotkey}: {str(e)}")
+        return []
+
+
 @requires_dependencies
 def prove_instant_mdd(hotkey, ledger_element):
     """
@@ -266,13 +364,16 @@ def prove_instant_mdd(hotkey, ledger_element):
                         parts[1].strip()
                     )  # Already unscaled from circuit
 
-                    return {
+                    results = {
                         "status": "success",
                         "hotkey": hotkey,
                         "exceeds_threshold": exceeds_threshold,
                         "drawdown_percentage": drawdown_percentage,
                         "n_checkpoints": n_checkpoints,
                     }
+
+                    save_instant_mdd_results(results, hotkey)
+                    return results
 
         return {"status": "parse_failed", "hotkey": hotkey, "raw_output": result.stdout}
 

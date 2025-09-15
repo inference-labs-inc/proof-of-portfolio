@@ -69,7 +69,13 @@ pub fn omega(
             if effective_denominator >= adjusted_ratio_scale {
                 positive_cross / (effective_denominator / adjusted_ratio_scale)
             } else if effective_denominator != 0 {
-                (positive_cross / effective_denominator) * adjusted_ratio_scale
+                let max_omega_result = SCALE * 1000; // Cap at 1000x scale to prevent overflow
+                let tentative_result = positive_cross / effective_denominator;
+                if tentative_result <= max_omega_result / adjusted_ratio_scale {
+                    tentative_result * adjusted_ratio_scale
+                } else {
+                    max_omega_result
+                }
             } else {
                 0
             }
