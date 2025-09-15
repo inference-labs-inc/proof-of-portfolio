@@ -9,6 +9,7 @@ import bittensor as bt
 import traceback
 import requests
 import base64
+from pathlib import Path
 
 
 ARRAY_SIZE = 256
@@ -209,6 +210,102 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
     except Exception as e:
         bt.logging.error(f"Error uploading proof: {str(e)}")
         return None
+
+
+def save_zk_results(results, miner_hotkey):
+    """
+    Save ZK proof results to disk in ~/.pop/ directory.
+
+    Args:
+        results: The ZK results dictionary to save
+        miner_hotkey: The miner's hotkey for filename
+    """
+    try:
+        pop_dir = Path.home() / ".pop"
+        pop_dir.mkdir(exist_ok=True)
+
+        timestamp = int(time.time())
+        filename = f"{miner_hotkey}_{timestamp}.json"
+        filepath = pop_dir / filename
+
+        with open(filepath, "w") as f:
+            json.dump(results, f, indent=2, default=str)
+
+        bt.logging.info(f"ZK results saved to {filepath}")
+        return str(filepath)
+
+    except Exception as e:
+        bt.logging.error(f"Error saving ZK results: {str(e)}")
+        return None
+
+
+def get_latest_merkle_root_for_miner(hotkey):
+    """
+    Get the latest merkle root for a specific miner.
+
+    Args:
+        hotkey: The miner's hotkey
+
+    Returns:
+        dict with signals and returns merkle roots, or None if not found
+    """
+    try:
+        pop_dir = Path.home() / ".pop"
+        if not pop_dir.exists():
+            return None
+
+        matching_files = list(pop_dir.glob(f"{hotkey}_*.json"))
+        if not matching_files:
+            return None
+
+        latest_file = max(matching_files, key=lambda f: f.stat().st_mtime)
+
+        with open(latest_file, "r") as f:
+            results = json.load(f)
+
+        return results.get("merkle_roots")
+
+    except Exception as e:
+        bt.logging.error(f"Error getting latest merkle root for {hotkey}: {str(e)}")
+        return None
+
+
+def get_all_results_for_miner(hotkey):
+    """
+    Get all ZK results for a specific miner.
+
+    Args:
+        hotkey: The miner's hotkey
+
+    Returns:
+        list of result dictionaries sorted by timestamp (newest first)
+    """
+    try:
+        pop_dir = Path.home() / ".pop"
+        if not pop_dir.exists():
+            return []
+
+        matching_files = list(pop_dir.glob(f"{hotkey}_*.json"))
+        if not matching_files:
+            return []
+
+        results = []
+        for file_path in matching_files:
+            try:
+                with open(file_path, "r") as f:
+                    result = json.load(f)
+                    result["_filepath"] = str(file_path)
+                    result["_timestamp"] = int(file_path.stem.split("_")[1])
+                    results.append(result)
+            except Exception as e:
+                bt.logging.warning(f"Error reading {file_path}: {str(e)}")
+                continue
+
+        return sorted(results, key=lambda x: x["_timestamp"], reverse=True)
+
+    except Exception as e:
+        bt.logging.error(f"Error getting all results for {hotkey}: {str(e)}")
+        return []
 
 
 def generate_bb_proof(circuit_dir):
@@ -756,8 +853,8 @@ def generate_proof(
     if wallet and proof_hex and public_inputs_hex and not witness_only:
         upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
 
-    # Return structured results for programmatic access
-    return {
+    # Build results dictionary
+    results = {
         "merkle_roots": {
             "signals": signals_merkle_root,
             "returns": returns_merkle_root,
@@ -797,3 +894,8 @@ def generate_proof(
             "upload_result": upload_result,
         },
     }
+
+    if miner_hotkey:
+        save_zk_results(results, miner_hotkey)
+
+    return results
