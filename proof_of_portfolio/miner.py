@@ -27,7 +27,7 @@ class Miner:
             )
 
         self.TREE_GEN_PROVER_TOML = os.path.join(self.TREE_GEN_DIR, "Prover.toml")
-        self.MAX_SIGNALS = 256
+        self.MAX_SIGNALS = 512
 
     def prepare_signals_from_data(self, data_json_path):
         """
@@ -58,7 +58,6 @@ class Miner:
         orders = []
 
         if isinstance(positions, dict):
-
             if "positions" in positions:
                 position_list = positions["positions"]
             else:
@@ -379,7 +378,7 @@ class Miner:
             indices = path_indices[i] if i < len(path_indices) else []
 
             # Add path header
-            path_header = f"║ Path {i+1}:"
+            path_header = f"║ Path {i + 1}:"
             if i == 0:
                 tree_str.append(
                     path_header + " " * (content_width - len(path_header)) + "║"
@@ -417,7 +416,7 @@ class Miner:
                     )
 
                 # Add the line to the tree
-                node_info = f"Level {level+1}: {short_element} {direction}"
+                node_info = f"Level {level + 1}: {short_element} {direction}"
                 line = f"{prefix}{node_info}"
 
                 # Ensure the line fits within the box

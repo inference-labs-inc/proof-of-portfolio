@@ -2,7 +2,7 @@ use components::core::merkle::{hash_signal, TradingSignal};
 use components::utils::constants::MERKLE_DEPTH;
 use std::hash::pedersen_hash;
 
-global MAX_SIGNALS: u32 = 256;
+global MAX_SIGNALS: u32 = 512;
 
 // A struct to hold all the Merkle tree data
 struct MerkleTree {

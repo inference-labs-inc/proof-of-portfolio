@@ -12,7 +12,7 @@ COMPUTED_RETURNS_MERKLE_ROOT = (
 )
 
 SCALE = 10_000_000  # Same scale as used in the circuit
-MAX_SIGNALS = 256
+MAX_SIGNALS = 512
 
 
 def load_validator_checkpoint(file_path: str) -> Dict[str, Any]:
@@ -108,14 +108,14 @@ def create_signals_toml(signals: List[Dict[str, Any]]) -> str:
     for i, signal in enumerate(signals):
         signals_toml += f"""
 [[signals]]
-trade_pair_id = "{signal['trade_pair_id']}"
-order_type = "{signal['order_type']}"
-leverage = "{signal['leverage']}"
-timestamp = "{signal['timestamp']}"
+trade_pair_id = "{signal["trade_pair_id"]}"
+order_type = "{signal["order_type"]}"
+leverage = "{signal["leverage"]}"
+timestamp = "{signal["timestamp"]}"
 """
 
     toml_content = f"""
-actual_len = "{len([s for s in signals if s['trade_pair_id'] != '0'])}"
+actual_len = "{len([s for s in signals if s["trade_pair_id"] != "0"])}"
 {signals_toml}
 """
 
@@ -243,7 +243,7 @@ def generate_prover_toml(
     # Format signals array
     signals_toml = "signals = [\n"
     for signal in signals:
-        signals_toml += f"""    {{ trade_pair_id = "{signal['trade_pair_id']}", order_type = "{signal['order_type']}", leverage = "{signal['leverage']}", timestamp = "{signal['timestamp']}" }},\n"""
+        signals_toml += f"""    {{ trade_pair_id = "{signal["trade_pair_id"]}", order_type = "{signal["order_type"]}", leverage = "{signal["leverage"]}", timestamp = "{signal["timestamp"]}" }},\n"""
     signals_toml += "]"
 
     # Format 2D arrays
@@ -252,7 +252,7 @@ def generate_prover_toml(
 
     toml_content = f"""# Generated test inputs for portfolio proof circuit
 # Miner: {miner_hotkey}
-# Checkpoints: {circuit_data['checkpoint_count']}
+# Checkpoints: {circuit_data["checkpoint_count"]}
 # Signals: {actual_signals_count}
 
 # Checkpoint data arrays
@@ -273,8 +273,8 @@ accum_times = {accum_times_array}
 {path_indices_toml}
 
 # Circuit parameters
-checkpoint_count = "{circuit_data['checkpoint_count']}"
-target_duration = "{circuit_data['target_duration']}"
+checkpoint_count = "{circuit_data["checkpoint_count"]}"
+target_duration = "{circuit_data["target_duration"]}"
 signals_count = "{actual_signals_count}"
 signals_merkle_root = "{signals_merkle_root}"
 returns_merkle_root = "{COMPUTED_RETURNS_MERKLE_ROOT}"
