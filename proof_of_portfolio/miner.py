@@ -81,18 +81,15 @@ class Miner:
             open_order = orders[i]
             close_order = orders[i + 1]
 
-            # Map string order types to numeric codes for the circuit
-            # Use unsigned values: LONG -> 1, SHORT -> 2, FLAT -> 0
             order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
             order_type_code = order_type_map.get(open_order["order_type"], 0)
 
-            # Convert UUIDs to single Field (as per main circuit)
             open_uuid_hex = open_order["order_uuid"].replace("-", "")
             close_uuid_hex = close_order["order_uuid"].replace("-", "")
-            # Create open signal using main circuit structure
+
             signals.append(
                 {
-                    "trade_pair": "0",  # Use 0 for now, could map trade pairs later
+                    "trade_pair": "0",
                     "order_type": str(order_type_code),
                     "leverage": str(int(abs(open_order["leverage"]) * 100)),
                     "price": str(int(open_order["price"] * 100)),
@@ -103,14 +100,11 @@ class Miner:
                 }
             )
 
-            # Create close signal using main circuit structure
             signals.append(
                 {
-                    "trade_pair": "0",  # Use 0 for now, could map trade pairs later
-                    "order_type": "0",  # Close orders are FLAT = 0
-                    "leverage": str(
-                        int(abs(open_order["leverage"]) * 100)
-                    ),  # Same leverage as open
+                    "trade_pair": "0",
+                    "order_type": "0",
+                    "leverage": str(int(abs(open_order["leverage"]) * 100)),
                     "price": str(int(close_order["price"] * 100)),
                     "processed_ms": str(close_order["processed_ms"]),
                     "order_uuid": f"0x{close_uuid_hex}",
@@ -124,7 +118,6 @@ class Miner:
             print(f"Warning: No valid order pairs found in {data_json_path}")
             return [], 0
 
-        # Pad signals if we have fewer than MAX_SIGNALS using main circuit structure
         padded_signals = signals + [
             {
                 "trade_pair": "0",
@@ -162,9 +155,8 @@ class Miner:
         with open(self.TREE_GEN_PROVER_TOML, "w") as f:
             toml.dump(merkle_input, f)
 
-        # Find nargo executable
         nargo_cmd = "nargo"
-        # Common locations for nargo
+
         nargo_paths = [
             os.path.expanduser("~/.nargo/bin/nargo"),
             os.path.expanduser("~/.noir/bin/nargo"),
@@ -172,7 +164,6 @@ class Miner:
             os.path.expanduser("~/.noirup/bin/nargo"),
         ]
 
-        # Check if nargo exists in common locations
         for path in nargo_paths:
             if os.path.isfile(path) and os.access(path, os.X_OK):
                 nargo_cmd = path
@@ -200,6 +191,16 @@ class Miner:
             output_str = result.stdout
 
             def parse_array_from_output(array_name, s):
+                hex_array_pattern = re.compile(
+                    rf"{array_name}: \[\[(0x[0-9a-fA-F, ]+)\]\]", re.DOTALL
+                )
+                hex_match = hex_array_pattern.search(s)
+
+                if hex_match:
+                    hex_values = re.findall(r"0x([0-9a-fA-F]+)", hex_match.group(1))
+                    values = [str(int(hex_val, 16)) for hex_val in hex_values]
+                    return values
+
                 pattern = re.compile(rf'"{array_name}": Vec\((.*?)\), "', re.DOTALL)
                 match = pattern.search(s)
                 if not match:
@@ -214,19 +215,23 @@ class Miner:
                 for field_str in field_strs:
                     val = int(field_str)
                     if val < 0:
-                        val = PRIME + val  # Convert negative to positive field element
+                        val = PRIME + val
                     values.append(str(val))
                 return values
 
-            root_match = re.search(r'"root": Field\(([^)]+)\)', output_str)
-            if not root_match:
-                raise ValueError("Could not parse Merkle root from output.")
+            root_match = re.search(r"root: (0x[0-9a-fA-F]+)", output_str)
+            if root_match:
+                merkle_root = str(int(root_match.group(1), 16))
+            else:
+                root_match = re.search(r'"root": Field\(([^)]+)\)', output_str)
+                if not root_match:
+                    raise ValueError("Could not parse Merkle root from output.")
 
-            PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-            root_val = int(root_match.group(1))
-            if root_val < 0:
-                root_val = PRIME + root_val
-            merkle_root = str(root_val)
+                PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+                root_val = int(root_match.group(1))
+                if root_val < 0:
+                    root_val = PRIME + root_val
+                merkle_root = str(root_val)
 
             path_elements_flat = parse_array_from_output("path_elements", output_str)
             path_indices_flat = parse_array_from_output("path_indices", output_str)
@@ -263,13 +268,12 @@ class Miner:
         Returns:
             dict: Tree data containing merkle_root, path_elements, and path_indices, or None if failed
         """
-        # Prepare signals from the data.json file
+
         signals, actual_len = self.prepare_signals_from_data(input_json_path)
         if not signals or actual_len == 0:
             print("Could not prepare signals. Exiting.")
             return None
 
-        # Run Merkle Generator
         merkle_data = self.run_merkle_generator(signals, actual_len)
         if not merkle_data:
             print("Halting due to error in Merkle generation.")
@@ -277,7 +281,6 @@ class Miner:
 
         merkle_root, path_elements, path_indices = merkle_data
 
-        # Create tree data dictionary
         tree_data = {
             "merkle_root": merkle_root,
             "path_elements": path_elements,
@@ -285,21 +288,16 @@ class Miner:
             "actual_len": actual_len,
         }
 
-        # Determine where to save the tree data
         if output_path:
-            # If output_path is a directory, append tree.json to it
             if os.path.isdir(output_path):
                 tree_file = os.path.join(output_path, "tree.json")
             else:
-                # Otherwise use the provided path directly
                 tree_file = output_path
         else:
-            # Default: save to the same directory as the input file
             output_dir = os.path.dirname(input_json_path)
             tree_file = os.path.join(output_dir, "tree.json")
 
         try:
-            # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(os.path.abspath(tree_file)), exist_ok=True)
 
             with open(tree_file, "w") as f:
@@ -309,7 +307,6 @@ class Miner:
             print(f"Error saving tree data: {e}")
             return None
 
-        # Clean up temporary files
         if os.path.exists(self.TREE_GEN_PROVER_TOML):
             os.remove(self.TREE_GEN_PROVER_TOML)
 
@@ -335,30 +332,25 @@ class Miner:
         if not tree_data:
             return "No tree data available."
 
-        # Extract data from tree_data
         merkle_root = tree_data["merkle_root"]
         path_elements = tree_data["path_elements"]
         path_indices = tree_data.get("path_indices", [])
         actual_len = tree_data.get("actual_len", 0)
 
-        # Box width - adjust as needed
         box_width = 70
-        content_width = box_width - 2  # Account for borders
+        content_width = box_width - 2
 
-        # Helper function to shorten hash strings
         def shorten_hash(hash_str):
             hash_str = str(hash_str)
             if len(hash_str) <= 14:
                 return hash_str
             return f"{hash_str[:6]}...{hash_str[-6:]}"
 
-        # Start building the tree visualization
         tree_str = []
         title = f"🌳 Merkle Tree (Signals: {actual_len}) 🌳"
         tree_str.append(title)
         tree_str.append("═" * box_width)
 
-        # Create a shortened version of the merkle root for display
         if isinstance(merkle_root, str):
             merkle_root_str = merkle_root
         else:
@@ -368,16 +360,12 @@ class Miner:
         tree_str.append(f"Root: {short_root}")
         tree_str.append("╔" + "═" * (box_width - 2) + "╗")
 
-        # Determine how many paths to show - only show up to actual_len paths
         max_paths_to_show = min(actual_len, len(path_elements))
 
-        # Create a more tree-like visualization
         for i in range(max_paths_to_show):
-            # Get the path elements and indices for this path
             elements = path_elements[i]
             indices = path_indices[i] if i < len(path_indices) else []
 
-            # Add path header
             path_header = f"║ Path {i + 1}:"
             if i == 0:
                 tree_str.append(
@@ -389,25 +377,19 @@ class Miner:
                     path_header + " " * (content_width - len(path_header)) + "║"
                 )
 
-            # Display each level of the path with ASCII art
             for level, element in enumerate(elements):
-                # Create a shortened version of the element for display
                 short_element = shorten_hash(element)
 
-                # Get the direction (left/right) if available
                 direction = ""
                 if level < len(indices):
                     direction = "→ Right" if indices[level] == "1" else "→ Left"
 
-                # Create tree-like structure with ASCII art
-                # Limit the depth of visualization to prevent excessive indentation
                 max_visible_depth = 4
                 if level == 0:
                     prefix = "║ ├── "
                 elif level < max_visible_depth:
                     prefix = "║ │   " * level + "├── "
                 else:
-                    # For deeper levels, use a more compact representation
                     prefix = (
                         "║ │   " * (max_visible_depth - 1)
                         + "├─"
@@ -415,22 +397,17 @@ class Miner:
                         + " "
                     )
 
-                # Add the line to the tree
                 node_info = f"Level {level + 1}: {short_element} {direction}"
                 line = f"{prefix}{node_info}"
 
-                # Ensure the line fits within the box
                 if len(line) > box_width - 1:
-                    # Calculate available space for node_info
-                    available_space = box_width - 1 - len(prefix) - 3  # -3 for "..."
-                    # Truncate node_info to fit
+                    available_space = box_width - 1 - len(prefix) - 3
+
                     truncated_node_info = node_info[:available_space] + "..."
                     line = f"{prefix}{truncated_node_info}"
 
-                # Pad the line to fill the box width
                 tree_str.append(line + " " * (box_width - 1 - len(line)) + "║")
 
-        # If there are more paths, indicate that
         if len(path_elements) > max_paths_to_show:
             tree_str.append("║" + "─" * (box_width - 2) + "║")
             more_paths_msg = (
@@ -440,7 +417,6 @@ class Miner:
                 more_paths_msg + " " * (box_width - 1 - len(more_paths_msg)) + "║"
             )
 
-        # Close the box
         tree_str.append("╚" + "═" * (box_width - 2) + "╝")
 
         return "\n".join(tree_str)
