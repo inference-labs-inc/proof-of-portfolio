@@ -830,9 +830,9 @@ def generate_proof(
     fields = parse_circuit_output(output)
     log_verbose(verbose, "info", f"Circuit output: {output}")
     log_verbose(verbose, "info", f"Parsed fields: {fields}")
-    if len(fields) < 9:
+    if len(fields) < 8:
         raise RuntimeError(
-            f"Expected 9 output fields from main circuit, got {len(fields)}: {fields}"
+            f"Expected 8 output fields from main circuit, got {len(fields)}: {fields}"
         )
 
     avg_daily_pnl_raw = fields[0]
@@ -842,8 +842,7 @@ def generate_proof(
     omega_raw = fields[4]
     sortino_raw = fields[5]
     stat_confidence_raw = fields[6]
-    pnl_score_raw = fields[7]
-    returns_merkle_root_raw = fields[8]
+    returns_merkle_root_raw = fields[7]
 
     def field_to_signed_int(field_str):
         if isinstance(field_str, str) and field_str.startswith("0x"):
@@ -865,7 +864,6 @@ def generate_proof(
     omega_ratio_raw = field_to_signed_int(omega_raw)
     sortino_ratio_raw = field_to_signed_int(sortino_raw)
     stat_confidence_raw = field_to_signed_int(stat_confidence_raw)
-    pnl_score_value = field_to_signed_int(pnl_score_raw)
 
     # Process returns merkle root (it's a Field, not signed)
     if isinstance(returns_merkle_root_raw, str) and returns_merkle_root_raw.startswith(
@@ -883,7 +881,6 @@ def generate_proof(
     omega_ratio_scaled = scale_from_int(omega_ratio_raw) / 1000000
     sortino_ratio_scaled = scale_from_int(sortino_ratio_raw)
     stat_confidence_scaled = scale_from_int(stat_confidence_raw)
-    pnl_score_scaled = scale_from_int(pnl_score_value)
 
     if witness_only:
         prove_time, proving_success = None, True
@@ -933,7 +930,6 @@ def generate_proof(
     bt.logging.info(f"Omega Ratio: {omega_ratio_scaled:.9f}")
     bt.logging.info(f"Sortino Ratio: {sortino_ratio_scaled:.9f}")
     bt.logging.info(f"Statistical Confidence: {stat_confidence_scaled:.9f}")
-    bt.logging.info(f"PnL Score: {pnl_score_scaled:.9f}")
 
     if verbose:
         bt.logging.info("\n--- Proof Generation Complete ---")
@@ -967,7 +963,6 @@ def generate_proof(
                 "calmar": calmar_ratio_scaled,
                 "sortino": sortino_ratio_scaled,
                 "omega": omega_ratio_scaled,
-                "pnl": pnl_score_scaled,
             }
 
             for metric, circuit_value in metric_keys.items():
@@ -1046,8 +1041,6 @@ def generate_proof(
             "sortino_ratio_scaled": sortino_ratio_scaled,
             "stat_confidence_raw": stat_confidence_raw,
             "stat_confidence_scaled": stat_confidence_scaled,
-            "pnl_score_raw": pnl_score_value,
-            "pnl_score_scaled": pnl_score_scaled,
         },
         "data_summary": {
             "daily_returns_processed": n_returns,
