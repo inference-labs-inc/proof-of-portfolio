@@ -102,18 +102,3 @@ pub fn build_merkle_root(leaves: [Field; MAX_RETURNS], num_leaves: u32) -> Field
         nodes[0]
     }
 }
-
-pub fn build_merkle_root_from_signals(
-    signals: [TradingSignal; MAX_RETURNS],
-    n_signals: u32,
-) -> Field {
-    let mut leaves = [0; MAX_RETURNS];
-    for i in 0..MAX_RETURNS {
-        if (i as u32) < n_signals {
-            leaves[i] = hash_signal(signals[i]);
-        } else {
-            leaves[i] = 0;
-        }
-    }
-    build_merkle_root(leaves, n_signals)
-}

@@ -41,7 +41,7 @@ fn main(
     calmar_noconfidence: pub i64,
     stat_confidence_noconfidence: pub i64,
     stat_conf_min_n: pub u32,
-) -> pub [Field; 9] {
+) -> pub [Field; 8] {
     // Intentionally unused, hack to trick the compiler into constraining it
     let mut hk = hotkey;
     hk = hotkey;
@@ -165,19 +165,13 @@ fn main(
         stat_conf_min_n,
     );
     let stat_confidence = statistical_confidence(
-        returns_array,
         n_returns,
-        weights,
-        use_weighting,
         bypass_confidence,
         avg_daily_return,
         variance_val,
-        ann_excess_return_val,
         stat_confidence_noconfidence,
         stat_conf_min_n,
     );
-
-    let pnl_score_result = avg_daily_pnl;
 
     // Build merkle root from returns
     let mut leaves = [0; MAX_RETURNS];
@@ -196,7 +190,6 @@ fn main(
         (omega_ratio as u64) as Field,
         (sortino_ratio as u64) as Field,
         (stat_confidence as u64) as Field,
-        (pnl_score_result as u64) as Field,
         computed_returns_root,
     ]
 }

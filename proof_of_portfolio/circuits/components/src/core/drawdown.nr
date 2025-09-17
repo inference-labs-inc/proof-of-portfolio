@@ -54,12 +54,7 @@ pub fn daily_max_drawdown(log_returns: [i64; ARRAY_SIZE], actual_len: u32) -> i6
             }
         }
     }
-
-    if (max_drawdown_decimal == 500) | (max_drawdown_decimal == 1200) {
-        max_drawdown_decimal * 100
-    } else {
-        max_drawdown_decimal
-    }
+    max_drawdown_decimal
 }
 
 #[test]
