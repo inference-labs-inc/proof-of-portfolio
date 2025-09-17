@@ -967,6 +967,9 @@ def generate_proof(
 
             for metric, circuit_value in metric_keys.items():
                 subnet_value = augmented_scores.get(metric, 0.0)
+                # Handle case where subnet_value is a dictionary with 'value' field
+                if isinstance(subnet_value, dict):
+                    subnet_value = subnet_value.get("value", 0.0)
                 diff = abs(circuit_value - subnet_value)
                 bt.logging.info(
                     f"{metric:<15} {circuit_value:>10.6f} {subnet_value:>10.6f} {diff:>10.6f}"
