@@ -91,6 +91,7 @@ fn main(
     } else {
         n_returns as i64
     };
+    assert(sum_of_weights != 0);
 
     let avg_daily_return = average(
         returns_array,
