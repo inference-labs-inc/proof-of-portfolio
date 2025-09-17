@@ -170,15 +170,29 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
     Returns:
         API response dictionary or None if failed
     """
-    if not wallet or not proof_hex or not public_inputs_hex:
-        bt.logging.warning("Missing wallet, proof, or public inputs for upload")
+    bt.logging.info(
+        f"[UPLOAD] Starting upload_proof: wallet={bool(wallet)}, proof_hex={bool(proof_hex)}, public_inputs_hex={bool(public_inputs_hex)}, testnet={testnet}"
+    )
+
+    if not wallet:
+        bt.logging.warning("[UPLOAD] Missing wallet for upload")
+        return None
+    if not proof_hex:
+        bt.logging.warning("[UPLOAD] Missing proof_hex for upload")
+        return None
+    if not public_inputs_hex:
+        bt.logging.warning("[UPLOAD] Missing public_inputs_hex for upload")
         return None
 
     try:
         # Sign timestamp
+        bt.logging.info(
+            f"[UPLOAD] Signing with wallet hotkey: {wallet.hotkey.ss58_address[:8]}..."
+        )
         timestamp = str(int(time.time()))
         signature = wallet.hotkey.sign(timestamp.encode())
         signature_b64 = base64.b64encode(signature).decode()
+        bt.logging.info(f"[UPLOAD] Signature created, length: {len(signature_b64)}")
 
         # Prepare request
         url = "https://api.omron.ai/ptn/upload-proof"
@@ -195,20 +209,41 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
             "public_signals": public_inputs_hex,
         }
 
-        bt.logging.info(f"Uploading proof for {wallet.hotkey.ss58_address[:8]}...")
+        bt.logging.info(
+            f"[UPLOAD] Payload sizes - proof: {len(proof_hex)}, public_signals: {len(public_inputs_hex)}"
+        )
+        bt.logging.info(
+            f"[UPLOAD] Uploading proof for {wallet.hotkey.ss58_address[:8]} to {url}..."
+        )
+
         response = requests.post(url, headers=headers, json=payload, timeout=30)
 
+        bt.logging.info(f"[UPLOAD] Response status code: {response.status_code}")
+
         if response.status_code == 200:
-            bt.logging.success("✅ Proof uploaded successfully!")
-            return response.json()
+            bt.logging.success("✅ [UPLOAD] Proof uploaded successfully!")
+            result = response.json()
+            bt.logging.info(f"[UPLOAD] Response data: {result}")
+            return result
         else:
             bt.logging.error(
-                f"❌ Proof upload failed: {response.status_code} - {response.text}"
+                f"❌ [UPLOAD] Proof upload failed: {response.status_code} - {response.text}"
             )
             return None
 
+    except requests.exceptions.Timeout as e:
+        bt.logging.error(f"[UPLOAD] Timeout error uploading proof: {str(e)}")
+        return None
+    except requests.exceptions.ConnectionError as e:
+        bt.logging.error(f"[UPLOAD] Connection error uploading proof: {str(e)}")
+        return None
     except Exception as e:
-        bt.logging.error(f"Error uploading proof: {str(e)}")
+        bt.logging.error(
+            f"[UPLOAD] Unexpected error uploading proof: {type(e).__name__}: {str(e)}"
+        )
+        import traceback
+
+        bt.logging.error(f"[UPLOAD] Traceback: {traceback.format_exc()}")
         return None
 
 
@@ -875,10 +910,27 @@ def generate_proof(
 
     # Upload proof if wallet provided and proof generation was successful
     upload_result = None
-    if wallet and proof_hex and public_inputs_hex and not witness_only:
-        upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
+    bt.logging.info(
+        f"[MAIN] Pre-upload check: wallet={bool(wallet)}, proof_hex={bool(proof_hex)} (len={len(proof_hex) if proof_hex else 0}), public_inputs_hex={bool(public_inputs_hex)} (len={len(public_inputs_hex) if public_inputs_hex else 0}), witness_only={witness_only}"
+    )
 
-    bt.logging.info(f"Proof upload result: {upload_result}")
+    if wallet and proof_hex and public_inputs_hex and not witness_only:
+        bt.logging.info(
+            f"[MAIN] All conditions met, calling upload_proof with testnet={testnet}"
+        )
+        upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
+    else:
+        bt.logging.warning("[MAIN] Skipping upload - conditions not met:")
+        if not wallet:
+            bt.logging.warning("[MAIN]   - wallet is None/False")
+        if not proof_hex:
+            bt.logging.warning("[MAIN]   - proof_hex is None/False")
+        if not public_inputs_hex:
+            bt.logging.warning("[MAIN]   - public_inputs_hex is None/False")
+        if witness_only:
+            bt.logging.warning("[MAIN]   - witness_only is True")
+
+    bt.logging.info(f"[MAIN] Proof upload result: {upload_result}")
 
     # Build results dictionary
     results = {
