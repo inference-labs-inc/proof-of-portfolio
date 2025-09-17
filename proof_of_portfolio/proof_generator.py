@@ -344,35 +344,85 @@ def get_all_results_for_miner(hotkey):
 
 
 def generate_bb_proof(circuit_dir):
+    bt.logging.info(f"Starting generate_bb_proof with circuit_dir: {circuit_dir}")
+
     try:
-        subprocess.run(["bb", "--version"], capture_output=True, check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+        version_result = subprocess.run(
+            ["bb", "--version"], capture_output=True, check=True, text=True
+        )
+        bt.logging.info(f"bb version check passed: {version_result.stdout.strip()}")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        bt.logging.error(f"bb (Barretenberg) not found or failed version check: {e}")
         bt.logging.error(
-            "bb (Barretenberg) not found. Install with: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/master/barretenberg/cpp/installation/install | bash"
+            "Install with: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/master/barretenberg/cpp/installation/install | bash"
         )
         return None, False
 
     target_dir = os.path.join(circuit_dir, "target")
     proof_dir = os.path.join(circuit_dir, "proof")
+    bt.logging.info(f"Creating proof directory: {proof_dir}")
     os.makedirs(proof_dir, exist_ok=True)
 
     witness_file = os.path.join(target_dir, "witness.gz")
     circuit_file = os.path.join(target_dir, "circuits.json")
 
+    bt.logging.info("Checking required files:")
+    bt.logging.info(
+        f"  witness_file: {witness_file} (exists: {os.path.exists(witness_file)})"
+    )
+    bt.logging.info(
+        f"  circuit_file: {circuit_file} (exists: {os.path.exists(circuit_file)})"
+    )
+
+    if not os.path.exists(witness_file):
+        bt.logging.error(f"Witness file not found: {witness_file}")
+        return None, False
+    if not os.path.exists(circuit_file):
+        bt.logging.error(f"Circuit file not found: {circuit_file}")
+        return None, False
+
+    prove_cmd = ["bb", "prove", "-b", circuit_file, "-w", witness_file, "-o", proof_dir]
+    bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
+    bt.logging.info(f"Working directory: {circuit_dir}")
+
     prove_start = time.time()
     prove_result = subprocess.run(
-        ["bb", "prove", "-b", circuit_file, "-w", witness_file, "-o", proof_dir],
+        prove_cmd,
         capture_output=True,
         text=True,
         cwd=circuit_dir,
     )
     prove_time = time.time() - prove_start
 
+    bt.logging.info(
+        f"bb prove completed in {prove_time:.3f}s with return code: {prove_result.returncode}"
+    )
+
+    if prove_result.stdout:
+        bt.logging.info(f"bb prove stdout: {prove_result.stdout}")
+    if prove_result.stderr:
+        bt.logging.info(f"bb prove stderr: {prove_result.stderr}")
+
     if prove_result.returncode != 0:
-        bt.logging.error(f"bb prove failed: {prove_result.stderr}")
+        bt.logging.error(f"bb prove failed with return code {prove_result.returncode}")
+        bt.logging.error(f"stderr: {prove_result.stderr}")
+        bt.logging.error(f"stdout: {prove_result.stdout}")
         return None, False
 
-    bt.logging.success(f"Proof of portfolio generated in {prove_time}")
+    bt.logging.success(
+        f"Proof of portfolio generated successfully in {prove_time:.3f}s"
+    )
+
+    proof_file = os.path.join(proof_dir, "proof")
+    public_inputs_file = os.path.join(proof_dir, "public_inputs")
+    bt.logging.info("Checking generated files:")
+    bt.logging.info(
+        f"  proof file: {proof_file} (exists: {os.path.exists(proof_file)})"
+    )
+    bt.logging.info(
+        f"  public_inputs file: {public_inputs_file} (exists: {os.path.exists(public_inputs_file)})"
+    )
+
     return prove_time, True
 
 
@@ -843,13 +893,28 @@ def generate_proof(
             "Skipping barretenberg proof generation (witness_only=True)",
         )
     else:
+        bt.logging.info(
+            f"Starting barretenberg proof generation for {miner_hotkey[:8]}..."
+        )
         try:
             prove_time, proving_success = generate_bb_proof(main_circuit_dir)
+            bt.logging.info(
+                f"generate_bb_proof returned: prove_time={prove_time}, proving_success={proving_success}"
+            )
             if prove_time is None:
-                bt.logging.error("Barretenberg proof generation failed")
+                bt.logging.error(
+                    "Barretenberg proof generation failed - prove_time is None"
+                )
                 prove_time, proving_success = None, False
+            elif not proving_success:
+                bt.logging.error(
+                    "Barretenberg proof generation failed - proving_success is False"
+                )
         except Exception as e:
-            bt.logging.error(f"Exception during proof generation: {e}")
+            bt.logging.error(
+                f"Exception during proof generation: {type(e).__name__}: {e}"
+            )
+            bt.logging.error(f"Full traceback: {traceback.format_exc()}")
             prove_time, proving_success = None, False
 
     # Always print key production info: hotkey and verification status

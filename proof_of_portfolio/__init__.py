@@ -12,6 +12,8 @@ from .post_install import main as post_install_main
 from .proof_generator import generate_proof
 import json
 import time
+import traceback
+import bittensor as bt
 
 
 _dependencies_checked = False
@@ -109,10 +111,16 @@ def _prove_worker(
         }
 
     except Exception as e:
+        bt.logging.error(
+            f"Exception in _prove_worker for hotkey {hotkey[:8] if hotkey else 'unknown'}: {type(e).__name__}: {e}"
+        )
+        bt.logging.error(f"Full traceback: {traceback.format_exc()}")
+
         return {
             "status": "error",
             "message": str(e),
             "proof_generated": False,
+            "traceback": traceback.format_exc(),
         }
 
 
