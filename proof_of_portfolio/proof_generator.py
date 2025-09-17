@@ -579,11 +579,15 @@ def generate_proof(
                 trade_pair_counter += 1
 
             order_type = get_attr(order, "order_type")
-            order_type_str = (
-                str(order_type).split(".")[1]
-                if hasattr(order_type, "name")
-                else str(order_type)
-            )
+            if hasattr(order_type, "name"):
+                order_type_parts = str(order_type).split(".")
+                order_type_str = (
+                    order_type_parts[1]
+                    if len(order_type_parts) > 1
+                    else order_type_parts[0]
+                )
+            else:
+                order_type_str = str(order_type)
             order_type_map = {"SHORT": 2, "LONG": 1, "FLAT": 0}
             price = int(get_attr(order, "price") * SCALE)
             order_uuid = get_attr(order, "order_uuid")
