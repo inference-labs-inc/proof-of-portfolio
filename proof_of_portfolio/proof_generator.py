@@ -337,6 +337,7 @@ def generate_bb_proof(circuit_dir):
         bt.logging.error(f"bb prove failed: {prove_result.stderr}")
         return None, False
 
+    bt.logging.success(f"Proof of portfolio generated in {prove_time}")
     return prove_time, True
 
 
@@ -876,6 +877,8 @@ def generate_proof(
     upload_result = None
     if wallet and proof_hex and public_inputs_hex and not witness_only:
         upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
+
+    bt.logging.info(f"Proof upload result: {upload_result}")
 
     # Build results dictionary
     results = {
