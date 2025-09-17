@@ -368,6 +368,7 @@ def generate_proof(
     statistical_confidence_noconfidence_value=-100,
     wallet=None,
     testnet=True,
+    augmented_scores=None,
 ):
     is_demo_mode = data is None
     if verbose is None:
@@ -825,6 +826,29 @@ def generate_proof(
                 bt.logging.info(f"Proof generation time: {prove_time:.3f}s")
             else:
                 bt.logging.info("Unable to prove due to an error.")
+
+        # Circuit vs Subnet Comparison Table (verbose only)
+        if augmented_scores:
+            bt.logging.info(
+                f"\n=== Circuit vs Subnet Comparison for {miner_hotkey[:8] if miner_hotkey else 'unknown'} ==="
+            )
+            bt.logging.info("Metric           Circuit    Subnet     Diff")
+            bt.logging.info("=" * 50)
+
+            metric_keys = {
+                "sharpe": sharpe_ratio_scaled,
+                "calmar": calmar_ratio_scaled,
+                "sortino": sortino_ratio_scaled,
+                "omega": omega_ratio_scaled,
+                "pnl": pnl_score_scaled,
+            }
+
+            for metric, circuit_value in metric_keys.items():
+                subnet_value = augmented_scores.get(metric, 0.0)
+                diff = abs(circuit_value - subnet_value)
+                bt.logging.info(
+                    f"{metric:<15} {circuit_value:>10.6f} {subnet_value:>10.6f} {diff:>10.6f}"
+                )
 
     # Read proof and public inputs files to return as hex strings
     proof_hex = None

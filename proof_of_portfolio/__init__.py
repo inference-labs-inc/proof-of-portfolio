@@ -83,6 +83,9 @@ def _prove_worker(
     sortino_noconfidence_value=-100,
     calmar_noconfidence_value=-100,
     statistical_confidence_noconfidence_value=-100,
+    witness_only=False,
+    wallet=None,
+    augmented_scores=None,
 ):
     """
     Worker function to run proof generation in a separate process.
@@ -113,6 +116,9 @@ def _prove_worker(
             sortino_noconfidence_value=sortino_noconfidence_value,
             calmar_noconfidence_value=calmar_noconfidence_value,
             statistical_confidence_noconfidence_value=statistical_confidence_noconfidence_value,
+            witness_only=witness_only,
+            wallet=wallet,
+            augmented_scores=augmented_scores,
         )
 
         proof_results = result.get("proof_results", {})
@@ -143,12 +149,31 @@ def _prove_worker(
 @requires_dependencies
 async def prove(
     miner_data,
-    hotkey,
+    daily_pnl=None,
+    hotkey=None,
     verbose=False,
     annual_risk_free_percentage=4.19,
+    days_in_year_crypto=365,
+    weighted_average_decay_max=1.0,
+    weighted_average_decay_min=0.15,
+    weighted_average_decay_rate=0.075,
+    omega_loss_minimum=0.01,
+    sharpe_stddev_minimum=0.01,
+    sortino_downside_minimum=0.01,
+    statistical_confidence_minimum_n_ceil=60,
+    annual_risk_free_decimal=0.0419,
+    drawdown_maxvalue_percentage=10,
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
+    account_size=None,
+    omega_noconfidence_value=0.0,
+    sharpe_noconfidence_value=-100,
+    sortino_noconfidence_value=-100,
+    calmar_noconfidence_value=-100,
+    statistical_confidence_noconfidence_value=-100,
+    witness_only=False,
+    wallet=None,
 ):
     """
     Generate zero-knowledge proof for miner portfolio data asynchronously.
@@ -169,12 +194,31 @@ async def prove(
                 executor,
                 _prove_worker,
                 miner_data,
+                daily_pnl,
                 hotkey,
                 verbose,
                 annual_risk_free_percentage,
+                days_in_year_crypto,
+                weighted_average_decay_max,
+                weighted_average_decay_min,
+                weighted_average_decay_rate,
+                omega_loss_minimum,
+                sharpe_stddev_minimum,
+                sortino_downside_minimum,
+                statistical_confidence_minimum_n_ceil,
+                annual_risk_free_decimal,
+                drawdown_maxvalue_percentage,
                 use_weighting,
                 bypass_confidence,
                 daily_checkpoints,
+                account_size,
+                omega_noconfidence_value,
+                sharpe_noconfidence_value,
+                sortino_noconfidence_value,
+                calmar_noconfidence_value,
+                statistical_confidence_noconfidence_value,
+                witness_only,
+                wallet,
             )
             return result
         except Exception as e:
@@ -406,6 +450,9 @@ def prove_sync(
     sortino_noconfidence_value=-100,
     calmar_noconfidence_value=-100,
     statistical_confidence_noconfidence_value=-100,
+    witness_only=False,
+    wallet=None,
+    augmented_scores=None,
 ):
     """
     Synchronous wrapper for the prove function for backward compatibility.
@@ -443,4 +490,7 @@ def prove_sync(
         sortino_noconfidence_value=sortino_noconfidence_value,
         calmar_noconfidence_value=calmar_noconfidence_value,
         statistical_confidence_noconfidence_value=statistical_confidence_noconfidence_value,
+        witness_only=witness_only,
+        wallet=wallet,
+        augmented_scores=augmented_scores,
     )

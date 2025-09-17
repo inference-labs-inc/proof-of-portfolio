@@ -42,6 +42,9 @@ fn main(
     stat_confidence_noconfidence: pub i64,
     stat_conf_min_n: pub u32,
 ) -> pub [Field; 9] {
+    // Intentionally unused, hack to trick the compiler into constraining it
+    let mut hk = hotkey;
+    hk = hotkey;
     // Verify all trading signals are included in the merkle tree
     let mut all_verified = true;
     for i in 0..MAX_SIGNALS {

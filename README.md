@@ -151,14 +151,13 @@ This command outputs a Merkle root. The miner can then compare this root to the 
 
 ## Demos
 
-The CLI includes several demos to test and compare the Python and Noir circuit implementations.
+The CLI includes a demo mode for testing purposes.
 
 ```bash
 pop demo --help
 ```
 
 - **`main`**: Runs a comprehensive end-to-end test, including ZKP generation and verification with Barretenberg.
-- **Other demos**: `log-returns`, `returns`, `sharpe`, `drawdown`.
 
 **Example:**
 

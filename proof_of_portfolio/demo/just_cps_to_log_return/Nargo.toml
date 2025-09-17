@@ -1,4 +1,0 @@
-[package]
-name = "just_cps_to_log_return"
-type = "bin"
-authors = ["Inference Labs Inc"]
