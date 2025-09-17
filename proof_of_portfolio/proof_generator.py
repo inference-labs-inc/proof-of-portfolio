@@ -381,27 +381,12 @@ def generate_proof(
     daily_pnl=None,
     miner_hotkey=None,
     verbose=None,
-    annual_risk_free_percentage=4.19,
-    days_in_year_crypto=365,
-    weighted_average_decay_max=1.0,
-    weighted_average_decay_min=0.15,
-    weighted_average_decay_rate=0.075,
-    omega_loss_minimum=0.01,
-    sharpe_stddev_minimum=0.01,
-    sortino_downside_minimum=0.01,
-    statistical_confidence_minimum_n_ceil=60,
-    annual_risk_free_decimal=0.0419,
-    drawdown_maxvalue_percentage=10,
+    vali_config=None,
     use_weighting=False,
     bypass_confidence=False,
     daily_checkpoints=2,
     witness_only=False,
     account_size=None,
-    omega_noconfidence_value=0.0,
-    sharpe_noconfidence_value=-100,
-    sortino_noconfidence_value=-100,
-    calmar_noconfidence_value=-100,
-    statistical_confidence_noconfidence_value=-100,
     wallet=None,
     testnet=True,
     augmented_scores=None,
@@ -409,6 +394,43 @@ def generate_proof(
     is_demo_mode = data is None
     if verbose is None:
         verbose = is_demo_mode
+
+    # Use ValiConfig class attributes directly if provided, else use defaults
+    if vali_config:
+        days_in_year_crypto = vali_config.DAYS_IN_YEAR_CRYPTO
+        weighted_average_decay_max = vali_config.WEIGHTED_AVERAGE_DECAY_MAX
+        weighted_average_decay_min = vali_config.WEIGHTED_AVERAGE_DECAY_MIN
+        weighted_average_decay_rate = vali_config.WEIGHTED_AVERAGE_DECAY_RATE
+        omega_loss_minimum = vali_config.OMEGA_LOSS_MINIMUM
+        sharpe_stddev_minimum = vali_config.SHARPE_STDDEV_MINIMUM
+        sortino_downside_minimum = vali_config.SORTINO_DOWNSIDE_MINIMUM
+        statistical_confidence_minimum_n_ceil = (
+            vali_config.STATISTICAL_CONFIDENCE_MINIMUM_N_CEIL
+        )
+        annual_risk_free_decimal = vali_config.ANNUAL_RISK_FREE_DECIMAL
+        omega_noconfidence_value = vali_config.OMEGA_NOCONFIDENCE_VALUE
+        sharpe_noconfidence_value = vali_config.SHARPE_NOCONFIDENCE_VALUE
+        sortino_noconfidence_value = vali_config.SORTINO_NOCONFIDENCE_VALUE
+        calmar_noconfidence_value = vali_config.CALMAR_NOCONFIDENCE_VALUE
+        statistical_confidence_noconfidence_value = (
+            vali_config.STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
+        )
+    else:
+        # Use defaults if ValiConfig not provided
+        days_in_year_crypto = 365
+        weighted_average_decay_max = 1.0
+        weighted_average_decay_min = 0.15
+        weighted_average_decay_rate = 0.075
+        omega_loss_minimum = 0.01
+        sharpe_stddev_minimum = 0.01
+        sortino_downside_minimum = 0.01
+        statistical_confidence_minimum_n_ceil = 60
+        annual_risk_free_decimal = 0.0419
+        omega_noconfidence_value = 0.0
+        sharpe_noconfidence_value = -100
+        sortino_noconfidence_value = -100
+        calmar_noconfidence_value = -100
+        statistical_confidence_noconfidence_value = -100
 
     log_verbose(
         verbose,
