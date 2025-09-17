@@ -2,7 +2,7 @@
 
 **A decentralized framework for verifiable, private performance metrics using Zero-Knowledge Proofs.**
 
-[Explorer](https://ptn.omron.ai) | [Docs](https://inferencelabs.gitbook.io/proof-of-portfolio/)
+[Explorer](https://ptn.omron.ai) | [Docs](https://inferencelabs.gitbook.io/proof-of-portfolio/) | [PyPI](https://pypi.org/proof-of-portfolio)
 
 Proof of Portfolio (PoP) is a framework that enables **Validators** to generate verifiable attestations of private portfolio performance. The system provides tooling for the original data owners (**Miners**) and consumers (**Signal Purchasers**) to cryptographically verify these attestations—ensuring both data inclusion and correctness of calculated metrics—all without the validator ever exposing the underlying private data.
 
