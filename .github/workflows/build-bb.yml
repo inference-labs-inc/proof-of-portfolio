@@ -1,0 +1,114 @@
+name: Build BB Binaries
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  build-bb:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            arch: x86_64
+            name: linux-x86_64
+          - os: ubuntu-22.04
+            arch: aarch64
+            name: linux-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU for cross-compilation
+        if: matrix.arch == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build BB (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          chmod +x ./compile_bb.sh
+          ./compile_bb.sh
+
+      - name: Build BB (aarch64)
+        if: matrix.arch == 'aarch64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+          # Create cross-compilation environment
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+          # Build in ARM64 container
+          docker run --rm -v $PWD:/workspace -w /workspace \
+            --platform linux/arm64 ubuntu:22.04 bash -c "
+            apt-get update &&
+            apt-get install -y wget gpg software-properties-common &&
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - &&
+            add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main' &&
+            apt-get update &&
+            apt-get install -y build-essential ninja-build libssl-dev pkg-config clang-18 libc++-18-dev libc++abi-18-dev libomp-18-dev &&
+            wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null &&
+            echo 'deb https://apt.kitware.com/ubuntu/ jammy main' | tee /etc/apt/sources.list.d/kitware.list >/dev/null &&
+            apt-get update &&
+            apt-get install -y cmake &&
+            rm -rf aztec-packages-0.87.0* v0.87.0.tar.gz &&
+            wget https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v0.87.0.tar.gz &&
+            tar -xzf v0.87.0.tar.gz &&
+            cd aztec-packages-0.87.0/barretenberg/cpp &&
+            export CC=clang-18 &&
+            export CXX=clang++-18 &&
+            mkdir -p build &&
+            cd build &&
+            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DTESTING=OFF -DBENCHMARK=OFF -DFUZZING=OFF -GNinja &&
+            ninja bb &&
+            ./bin/bb --version &&
+            mkdir -p /workspace/bb-artifacts &&
+            cp ./bin/bb /workspace/bb-artifacts/bb-${{ matrix.name }}
+            "
+
+      - name: Prepare artifacts (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          mkdir -p bb-artifacts
+          cp ~/.bb/bb bb-artifacts/bb-${{ matrix.name }}
+
+      - name: Upload BB binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: bb-${{ matrix.name }}
+          path: bb-artifacts/bb-${{ matrix.name }}
+          retention-days: 0
+
+  create-release:
+    needs: build-bb
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bb-binaries
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get current date for release tag
+          DATE=$(date +%Y%m%d-%H%M%S)
+          TAG="bb-v0.87.0-$DATE"
+
+          # Create release
+          gh release create "$TAG" \
+            --title "BB Binaries v0.87.0 ($DATE)" \
+            --notes "Pre-compiled BB binaries for v0.87.0 built on Ubuntu 22.04" \
+            bb-binaries/*/bb-*

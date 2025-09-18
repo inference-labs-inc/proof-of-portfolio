@@ -185,7 +185,12 @@ def install_bb():
                         "GLIBC" in test_result.stderr or "GLIBCXX" in test_result.stderr
                     ):
                         print(
-                            f"Version {version} has incompatible GLIBC requirements, trying compilation from source..."
+                            f"Version {version} has incompatible GLIBC requirements, trying pre-built binary..."
+                        )
+                        if download_prebuilt_bb():
+                            return True
+                        print(
+                            "Pre-built binary not available, trying compilation from source..."
                         )
                         return compile_bb_from_source()
             else:
@@ -198,9 +203,80 @@ def install_bb():
         return False
 
 
+def download_prebuilt_bb():
+    """Download pre-built bb binary from GitHub releases"""
+    print("Downloading pre-built bb binary...")
+    try:
+        import platform
+
+        machine = platform.machine().lower()
+        if machine in ["x86_64", "amd64"]:
+            arch = "linux-x86_64"
+        elif machine in ["aarch64", "arm64"]:
+            arch = "linux-aarch64"
+        else:
+            print(f"Unsupported architecture: {machine}")
+            return False
+
+        repo_url = "https://api.github.com/repos/inference-labs-inc/proof-of-portfolio/releases"
+
+        try:
+            import json
+
+            response = urllib.request.urlopen(repo_url)
+            releases = json.loads(response.read().decode())
+
+            bb_release = None
+            for release in releases:
+                if release["tag_name"].startswith("bb-v0.87.0"):
+                    bb_release = release
+                    break
+
+            if not bb_release:
+                print("No pre-built bb releases found")
+                return False
+
+            bb_asset = None
+            for asset in bb_release["assets"]:
+                if asset["name"] == f"bb-{arch}":
+                    bb_asset = asset
+                    break
+
+            if not bb_asset:
+                print(f"No bb binary found for architecture: {arch}")
+                return False
+
+            print(f"Downloading bb binary for {arch}...")
+            bb_dir = Path.home() / ".bb"
+            bb_dir.mkdir(exist_ok=True)
+            bb_path = bb_dir / "bb"
+
+            urllib.request.urlretrieve(bb_asset["browser_download_url"], bb_path)
+            bb_path.chmod(0o755)
+
+            test_result = subprocess.run(
+                [str(bb_path), "--version"], capture_output=True, text=True
+            )
+            if test_result.returncode != 0:
+                print("Downloaded bb binary failed version check")
+                return False
+
+            print("Successfully downloaded and installed pre-built bb binary")
+            return True
+
+        except Exception as e:
+            print(f"Failed to download pre-built binary: {e}")
+            return False
+
+    except Exception as e:
+        print(f"Error downloading pre-built bb: {e}")
+        return False
+
+
 def compile_bb_from_source():
-    """Compile bb from source"""
-    print("Compiling bb from source...")
+    """Fallback: compile bb from source (requires build tools)"""
+    print("Compiling bb from source as fallback...")
+    print("Note: This requires build tools (cmake, ninja, clang-18) to be installed")
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
