@@ -793,7 +793,7 @@ def generate_proof(
         ),
         "risk_free_rate": str(risk_free_rate_scaled),
         "daily_rf": str(daily_rf_scaled),
-        "use_weighting": "1",
+        "use_weighting": str(int(use_weighting)),
         "weights": [str(w) for w in scaled_weights],
         "bypass_confidence": str(int(bypass_confidence)),
         "account_size": str(account_size),
