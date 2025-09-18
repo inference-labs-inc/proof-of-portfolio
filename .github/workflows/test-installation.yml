@@ -1,0 +1,118 @@
+name: Test Installation and Prove Function
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  test-installation:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "CI=true" >> $GITHUB_ENV
+        echo "POP_SKIP_INSTALL=false" >> $GITHUB_ENV
+
+    - name: Install package
+      shell: bash
+      run: |
+        uv venv
+        source .venv/bin/activate
+        uv pip install -e .
+
+    - name: Test automatic dependency installation
+      shell: bash
+      run: |
+        source .venv/bin/activate
+
+        # Test that importing the package triggers dependency installation
+        python -c "import proof_of_portfolio; print('Package imported successfully')"
+
+    - name: Verify bb installation
+      shell: bash
+      run: |
+        if command -v bb &> /dev/null; then
+          echo 'bb is installed'
+          bb --version
+        elif [ -f ~/.bb/bb ]; then
+          echo 'bb found in ~/.bb/bb'
+          ~/.bb/bb --version
+        else
+          echo 'bb not found in PATH or ~/.bb/bb'
+          exit 1
+        fi
+
+    - name: Verify nargo installation
+      shell: bash
+      run: |
+        if command -v nargo &> /dev/null; then
+          echo 'nargo is installed'
+          nargo --version
+        elif [ -f ~/.nargo/bin/nargo ]; then
+          echo 'nargo found in ~/.nargo/bin/nargo'
+          ~/.nargo/bin/nargo --version
+        else
+          echo 'nargo not found in PATH or ~/.nargo/bin/nargo'
+          exit 1
+        fi
+
+    - name: Test prove function with dummy data
+      shell: bash
+      run: |
+        source .venv/bin/activate
+
+        # Run the test script from .github/workflows/
+        python .github/workflows/test_prove.py
+
+    - name: Test CLI functionality
+      shell: bash
+      run: |
+        source .venv/bin/activate
+
+        # Test pop CLI is available
+        pop --version
+
+        # Test generate-test-data command
+        pop generate-test-data --num-miners 2 --output-file test_generated.json
+
+        if [ -f test_generated.json ]; then
+          echo "✓ Test data generation successful"
+          head -5 test_generated.json
+        else
+          echo "✗ Test data generation failed"
+          exit 1
+        fi
+
+    - name: Upload test artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-artifacts-${{ matrix.os }}-py${{ matrix.python-version }}
+        path: |
+          test_*.json
+          test_*.py
+          *.log
+        retention-days: 7
