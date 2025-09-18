@@ -44,12 +44,12 @@ miner_data = {
         miner_hotkey: {
             "positions": [
                 {
-                    "position_uuid": "test-position-1",
+                    "position_uuid": 987654321,
                     "miner_hotkey": miner_hotkey,
                     "position_type": "LONG",
                     "orders": [
                         {
-                            "order_uuid": "test-order-1",
+                            "order_uuid": 123456789,
                             "trade_pair": "BTCUSD",
                             "processed_ms": 1704067200000,
                             "order_type": "MARKET",
