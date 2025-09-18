@@ -117,6 +117,7 @@ try:
                     with open(public_inputs_path, "rb") as f:
                         public_inputs_hex = f.read().hex()
 
+                    # Verify the proof using hex data
                     verification_result = proof_of_portfolio.verify(
                         proof_hex, public_inputs_hex
                     )
