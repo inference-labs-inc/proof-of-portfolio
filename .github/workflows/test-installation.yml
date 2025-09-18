@@ -43,13 +43,13 @@ jobs:
         source .venv/bin/activate
         uv pip install -e .
 
-    - name: Test automatic dependency installation
+    - name: Test prove function with dummy data
       shell: bash
       run: |
         source .venv/bin/activate
 
-        # Test that importing the package triggers dependency installation
-        python -c "import proof_of_portfolio; print('Package imported successfully')"
+        # Run the test script from .github/workflows/
+        python .github/workflows/test_prove.py
 
     - name: Verify bb installation
       shell: bash
@@ -78,14 +78,6 @@ jobs:
           echo 'nargo not found in PATH or ~/.nargo/bin/nargo'
           exit 1
         fi
-
-    - name: Test prove function with dummy data
-      shell: bash
-      run: |
-        source .venv/bin/activate
-
-        # Run the test script from .github/workflows/
-        python .github/workflows/test_prove.py
 
     - name: Test CLI functionality
       shell: bash
