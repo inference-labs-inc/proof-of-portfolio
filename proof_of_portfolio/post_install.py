@@ -4,6 +4,9 @@ import sys
 import subprocess
 import shutil
 from pathlib import Path
+import tempfile
+import tarfile
+import urllib.request
 
 
 def refresh_shell_environment():
@@ -159,7 +162,6 @@ def install_bb():
             print(f"bbup not found at {bbup_cmd}")
             return False
 
-        # Use version 0.87.0 as specified
         versions_to_try = ["0.87.0"]
 
         for version in versions_to_try:
@@ -169,7 +171,6 @@ def install_bb():
             )
 
             if result.returncode == 0:
-                # Test if bb actually works
                 bb_path = str(home / ".bb" / "bb")
                 if Path(bb_path).exists():
                     test_result = subprocess.run(
@@ -184,9 +185,9 @@ def install_bb():
                         "GLIBC" in test_result.stderr or "GLIBCXX" in test_result.stderr
                     ):
                         print(
-                            f"Version {version} has incompatible GLIBC requirements, trying older version..."
+                            f"Version {version} has incompatible GLIBC requirements, trying compilation from source..."
                         )
-                        continue
+                        return compile_bb_from_source()
             else:
                 print(f"Failed to install version {version}: {result.stderr}")
 
@@ -194,6 +195,83 @@ def install_bb():
         return False
     except Exception as e:
         print(f"Error installing bb: {e}")
+        return False
+
+
+def compile_bb_from_source():
+    """Compile bb from source"""
+    print("Compiling bb from source...")
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+
+            print("Downloading aztec packages v0.87.0...")
+            url = "https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v0.87.0.tar.gz"
+            tar_path = temp_path / "v0.87.0.tar.gz"
+
+            urllib.request.urlretrieve(url, tar_path)
+
+            print("Extracting source code...")
+            with tarfile.open(tar_path, "r:gz") as tar:
+                tar.extractall(temp_path)
+
+            cpp_dir = temp_path / "aztec-packages-0.87.0" / "barretenberg" / "cpp"
+            build_dir = cpp_dir / "build"
+            build_dir.mkdir(exist_ok=True)
+
+            print("Configuring build with cmake...")
+            cmake_cmd = [
+                "cmake",
+                "..",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DTESTING=OFF",
+                "-DBENCHMARK=OFF",
+                "-DFUZZING=OFF",
+            ]
+
+            if shutil.which("ninja"):
+                cmake_cmd.append("-GNinja")
+                build_cmd = ["ninja", "bb"]
+            else:
+                build_cmd = ["make", "bb", "-j4"]
+
+            result = subprocess.run(
+                cmake_cmd, cwd=build_dir, capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                print(f"CMake configuration failed: {result.stderr}")
+                return False
+
+            print("Building bb (this may take several minutes)...")
+            result = subprocess.run(
+                build_cmd, cwd=build_dir, capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                print(f"Build failed: {result.stderr}")
+                return False
+
+            bb_bin = build_dir / "bin" / "bb"
+            if not bb_bin.exists():
+                print("Built bb binary not found")
+                return False
+
+            test_result = subprocess.run(
+                [str(bb_bin), "--version"], capture_output=True, text=True
+            )
+            if test_result.returncode != 0:
+                print("Built bb binary failed version check")
+                return False
+
+            bb_dir = Path.home() / ".bb"
+            bb_dir.mkdir(exist_ok=True)
+
+            shutil.copy2(bb_bin, bb_dir / "bb")
+
+            print("Successfully compiled and installed bb from source")
+            return True
+
+    except Exception as e:
+        print(f"Error compiling bb from source: {e}")
         return False
 
 
