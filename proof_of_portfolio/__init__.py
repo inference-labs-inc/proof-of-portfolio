@@ -23,11 +23,7 @@ def ensure_dependencies():
     """Ensure bb and nargo are installed before running package functions."""
     global _dependencies_checked
 
-    if (
-        _dependencies_checked
-        or os.environ.get("CI")
-        or os.environ.get("POP_SKIP_INSTALL")
-    ):
+    if _dependencies_checked or os.environ.get("POP_SKIP_INSTALL"):
         return
 
     missing_deps = []

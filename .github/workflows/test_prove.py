@@ -57,6 +57,8 @@ miner_data = {
                             "order_status": "FILLED",
                             "price": 45000.0,
                             "quantity": 0.001,
+                            "bid": 44990.0,
+                            "ask": 45010.0,
                         }
                     ],
                     "net_volume": 0.001,

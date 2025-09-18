@@ -198,7 +198,7 @@ def install_bb():
 
 
 def main():
-    if os.environ.get("CI") or os.environ.get("POP_SKIP_INSTALL"):
+    if os.environ.get("POP_SKIP_INSTALL"):
         return
 
     success = True
