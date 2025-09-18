@@ -137,15 +137,10 @@ fn main(
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
-        returns_array,
-        n_returns,
-        bypass_confidence,
         avg_daily_return,
         days_in_year,
-        calmar_noconfidence,
         checkpoint_count,
         checkpoint_mdds,
-        stat_conf_min_n,
     );
     let omega_ratio = omega(
         returns_array,

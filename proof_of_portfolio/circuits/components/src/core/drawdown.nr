@@ -90,7 +90,6 @@ fn test_drawdown_multiple_peaks() {
     returns[4] = 400;
 
     let result = daily_max_drawdown(returns, 5);
-    std::println(f"test_drawdown_multiple_peaks result: {result}");
     let expected = 1200;
     let tolerance = 100;
     assert((result >= expected - tolerance) & (result <= expected + tolerance));
@@ -104,7 +103,6 @@ fn test_drawdown_all_negative() {
     }
 
     let result = daily_max_drawdown(returns, 5);
-    std::println(f"test_drawdown_all_negative result: {result}");
     let expected = 500;
     let tolerance = 20;
     assert((result >= expected - tolerance) & (result <= expected + tolerance));

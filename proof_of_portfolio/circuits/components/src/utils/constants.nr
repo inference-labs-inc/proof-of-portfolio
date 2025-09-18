@@ -55,3 +55,7 @@ pub global ORDER_SRC_ORGANIC: u8 = 1;
 // Version timestamps for fee and slippage calculations
 pub global FEE_V6_TIME_MS: u64 = 1720843707000;
 pub global SLIPPAGE_V1_TIME_MS: u64 = 1739937600000;
+
+// Drawdown thresholds for risk normalization (percentages)
+pub global DRAWDOWN_MAXVALUE_PERCENTAGE: i64 = 10; // 10% max drawdown threshold
+pub global DRAWDOWN_MINVALUE_PERCENTAGE: i64 = 1;  // 1% min drawdown threshold
