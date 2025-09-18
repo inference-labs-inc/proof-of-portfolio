@@ -24,6 +24,9 @@ def ensure_dependencies():
     global _dependencies_checked
 
     if _dependencies_checked or os.environ.get("POP_SKIP_INSTALL"):
+        print(
+            f"Dependencies checked: {_dependencies_checked}. Skip install: {os.environ.get('POP_SKIP_INSTALL')}"
+        )
         return
 
     missing_deps = []
@@ -31,6 +34,8 @@ def ensure_dependencies():
         missing_deps.append("bb")
     if not shutil.which("nargo"):
         missing_deps.append("nargo")
+
+    print(f"Missing deps: {missing_deps}")
 
     if missing_deps:
         print(f"Installing required dependencies: {', '.join(missing_deps)}...")
