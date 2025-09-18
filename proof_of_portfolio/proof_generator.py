@@ -348,7 +348,10 @@ def generate_bb_proof(circuit_dir):
 
     try:
         version_result = subprocess.run(
-            ["bb", "--version"], capture_output=True, check=True, text=True
+            [os.path.expanduser("~/.bb/bb"), "--version"],
+            capture_output=True,
+            check=True,
+            text=True,
         )
         bt.logging.info(f"bb version check passed: {version_result.stdout.strip()}")
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
@@ -381,7 +384,16 @@ def generate_bb_proof(circuit_dir):
         bt.logging.error(f"Circuit file not found: {circuit_file}")
         return None, False
 
-    prove_cmd = ["bb", "prove", "-b", circuit_file, "-w", witness_file, "-o", proof_dir]
+    prove_cmd = [
+        os.path.expanduser("~/.bb/bb"),
+        "prove",
+        "-b",
+        circuit_file,
+        "-w",
+        witness_file,
+        "-o",
+        proof_dir,
+    ]
     bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
     bt.logging.info(f"Working directory: {circuit_dir}")
 
