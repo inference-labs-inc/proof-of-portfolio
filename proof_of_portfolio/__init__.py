@@ -370,6 +370,7 @@ def prove_instant_mdd(hotkey, ledger_element):
         return {"status": "error", "hotkey": hotkey, "message": str(e)}
 
 
+@requires_dependencies
 def prove_sync(
     miner_data,
     daily_pnl=None,
