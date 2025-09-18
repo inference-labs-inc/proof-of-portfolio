@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Test script for the prove function with dummy data."""
 
+import os
+
+
 import proof_of_portfolio
 
 
@@ -131,6 +134,12 @@ try:
                         print(f"VK file found at {vk_path}, size: {vk_size} bytes")
                     else:
                         print(f"VK file NOT found at {vk_path}")
+
+                    # Debug: Check if proof content matches expected pattern
+                    print(f"Proof hex first 100 chars: {proof_hex[:100]}")
+                    print(
+                        f"Public inputs hex first 100 chars: {public_inputs_hex[:100]}"
+                    )
 
                     # Verify the proof using hex data
                     print(
