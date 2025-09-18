@@ -30,12 +30,6 @@ jobs:
       with:
         enable-cache: true
 
-    - name: Set environment variables
-      shell: bash
-      run: |
-        # Don't set CI=true so auto-install can run
-        echo "POP_SKIP_INSTALL=false" >> $GITHUB_ENV
-
     - name: Install package
       shell: bash
       run: |

@@ -23,9 +23,14 @@ def ensure_dependencies():
     """Ensure bb and nargo are installed before running package functions."""
     global _dependencies_checked
 
-    if _dependencies_checked or os.environ.get("POP_SKIP_INSTALL"):
+    skip_install = os.environ.get("POP_SKIP_INSTALL", "").lower() in [
+        "true",
+        "1",
+        "yes",
+    ]
+    if _dependencies_checked or skip_install:
         print(
-            f"Dependencies checked: {_dependencies_checked}. Skip install: {os.environ.get('POP_SKIP_INSTALL')}"
+            f"Dependencies checked: {_dependencies_checked}. Skip install: {skip_install}"
         )
         return
 
