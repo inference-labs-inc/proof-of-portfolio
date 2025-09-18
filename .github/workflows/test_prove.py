@@ -3,10 +3,13 @@
 
 import proof_of_portfolio
 
-# Create test data
-test_data = {
-    "5HTestMinerHotkey123456789": {
-        "perf_ledgers": [
+# Create test data with correct structure
+miner_hotkey = "5HTestMinerHotkey123456789"
+
+# The data structure expected by prove_sync
+miner_data = {
+    "perf_ledgers": {
+        miner_hotkey: [
             {
                 "cps": [
                     {
@@ -35,45 +38,50 @@ test_data = {
                     },
                 ]
             }
-        ],
-        "positions": [
-            {
-                "position_uuid": "test-position-1",
-                "miner_hotkey": "5HTestMinerHotkey123456789",
-                "position_type": "LONG",
-                "orders": [
-                    {
-                        "order_uuid": "test-order-1",
-                        "trade_pair": "BTCUSD",
-                        "processed_ms": 1704067200000,
-                        "order_type": "MARKET",
-                        "leverage": 1.0,
-                        "order_status": "FILLED",
-                        "price": 45000.0,
-                        "quantity": 0.001,
-                    }
-                ],
-                "net_volume": 0.001,
-                "average_entry_price": 45000.0,
-                "close_out_type": "TIME_BASED",
-                "return_at_close": 0.02,
-            }
-        ],
-    }
+        ]
+    },
+    "positions": {
+        miner_hotkey: {
+            "positions": [
+                {
+                    "position_uuid": "test-position-1",
+                    "miner_hotkey": miner_hotkey,
+                    "position_type": "LONG",
+                    "orders": [
+                        {
+                            "order_uuid": "test-order-1",
+                            "trade_pair": "BTCUSD",
+                            "processed_ms": 1704067200000,
+                            "order_type": "MARKET",
+                            "leverage": 1.0,
+                            "order_status": "FILLED",
+                            "price": 45000.0,
+                            "quantity": 0.001,
+                        }
+                    ],
+                    "net_volume": 0.001,
+                    "average_entry_price": 45000.0,
+                    "close_out_type": "TIME_BASED",
+                    "return_at_close": 0.02,
+                }
+            ]
+        }
+    },
 }
-
-miner_hotkey = "5HTestMinerHotkey123456789"
-miner_data = test_data[miner_hotkey]
 
 print(f"Testing prove function with miner: {miner_hotkey}")
 print(
-    f"Data contains {len(miner_data['perf_ledgers'])} perf_ledgers and {len(miner_data['positions'])} positions"
+    f"Data contains {len(miner_data['perf_ledgers'][miner_hotkey])} perf_ledgers and {len(miner_data['positions'][miner_hotkey]['positions'])} positions"
 )
+
+# Create dummy daily PnL data (required parameter)
+daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 
 # Test the prove function
 try:
     result = proof_of_portfolio.prove_sync(
         miner_data=miner_data,
+        daily_pnl=daily_pnl,
         hotkey=miner_hotkey,
         verbose=True,
         witness_only=True,  # Only generate witness, not full proof for speed
