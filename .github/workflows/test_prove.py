@@ -118,9 +118,13 @@ try:
                         public_inputs_hex = f.read().hex()
 
                     # Verify the proof using hex data
+                    print(
+                        f"Starting verification with proof length {len(proof_hex)} and public inputs length {len(public_inputs_hex)}"
+                    )
                     verification_result = proof_of_portfolio.verify(
                         proof_hex, public_inputs_hex
                     )
+                    print(f"Verification result: {verification_result}")
 
                     if verification_result:
                         print("✓ Proof verification successful")
