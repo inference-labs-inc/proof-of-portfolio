@@ -1,4 +1,4 @@
-name: Test Installation and Prove Function
+name: Test E2E Workflow
 
 on:
   push:
@@ -37,12 +37,12 @@ jobs:
         source .venv/bin/activate
         uv pip install -e .
 
-    - name: Test prove function with dummy data
+    - name: Test end-to-end proof generation and verification
       shell: bash
       run: |
         source .venv/bin/activate
 
-        # Run the test script from .github/workflows/
+        # Test proof generation and verification with dummy data
         python .github/workflows/test_prove.py
 
     - name: Verify bb installation

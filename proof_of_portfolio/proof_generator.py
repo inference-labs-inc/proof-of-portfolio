@@ -652,7 +652,7 @@ def generate_proof(
                     "leverage": str(int(abs(get_attr(order, "leverage")) * SCALE)),
                     "price": str(price),
                     "processed_ms": str(processed_ms),
-                    "order_uuid": f"0x{order_uuid.replace('-', '')}",
+                    "order_uuid": f"0x{str(order_uuid).replace('-', '')}",
                     "bid": str(bid),
                     "ask": str(ask),
                 }
@@ -725,7 +725,7 @@ def generate_proof(
         toml.dump(tree_prover_input, f)
 
     output = run_command(
-        ["nargo", "execute", "--silence-warnings"],
+        [os.path.expanduser("~/.nargo/bin/nargo"), "execute", "--silence-warnings"],
         tree_generator_dir,
     )
 
@@ -822,7 +822,13 @@ def generate_proof(
     log_verbose(verbose, "info", "Executing main circuit to generate witness...")
     witness_start = time.time()
     output = run_command(
-        ["nargo", "execute", "witness", "--silence-warnings"], main_circuit_dir
+        [
+            os.path.expanduser("~/.nargo/bin/nargo"),
+            "execute",
+            "witness",
+            "--silence-warnings",
+        ],
+        main_circuit_dir,
     )
     witness_time = time.time() - witness_start
     log_verbose(verbose, "info", f"Witness generation completed in {witness_time:.3f}s")

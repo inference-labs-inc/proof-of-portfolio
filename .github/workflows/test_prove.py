@@ -3,10 +3,10 @@
 
 import proof_of_portfolio
 
-# Create test data with correct structure
-miner_hotkey = "5HTestMinerHotkey123456789"
 
-# The data structure expected by prove_sync
+miner_hotkey = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
+
+
 miner_data = {
     "perf_ledgers": {
         miner_hotkey: [
@@ -40,16 +40,17 @@ miner_data = {
             }
         ]
     },
+    "daily_returns": [0.01 * (1 + i % 3 - 1) for i in range(30)],
     "positions": {
         miner_hotkey: {
             "positions": [
                 {
-                    "position_uuid": 987654321,
+                    "position_uuid": "98765432-10ab-cdef-1234-567890abcdef",
                     "miner_hotkey": miner_hotkey,
                     "position_type": "LONG",
                     "orders": [
                         {
-                            "order_uuid": 123456789,
+                            "order_uuid": "12345678-90ab-cdef-1234-567890abcdef",
                             "trade_pair": "BTCUSD",
                             "processed_ms": 1704067200000,
                             "order_type": "MARKET",
@@ -76,17 +77,19 @@ print(
     f"Data contains {len(miner_data['perf_ledgers'][miner_hotkey])} perf_ledgers and {len(miner_data['positions'][miner_hotkey]['positions'])} positions"
 )
 
-# Create dummy daily PnL data (required parameter)
+
 daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 
-# Test the prove function
+
 try:
     result = proof_of_portfolio.prove_sync(
         miner_data=miner_data,
         daily_pnl=daily_pnl,
         hotkey=miner_hotkey,
         verbose=True,
-        witness_only=True,  # Only generate witness, not full proof for speed
+        use_weighting=False,
+        bypass_confidence=True,
+        witness_only=False,
     )
 
     print(f"Prove function completed with status: {result.get('status', 'unknown')}")
@@ -94,6 +97,47 @@ try:
     if result.get("status") == "success":
         print("✓ Prove function executed successfully")
         print(f"Portfolio metrics: {result.get('portfolio_metrics', {})}")
+
+        proof_results = result.get("proof_results", {})
+        if proof_results.get("proof_generated"):
+            print("✓ Proof was generated successfully")
+
+            try:
+                import os
+
+                proof_path = os.path.join("proof_of_portfolio/circuits/proof", "proof")
+                public_inputs_path = os.path.join(
+                    "proof_of_portfolio/circuits/proof", "public_inputs"
+                )
+
+                if os.path.exists(proof_path) and os.path.exists(public_inputs_path):
+                    with open(proof_path, "rb") as f:
+                        proof_hex = f.read().hex()
+
+                    with open(public_inputs_path, "rb") as f:
+                        public_inputs_hex = f.read().hex()
+
+                    verification_result = proof_of_portfolio.verify(
+                        proof_hex, public_inputs_hex
+                    )
+
+                    if verification_result:
+                        print("✓ Proof verification successful")
+                    else:
+                        print("✗ Proof verification failed")
+                        exit(1)
+                else:
+                    print("✗ Proof files not found at expected paths")
+                    print(f"  Expected: {proof_path}")
+                    print(f"  Expected: {public_inputs_path}")
+                    exit(1)
+
+            except Exception as ve:
+                print(f"✗ Proof verification exception: {str(ve)}")
+                exit(1)
+        else:
+            print("✗ No proof was generated")
+            exit(1)
     elif result.get("status") == "error":
         print(f"✗ Prove function failed: {result.get('message', 'unknown error')}")
         exit(1)
