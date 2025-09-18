@@ -218,7 +218,7 @@ def download_prebuilt_bb():
             print(f"Unsupported architecture: {machine}")
             return False
 
-        repo_url = "https://api.github.com/repos/inference-labs-inc/proof-of-portfolio/releases"
+        repo_url = "https://api.github.com/repos/inference-labs-inc/bb/releases"
 
         try:
             import json
