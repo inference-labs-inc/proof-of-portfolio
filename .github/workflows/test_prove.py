@@ -117,6 +117,21 @@ try:
                     with open(public_inputs_path, "rb") as f:
                         public_inputs_hex = f.read().hex()
 
+                    # Check verification key file
+                    import proof_of_portfolio.verifier as verifier_module
+
+                    vk_path = os.path.join(
+                        os.path.dirname(verifier_module.__file__),
+                        "circuits",
+                        "vk",
+                        "vk",
+                    )
+                    if os.path.exists(vk_path):
+                        vk_size = os.path.getsize(vk_path)
+                        print(f"VK file found at {vk_path}, size: {vk_size} bytes")
+                    else:
+                        print(f"VK file NOT found at {vk_path}")
+
                     # Verify the proof using hex data
                     print(
                         f"Starting verification with proof length {len(proof_hex)} and public inputs length {len(public_inputs_hex)}"
