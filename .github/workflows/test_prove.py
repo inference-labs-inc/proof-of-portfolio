@@ -5,6 +5,8 @@ import sys
 import os
 import hashlib
 import shutil
+import subprocess
+import traceback
 
 # Add the project root to Python path to use local development version
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -12,7 +14,7 @@ sys.path.insert(0, project_root)
 
 # ruff: noqa: E402
 import proof_of_portfolio
-
+import proof_of_portfolio.verifier as verifier_module
 
 miner_hotkey = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
 
@@ -120,6 +122,27 @@ try:
     print(f"BB path: {bb_path}")
     print(f"Nargo path: {nargo_path}")
 
+    # Regenerate VK with current bb binary to ensure compatibility
+    print("Regenerating VK with current bb binary...")
+    vk_result = subprocess.run(
+        [
+            bb_path,
+            "write_vk",
+            "-b",
+            "proof_of_portfolio/circuits/target/circuits.json",
+            "-o",
+            "proof_of_portfolio/circuits/vk",
+            "-v",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    print(f"VK generation return code: {vk_result.returncode}")
+    if vk_result.stdout:
+        print(f"VK generation stdout: {vk_result.stdout}")
+    if vk_result.stderr:
+        print(f"VK generation stderr: {vk_result.stderr}")
+
     if result.get("status") == "success":
         print("✓ Prove function executed successfully")
         print(f"Portfolio metrics: {result.get('portfolio_metrics', {})}")
@@ -129,8 +152,6 @@ try:
             print("✓ Proof was generated successfully")
 
             try:
-                import os
-
                 proof_path = os.path.join("proof_of_portfolio/circuits/proof", "proof")
                 public_inputs_path = os.path.join(
                     "proof_of_portfolio/circuits/proof", "public_inputs"
@@ -153,9 +174,6 @@ try:
                     print(
                         f"Public inputs hex hash: {hashlib.sha256(public_inputs_hex.encode()).hexdigest()}"
                     )
-
-                    # Check verification key file
-                    import proof_of_portfolio.verifier as verifier_module
 
                     vk_path = os.path.join(
                         os.path.dirname(verifier_module.__file__),
@@ -198,7 +216,6 @@ try:
 
 except Exception as e:
     print(f"✗ Exception during prove function: {str(e)}")
-    import traceback
 
     traceback.print_exc()
     exit(1)
