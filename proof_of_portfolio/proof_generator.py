@@ -399,6 +399,11 @@ def generate_bb_proof(circuit_dir):
     ]
     bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
     bt.logging.info(f"Working directory: {circuit_dir}")
+    print(f"DEBUG: About to run bb prove: {' '.join(prove_cmd)}")
+    print(f"DEBUG: Working directory: {circuit_dir}")
+    print(f"DEBUG: BB_PATH exists: {os.path.exists(BB_PATH)}")
+    print(f"DEBUG: Circuit file exists: {os.path.exists(circuit_file)}")
+    print(f"DEBUG: Witness file exists: {os.path.exists(witness_file)}")
 
     prove_start = time.time()
     prove_result = subprocess.run(
@@ -409,6 +414,8 @@ def generate_bb_proof(circuit_dir):
     )
     prove_time = time.time() - prove_start
 
+    print(f"DEBUG: bb prove completed with return code: {prove_result.returncode}")
+    print(f"DEBUG: bb prove time: {prove_time:.3f}s")
     bt.logging.info(
         f"bb prove completed in {prove_time:.3f}s with return code: {prove_result.returncode}"
     )
