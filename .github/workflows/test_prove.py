@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Test script for the prove function with dummy data."""
 
+import sys
 import os
 
+# Add the project root to Python path to use local development version
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+sys.path.insert(0, project_root)
 
+# ruff: noqa: E402
 import proof_of_portfolio
 
 
