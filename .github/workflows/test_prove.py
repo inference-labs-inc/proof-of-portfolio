@@ -92,12 +92,6 @@ def get_file_hash(path):
     return "NOT_FOUND"
 
 
-print(f"Testing prove function with miner: {miner_hotkey}")
-print(
-    f"Data contains {len(miner_data['perf_ledgers'][miner_hotkey])} perf_ledgers and {len(miner_data['positions'][miner_hotkey]['positions'])} positions"
-)
-
-
 daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 
 
@@ -112,15 +106,8 @@ try:
         witness_only=False,
     )
 
-    print(f"Prove function completed with status: {result.get('status', 'unknown')}")
-
     bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
     nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
-
-    print(f"BB binary hash: {get_file_hash(bb_path)}")
-    print(f"Nargo binary hash: {get_file_hash(nargo_path)}")
-    print(f"BB path: {bb_path}")
-    print(f"Nargo path: {nargo_path}")
 
     # Regenerate VK with current bb binary to ensure compatibility
     print("Regenerating VK with current bb binary...")
@@ -137,11 +124,6 @@ try:
         capture_output=True,
         text=True,
     )
-    print(f"VK generation return code: {vk_result.returncode}")
-    if vk_result.stdout:
-        print(f"VK generation stdout: {vk_result.stdout}")
-    if vk_result.stderr:
-        print(f"VK generation stderr: {vk_result.stderr}")
 
     if result.get("status") == "success":
         print("✓ Prove function executed successfully")
@@ -164,17 +146,6 @@ try:
                     with open(public_inputs_path, "rb") as f:
                         public_inputs_hex = f.read().hex()
 
-                    # Log hex data for debugging
-                    print(f"Proof hex (first 100 chars): {proof_hex[:100]}...")
-                    print(f"Full proof hex: {proof_hex}")
-                    print(f"Public inputs hex: {public_inputs_hex}")
-                    print(
-                        f"Proof hex hash: {hashlib.sha256(proof_hex.encode()).hexdigest()}"
-                    )
-                    print(
-                        f"Public inputs hex hash: {hashlib.sha256(public_inputs_hex.encode()).hexdigest()}"
-                    )
-
                     vk_path = os.path.join(
                         os.path.dirname(verifier_module.__file__),
                         "circuits",
@@ -182,8 +153,11 @@ try:
                         "vk",
                     )
                     if os.path.exists(vk_path):
+                        vk_hash = hashlib.sha256(open(vk_path, "rb").read()).hexdigest()
                         vk_size = os.path.getsize(vk_path)
-                        print(f"VK file found at {vk_path}, size: {vk_size} bytes")
+                        print(
+                            f"VK file found at {vk_path}, size: {vk_size} bytes, hash: {vk_hash}"
+                        )
                     else:
                         print(f"VK file NOT found at {vk_path}")
 
