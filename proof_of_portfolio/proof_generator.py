@@ -11,6 +11,9 @@ import requests
 import base64
 from pathlib import Path
 
+# Import global constants
+from . import BB_PATH, NARGO_PATH
+
 
 ARRAY_SIZE = 256
 MAX_DAYS = 256
@@ -348,7 +351,7 @@ def generate_bb_proof(circuit_dir):
 
     try:
         version_result = subprocess.run(
-            [os.path.expanduser("~/.bb/bb"), "--version"],
+            [BB_PATH, "--version"],
             capture_output=True,
             check=True,
             text=True,
@@ -385,7 +388,7 @@ def generate_bb_proof(circuit_dir):
         return None, False
 
     prove_cmd = [
-        os.path.expanduser("~/.bb/bb"),
+        BB_PATH,
         "prove",
         "-b",
         circuit_file,
@@ -737,7 +740,7 @@ def generate_proof(
         toml.dump(tree_prover_input, f)
 
     output = run_command(
-        [os.path.expanduser("~/.nargo/bin/nargo"), "execute", "--silence-warnings"],
+        [NARGO_PATH, "execute", "--silence-warnings"],
         tree_generator_dir,
     )
 
@@ -835,7 +838,7 @@ def generate_proof(
     witness_start = time.time()
     output = run_command(
         [
-            os.path.expanduser("~/.nargo/bin/nargo"),
+            NARGO_PATH,
             "execute",
             "witness",
             "--silence-warnings",

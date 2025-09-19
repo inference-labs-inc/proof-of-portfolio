@@ -5,15 +5,20 @@ import shutil
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 from functools import wraps
-from .verifier import verify as verify
 import subprocess
 from pathlib import Path
-from .post_install import main as post_install_main
-from .proof_generator import generate_proof
 import json
 import time
 import traceback
 import bittensor as bt
+
+BB_PATH = os.path.expanduser("~/.bb/bb")
+NARGO_PATH = os.path.expanduser("~/.nargo/bin/nargo")
+
+# ruff: noqa
+from .post_install import main as post_install_main
+from .proof_generator import generate_proof
+from .verifier import verify as verify
 
 
 _dependencies_checked = False

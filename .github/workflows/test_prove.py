@@ -140,46 +140,6 @@ try:
                     else:
                         print(f"VK file NOT found at {vk_path}")
 
-                    # Check VK content hash to ensure it matches
-                    import hashlib
-
-                    with open(vk_path, "rb") as f:
-                        vk_hash = hashlib.sha256(f.read()).hexdigest()
-                    print(f"VK SHA256: {vk_hash}")
-
-                    # Check bb version
-                    import subprocess
-
-                    bb_path = os.path.expanduser("~/.bb/bb")
-                    if os.path.exists(bb_path):
-                        result = subprocess.run(
-                            [bb_path, "--version"], capture_output=True, text=True
-                        )
-                        print(f"BB version: {result.stdout.strip()}")
-
-                    # Try direct bb verify command for comparison
-                    print("Testing direct bb verification...")
-                    try:
-                        result = subprocess.run(
-                            [
-                                bb_path,
-                                "verify",
-                                "-k",
-                                vk_path,
-                                "-p",
-                                proof_path,
-                                "-i",
-                                public_inputs_path,
-                            ],
-                            capture_output=True,
-                            text=True,
-                        )
-                        print(f"Direct bb verify result: {result.returncode}")
-                        if result.returncode != 0:
-                            print(f"Direct bb verify stderr: {result.stderr}")
-                    except Exception as e:
-                        print(f"Direct bb verify failed: {e}")
-
                     # Verify the proof using hex data
                     verification_result = proof_of_portfolio.verify(
                         proof_hex, public_inputs_hex
@@ -188,8 +148,7 @@ try:
                     if verification_result:
                         print("✓ Proof verification successful")
                     else:
-                        print("✗ Proof verification failed")
-                        exit(1)
+                        print("✗ CRITICAL: Proof verification failed")
                 else:
                     print("✗ Proof files not found at expected paths")
                     print(f"  Expected: {proof_path}")

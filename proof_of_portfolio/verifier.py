@@ -2,30 +2,6 @@ import os
 import subprocess
 import tempfile
 import bittensor as bt
-from .post_install import main as post_install_main
-import shutil
-
-
-def ensure_bb_installed():
-    """Ensure bb is installed before verification."""
-    bb_path = shutil.which("bb")
-    if not bb_path:
-        # Check common installation path
-        home = os.path.expanduser("~")
-        bb_path = os.path.join(home, ".bb", "bb")
-        if not os.path.exists(bb_path):
-            bt.logging.info("Installing bb (Barretenberg) for proof verification...")
-            try:
-                post_install_main()
-                bt.logging.info("bb installed successfully!")
-                # After installation, bb should be at ~/.bb/bb
-                if not os.path.exists(bb_path):
-                    bt.logging.error(f"bb not found at expected path: {bb_path}")
-                    return None
-            except Exception as e:
-                bt.logging.error(f"Failed to install bb: {e}")
-                return None
-    return bb_path if os.path.exists(bb_path) else shutil.which("bb")
 
 
 def verify(proof_hex, public_inputs_hex):
@@ -39,10 +15,6 @@ def verify(proof_hex, public_inputs_hex):
     Returns:
         bool: True if verification succeeds, False otherwise
     """
-    bb_path = ensure_bb_installed()
-    if not bb_path:
-        bt.logging.error("Failed to install required dependencies for verification")
-        return False
 
     try:
         proof_data = bytes.fromhex(proof_hex)
@@ -50,6 +22,8 @@ def verify(proof_hex, public_inputs_hex):
     except ValueError as e:
         bt.logging.error(f"Invalid hex data: {str(e)}")
         return False
+
+    from . import BB_PATH
 
     vk_path = os.path.join(os.path.dirname(__file__), "circuits", "vk", "vk")
     if not os.path.exists(vk_path):
@@ -68,7 +42,7 @@ def verify(proof_hex, public_inputs_hex):
 
             result = subprocess.run(
                 [
-                    bb_path,
+                    BB_PATH,
                     "verify",
                     "-k",
                     vk_path,
