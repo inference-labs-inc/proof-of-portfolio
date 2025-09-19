@@ -2,6 +2,7 @@ import os
 import subprocess
 import tempfile
 import bittensor as bt
+from . import BB_PATH
 
 
 def verify(proof_hex, public_inputs_hex):
@@ -22,8 +23,6 @@ def verify(proof_hex, public_inputs_hex):
     except ValueError as e:
         bt.logging.error(f"Invalid hex data: {str(e)}")
         return False
-
-    from . import BB_PATH
 
     vk_path = os.path.join(os.path.dirname(__file__), "circuits", "vk", "vk")
     if not os.path.exists(vk_path):
