@@ -415,8 +415,10 @@ def generate_bb_proof(circuit_dir):
 
     if prove_result.stdout:
         bt.logging.info(f"bb prove stdout: {prove_result.stdout}")
+        print(f"DEBUG: bb prove stdout: {prove_result.stdout}")
     if prove_result.stderr:
         bt.logging.info(f"bb prove stderr: {prove_result.stderr}")
+        print(f"DEBUG: bb prove stderr: {prove_result.stderr}")
 
     if prove_result.returncode != 0:
         bt.logging.error(f"bb prove failed with return code {prove_result.returncode}")

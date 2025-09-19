@@ -58,9 +58,14 @@ def verify(proof_hex, public_inputs_hex):
 
             if result.returncode == 0:
                 bt.logging.info("Proof verification successful")
+                if result.stdout:
+                    print(f"DEBUG: bb verify stdout: {result.stdout}")
                 return True
             else:
                 bt.logging.error(f"Proof verification failed: {result.stderr}")
+                print(f"DEBUG: bb verify failed with return code {result.returncode}")
+                print(f"DEBUG: bb verify stdout: {result.stdout}")
+                print(f"DEBUG: bb verify stderr: {result.stderr}")
                 return False
 
     except subprocess.TimeoutExpired:
