@@ -125,6 +125,19 @@ try:
         text=True,
     )
 
+    # Check CRS hash for comparison with local
+    crs_path = os.path.expanduser("~/.bb-crs/bn254_g1.dat")
+    if os.path.exists(crs_path):
+        crs_hash = get_file_hash(crs_path)
+        crs_size = os.path.getsize(crs_path)
+        print(f"CRS bn254_g1.dat hash: {crs_hash}, size: {crs_size} bytes")
+    else:
+        print("CRS bn254_g1.dat not found")
+
+    # Check circuit bytecode hash
+    circuit_hash = get_file_hash("proof_of_portfolio/circuits/target/circuits.json")
+    print(f"Circuit bytecode hash: {circuit_hash}")
+
     if result.get("status") == "success":
         print("✓ Prove function executed successfully")
         print(f"Portfolio metrics: {result.get('portfolio_metrics', {})}")
