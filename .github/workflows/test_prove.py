@@ -3,6 +3,8 @@
 
 import sys
 import os
+import hashlib
+import shutil
 
 # Add the project root to Python path to use local development version
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -80,10 +82,27 @@ miner_data = {
     },
 }
 
+
+def get_file_hash(path):
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    return "NOT_FOUND"
+
+
 print(f"Testing prove function with miner: {miner_hotkey}")
 print(
     f"Data contains {len(miner_data['perf_ledgers'][miner_hotkey])} perf_ledgers and {len(miner_data['positions'][miner_hotkey]['positions'])} positions"
 )
+
+# Log binary hashes for debugging
+bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
+nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
+
+print(f"BB binary hash: {get_file_hash(bb_path)}")
+print(f"Nargo binary hash: {get_file_hash(nargo_path)}")
+print(f"BB path: {bb_path}")
+print(f"Nargo path: {nargo_path}")
 
 
 daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
@@ -124,6 +143,16 @@ try:
 
                     with open(public_inputs_path, "rb") as f:
                         public_inputs_hex = f.read().hex()
+
+                    # Log hex data for debugging
+                    print(f"Proof hex (first 100 chars): {proof_hex[:100]}...")
+                    print(f"Public inputs hex: {public_inputs_hex}")
+                    print(
+                        f"Proof hex hash: {hashlib.sha256(proof_hex.encode()).hexdigest()}"
+                    )
+                    print(
+                        f"Public inputs hex hash: {hashlib.sha256(public_inputs_hex.encode()).hexdigest()}"
+                    )
 
                     # Check verification key file
                     import proof_of_portfolio.verifier as verifier_module
