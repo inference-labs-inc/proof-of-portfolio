@@ -366,6 +366,7 @@ def generate_bb_proof(circuit_dir):
 
     target_dir = os.path.join(circuit_dir, "target")
     proof_dir = os.path.join(circuit_dir, "proof")
+    vk_dir = os.path.join(circuit_dir, "vk")
     bt.logging.info(f"Creating proof directory: {proof_dir}")
     os.makedirs(proof_dir, exist_ok=True)
 
@@ -396,6 +397,8 @@ def generate_bb_proof(circuit_dir):
         witness_file,
         "-o",
         proof_dir,
+        "-k",
+        vk_dir,
     ]
     bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
     bt.logging.info(f"Working directory: {circuit_dir}")

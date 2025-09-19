@@ -5,7 +5,6 @@ import sys
 import os
 import hashlib
 import shutil
-import subprocess
 import traceback
 
 # Add the project root to Python path to use local development version
@@ -108,22 +107,6 @@ try:
 
     bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
     nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
-
-    # Regenerate VK with current bb binary to ensure compatibility
-    print("Regenerating VK with current bb binary...")
-    vk_result = subprocess.run(
-        [
-            bb_path,
-            "write_vk",
-            "-b",
-            "proof_of_portfolio/circuits/target/circuits.json",
-            "-o",
-            "proof_of_portfolio/circuits/vk",
-            "-v",
-        ],
-        capture_output=True,
-        text=True,
-    )
 
     # Check CRS hash for comparison with local
     crs_path = os.path.expanduser("~/.bb-crs/bn254_g1.dat")
