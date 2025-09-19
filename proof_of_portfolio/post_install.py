@@ -162,7 +162,7 @@ def install_bb():
             print(f"bbup not found at {bbup_cmd}")
             return False
 
-        versions_to_try = ["0.87.0"]
+        versions_to_try = ["1.0.0"]
 
         for version in versions_to_try:
             print(f"Trying bb version {version}...")
@@ -228,7 +228,7 @@ def download_prebuilt_bb():
 
             bb_release = None
             for release in releases:
-                if release["tag_name"].startswith("bb-v0.87.0"):
+                if release["tag_name"].startswith("bb-v1.0.0"):
                     bb_release = release
                     break
 
@@ -281,9 +281,9 @@ def compile_bb_from_source():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
 
-            print("Downloading aztec packages v0.87.0...")
-            url = "https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v0.87.0.tar.gz"
-            tar_path = temp_path / "v0.87.0.tar.gz"
+            print("Downloading aztec packages v1.0.0...")
+            url = "https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v1.0.0.tar.gz"
+            tar_path = temp_path / "v1.0.0.tar.gz"
 
             urllib.request.urlretrieve(url, tar_path)
 
@@ -291,7 +291,7 @@ def compile_bb_from_source():
             with tarfile.open(tar_path, "r:gz") as tar:
                 tar.extractall(temp_path)
 
-            cpp_dir = temp_path / "aztec-packages-0.87.0" / "barretenberg" / "cpp"
+            cpp_dir = temp_path / "aztec-packages-1.0.0" / "barretenberg" / "cpp"
             build_dir = cpp_dir / "build"
             build_dir.mkdir(exist_ok=True)
 

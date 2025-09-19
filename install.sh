@@ -152,8 +152,8 @@ install_barretenberg() {
     fi
 
     echo "Found bbup at: $BBUP_CMD"
-    echo "Installing bb version 0.87.0..."
-    $BBUP_CMD --version 0.87.0
+    echo "Installing bb version 1.0.0..."
+    $BBUP_CMD --version 1.0.0
 
     refresh_path
     BB_CMD=$(find_executable "bb" ".bb" || true)

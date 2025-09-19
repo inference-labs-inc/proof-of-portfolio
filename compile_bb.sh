@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Building bb v0.87.0 with LLVM 18..."
+echo "Building bb v1.0.0 with LLVM 18..."
 
 wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
 sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main"
@@ -21,10 +21,10 @@ echo 'deb https://apt.kitware.com/ubuntu/ jammy main' | sudo tee /etc/apt/source
 sudo apt update
 sudo apt install -y cmake
 
-rm -rf aztec-packages-0.87.0* v0.87.0.tar.gz
-wget https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v0.87.0.tar.gz
-tar -xzf v0.87.0.tar.gz
-cd aztec-packages-0.87.0/barretenberg/cpp
+rm -rf aztec-packages-1.0.0* v1.0.0.tar.gz
+wget https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v1.0.0.tar.gz
+tar -xzf v1.0.0.tar.gz
+cd aztec-packages-1.0.0/barretenberg/cpp
 
 export CC=clang-18
 export CXX=clang++-18
