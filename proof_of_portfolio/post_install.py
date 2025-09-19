@@ -7,6 +7,8 @@ from pathlib import Path
 import tempfile
 import tarfile
 import urllib.request
+import json
+import platform
 
 
 def refresh_shell_environment():
@@ -162,7 +164,7 @@ def install_bb():
             print(f"bbup not found at {bbup_cmd}")
             return False
 
-        versions_to_try = ["1.0.0"]
+        versions_to_try = ["2.0.3"]
 
         for version in versions_to_try:
             print(f"Trying bb version {version}...")
@@ -181,18 +183,6 @@ def install_bb():
                     if test_result.returncode == 0:
                         print(f"Successfully installed bb version {version}")
                         return True
-                    elif (
-                        "GLIBC" in test_result.stderr or "GLIBCXX" in test_result.stderr
-                    ):
-                        print(
-                            f"Version {version} has incompatible GLIBC requirements, trying pre-built binary..."
-                        )
-                        if download_prebuilt_bb():
-                            return True
-                        print(
-                            "Pre-built binary not available, trying compilation from source..."
-                        )
-                        return compile_bb_from_source()
             else:
                 print(f"Failed to install version {version}: {result.stderr}")
 
@@ -207,28 +197,26 @@ def download_prebuilt_bb():
     """Download pre-built bb binary from GitHub releases"""
     print("Downloading pre-built bb binary...")
     try:
-        import platform
-
         machine = platform.machine().lower()
         if machine in ["x86_64", "amd64"]:
             arch = "linux-x86_64"
         elif machine in ["aarch64", "arm64"]:
-            arch = "linux-aarch64"
+            if platform.system().lower() == "darwin":
+                arch = "macos-arm64"
+            else:
+                arch = "linux-aarch64"
         else:
             print(f"Unsupported architecture: {machine}")
             return False
-
         repo_url = "https://api.github.com/repos/inference-labs-inc/bb/releases"
 
         try:
-            import json
-
             response = urllib.request.urlopen(repo_url)
             releases = json.loads(response.read().decode())
 
             bb_release = None
             for release in releases:
-                if release["tag_name"].startswith("bb-v1.0.0"):
+                if release["tag_name"].startswith("bb-v2.0.3"):
                     bb_release = release
                     break
 
@@ -281,9 +269,9 @@ def compile_bb_from_source():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
 
-            print("Downloading aztec packages v1.0.0...")
-            url = "https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v1.0.0.tar.gz"
-            tar_path = temp_path / "v1.0.0.tar.gz"
+            print("Downloading aztec packages v2.0.3...")
+            url = "https://github.com/AztecProtocol/aztec-packages/archive/refs/tags/v2.0.3.tar.gz"
+            tar_path = temp_path / "v2.0.3.tar.gz"
 
             urllib.request.urlretrieve(url, tar_path)
 
@@ -291,7 +279,7 @@ def compile_bb_from_source():
             with tarfile.open(tar_path, "r:gz") as tar:
                 tar.extractall(temp_path)
 
-            cpp_dir = temp_path / "aztec-packages-1.0.0" / "barretenberg" / "cpp"
+            cpp_dir = temp_path / "aztec-packages-2.0.3" / "barretenberg" / "cpp"
             build_dir = cpp_dir / "build"
             build_dir.mkdir(exist_ok=True)
 
@@ -369,7 +357,11 @@ def main():
     else:
         refresh_shell_environment()
         if not install_bb():
-            success = False
+            print("Standard bb installation failed.")
+            if not download_prebuilt_bb():
+                success = False
+            else:
+                print("Successfully installed bb from inference-labs-inc fallback")
 
     if not success:
         print(
