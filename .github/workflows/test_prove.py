@@ -95,15 +95,6 @@ print(
     f"Data contains {len(miner_data['perf_ledgers'][miner_hotkey])} perf_ledgers and {len(miner_data['positions'][miner_hotkey]['positions'])} positions"
 )
 
-# Log binary hashes for debugging
-bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
-nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
-
-print(f"BB binary hash: {get_file_hash(bb_path)}")
-print(f"Nargo binary hash: {get_file_hash(nargo_path)}")
-print(f"BB path: {bb_path}")
-print(f"Nargo path: {nargo_path}")
-
 
 daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 
@@ -120,6 +111,14 @@ try:
     )
 
     print(f"Prove function completed with status: {result.get('status', 'unknown')}")
+
+    bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
+    nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
+
+    print(f"BB binary hash: {get_file_hash(bb_path)}")
+    print(f"Nargo binary hash: {get_file_hash(nargo_path)}")
+    print(f"BB path: {bb_path}")
+    print(f"Nargo path: {nargo_path}")
 
     if result.get("status") == "success":
         print("✓ Prove function executed successfully")
@@ -146,6 +145,7 @@ try:
 
                     # Log hex data for debugging
                     print(f"Proof hex (first 100 chars): {proof_hex[:100]}...")
+                    print(f"Full proof hex: {proof_hex}")
                     print(f"Public inputs hex: {public_inputs_hex}")
                     print(
                         f"Proof hex hash: {hashlib.sha256(proof_hex.encode()).hexdigest()}"
