@@ -7,6 +7,8 @@ from pathlib import Path
 import tempfile
 import tarfile
 import urllib.request
+import platform
+import json
 
 
 def refresh_shell_environment():
@@ -207,8 +209,6 @@ def download_prebuilt_bb():
     """Download pre-built bb binary from GitHub releases"""
     print("Downloading pre-built bb binary...")
     try:
-        import platform
-
         machine = platform.machine().lower()
         if machine in ["x86_64", "amd64"]:
             arch = "linux-x86_64"
@@ -221,8 +221,6 @@ def download_prebuilt_bb():
         repo_url = "https://api.github.com/repos/inference-labs-inc/bb/releases"
 
         try:
-            import json
-
             response = urllib.request.urlopen(repo_url)
             releases = json.loads(response.read().decode())
 
@@ -237,13 +235,28 @@ def download_prebuilt_bb():
                 return False
 
             bb_asset = None
+            ubuntu_version = (
+                platform.release().split(".")[0]
+                if platform.system() == "Linux"
+                else "22"
+            )
+            ubuntu_codename = f"ubuntu{ubuntu_version}04"
+
             for asset in bb_release["assets"]:
-                if asset["name"] == f"bb-{arch}":
+                if asset["name"] == f"bb-{arch}-{ubuntu_codename}":
                     bb_asset = asset
                     break
 
             if not bb_asset:
-                print(f"No bb binary found for architecture: {arch}")
+                for asset in bb_release["assets"]:
+                    if asset["name"] == f"bb-{arch}-ubuntu2204":
+                        bb_asset = asset
+                        break
+
+            if not bb_asset:
+                print(
+                    f"No bb binary found for architecture: {arch} with Ubuntu {ubuntu_version}.04"
+                )
                 return False
 
             print(f"Downloading bb binary for {arch}...")
