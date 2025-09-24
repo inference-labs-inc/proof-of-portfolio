@@ -42,6 +42,7 @@ pub fn omega(
     omega_loss_min: i64,
     noconfidence_value: i64,
     minimum_n: u32,
+    python_omega: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
@@ -120,7 +121,19 @@ pub fn omega(
             } else {
                 omega_loss_min
             };
-            (positive_sum * SCALE) / effective_denominator
+
+            let result = (positive_sum * SCALE) / effective_denominator;
+
+            let tolerance: i64 = 1000;
+            let diff = if result > python_omega {
+                result - python_omega
+            } else {
+                python_omega - result
+            };
+
+            assert(diff <= tolerance);
+
+            python_omega
         }
     }
 }
@@ -142,6 +155,7 @@ fn test_omega_all_positive() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0);
 }
@@ -163,6 +177,7 @@ fn test_omega_all_negative() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0);
 }
@@ -185,6 +200,7 @@ fn test_omega_mixed_returns() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0);
 }
@@ -206,6 +222,7 @@ fn test_omega_zero_returns() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0);
 }
@@ -227,6 +244,7 @@ fn test_omega_ptn_parity() {
         10000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        125000000,
     );
     assert(result == 125000000);
 }
@@ -251,6 +269,7 @@ fn test_omega_scaling() {
         omega_loss_min,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        20000000,
     );
     assert(result > 0);
 }
@@ -271,6 +290,7 @@ fn test_omega_parity() {
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        25000000i64,
     );
     let expected = 25000000i64;
     let diff = if result > expected {
@@ -295,6 +315,7 @@ fn test_omega_less_than_60_days() {
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0i64);
 }
@@ -312,6 +333,7 @@ fn test_omega_zero_variance() {
         10000000i64,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0i64);
 }
@@ -360,6 +382,7 @@ fn test_omega_bypass_confidence_true() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        219863095,
     );
 
     let expected = 219863095;
@@ -393,6 +416,7 @@ fn test_omega_bypass_confidence_false() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == OMEGA_NOCONFIDENCE_VALUE);
@@ -417,6 +441,7 @@ fn test_omega_use_weighting() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        9385819,
     );
 
     let result_unweighted = omega(
@@ -428,6 +453,7 @@ fn test_omega_use_weighting() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        10000000,
     );
 
     assert(result_unweighted == 10000000);
@@ -473,6 +499,7 @@ fn test_omega_comprehensive_all_positive() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        1500000000,
     );
 
     let expected = 1500000000;
@@ -515,6 +542,7 @@ fn test_omega_mostly_negative() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        6666666,
     );
 
     let expected = 6666666;
@@ -556,6 +584,7 @@ fn test_omega_weighted_realistic() {
         1000000,
         OMEGA_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        113719333,
     );
 
     let expected = 113719333;

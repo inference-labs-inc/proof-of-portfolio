@@ -469,7 +469,6 @@ def generate_proof(
     if verbose is None:
         verbose = is_demo_mode
 
-    # Use ValiConfig class attributes directly if provided, else use defaults
     if vali_config:
         days_in_year_crypto = vali_config.DAYS_IN_YEAR_CRYPTO
         weighted_average_decay_max = vali_config.WEIGHTED_AVERAGE_DECAY_MAX
@@ -490,7 +489,6 @@ def generate_proof(
             vali_config.STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE
         )
     else:
-        # Use defaults if ValiConfig not provided
         days_in_year_crypto = 365
         weighted_average_decay_max = 1.0
         weighted_average_decay_min = 0.15
@@ -838,6 +836,33 @@ def generate_proof(
             int(statistical_confidence_noconfidence_value * SCALE)
         ),
     }
+
+    if augmented_scores:
+        python_sharpe = augmented_scores.get("sharpe", 0.0)
+        python_calmar = augmented_scores.get("calmar", 0.0)
+        python_sortino = augmented_scores.get("sortino", 0.0)
+        python_omega = augmented_scores.get("omega", 0.0)
+
+        if isinstance(python_sharpe, dict):
+            python_sharpe = python_sharpe.get("value", 0.0)
+        if isinstance(python_calmar, dict):
+            python_calmar = python_calmar.get("value", 0.0)
+        if isinstance(python_sortino, dict):
+            python_sortino = python_sortino.get("value", 0.0)
+        if isinstance(python_omega, dict):
+            python_omega = python_omega.get("value", 0.0)
+
+        main_prover_input["python_sharpe"] = str(int(python_sharpe * SCALE))
+        main_prover_input["python_calmar"] = str(int(python_calmar * SCALE))
+        main_prover_input["python_sortino"] = str(int(python_sortino * SCALE))
+        main_prover_input["python_omega"] = str(int(python_omega * SCALE))
+    else:
+        main_prover_input["python_sharpe"] = str(int(sharpe_noconfidence_value * SCALE))
+        main_prover_input["python_calmar"] = str(int(calmar_noconfidence_value * SCALE))
+        main_prover_input["python_sortino"] = str(
+            int(sortino_noconfidence_value * SCALE)
+        )
+        main_prover_input["python_omega"] = str(int(omega_noconfidence_value * SCALE))
 
     os.makedirs(main_circuit_dir, exist_ok=True)
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:

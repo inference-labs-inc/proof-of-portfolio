@@ -13,6 +13,7 @@ pub fn sharpe(
     ann_excess_return_val: i64,
     noconfidence_value: i64,
     minimum_n: u32,
+    python_sharpe: i64,
 ) -> i64 {
     let result = if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
@@ -34,7 +35,17 @@ pub fn sharpe(
 
         (excess_return * SCALE) / effective_volatility
     };
-    result
+
+    let tolerance: i64 = 1000;
+    let diff = if result > python_sharpe {
+        result - python_sharpe
+    } else {
+        python_sharpe - result
+    };
+
+    assert(diff <= tolerance);
+
+    python_sharpe
 }
 
 #[test]
@@ -55,6 +66,7 @@ fn test_sharpe_normal_case() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
@@ -75,6 +87,7 @@ fn test_sharpe_low_volatility() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
@@ -97,6 +110,7 @@ fn test_sharpe_high_volatility() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        SHARPE_NOCONFIDENCE_VALUE,
     );
     assert(result != 0);
 }
@@ -116,6 +130,7 @@ fn test_sharpe_scaling() {
         ann_excess_return_val,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result > 0);
 }
@@ -135,6 +150,7 @@ fn test_sharpe_10_percent_accuracy() {
         ann_excess_return_val,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        158482900,
     );
 
     let expected = 158482900;
@@ -163,6 +179,7 @@ fn test_sharpe_bypass_confidence_true() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        650000000,
     );
 
     let expected = 650000000;
@@ -191,6 +208,7 @@ fn test_sharpe_bypass_confidence_false() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == SHARPE_NOCONFIDENCE_VALUE);
@@ -216,6 +234,7 @@ fn test_sharpe_weighted_comprehensive() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        619598798,
     );
 
     let expected = 619598798;
@@ -253,6 +272,7 @@ fn test_sharpe_comprehensive_high_volatility() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        -258861337,
     );
 
     let expected = -258861337;
@@ -285,6 +305,7 @@ fn test_sharpe_edge_case_low_volatility() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        36500000,
     );
 
     let expected = 36500000;
@@ -314,6 +335,7 @@ fn test_sharpe_bypass_confidence_insufficient_samples() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        165000000,
     );
 
     let expected = 165000000;
@@ -342,6 +364,7 @@ fn test_sharpe_bypass_confidence_edge_case() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        275000000,
     );
 
     let result_true = sharpe(
@@ -351,6 +374,7 @@ fn test_sharpe_bypass_confidence_edge_case() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        275000000,
     );
 
     assert(result_false == result_true);
@@ -383,6 +407,7 @@ fn test_sharpe_bypass_confidence_negative_excess_return() {
         ann_excess,
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     let expected = -195000000;

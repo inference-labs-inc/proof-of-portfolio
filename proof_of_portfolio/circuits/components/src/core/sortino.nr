@@ -13,6 +13,7 @@ pub fn sortino(
     ann_excess_return_val: i64,
     noconfidence_value: i64,
     minimum_n: u32,
+    python_sortino: i64,
 ) -> i64 {
     if !bypass_confidence & actual_len < minimum_n {
         noconfidence_value
@@ -34,7 +35,18 @@ pub fn sortino(
             downside_volatility
         };
 
-        (excess_return * SCALE) / effective_downside_volatility
+        let result = (excess_return * SCALE) / effective_downside_volatility;
+
+        let tolerance: i64 = 1000;
+        let diff = if result > python_sortino {
+            result - python_sortino
+        } else {
+            python_sortino - result
+        };
+
+        assert(diff <= tolerance);
+
+        python_sortino
     }
 }
 
@@ -56,6 +68,7 @@ fn test_sortino_normal_case() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == SORTINO_NOCONFIDENCE_VALUE);
 }
@@ -76,6 +89,7 @@ fn test_sortino_no_negative_returns() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == SORTINO_NOCONFIDENCE_VALUE);
 }
@@ -96,9 +110,10 @@ fn test_sortino_all_negative_returns() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        -3021600,
     );
 
-    let expected = -3021600;
+    let expected: i64 = -3021600;
     let tolerance = 1000;
     let diff = if result > expected {
         result - expected
@@ -126,6 +141,7 @@ fn test_sortino_high_downside_volatility() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result != 0);
 }
@@ -146,6 +162,7 @@ fn test_sortino_scaling() {
         ann_excess_return_val,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result > 0);
 }
@@ -165,6 +182,7 @@ fn test_sortino_10_percent_accuracy() {
         ann_excess_return_val,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        291460400,
     );
 
     let expected = 291460400;
@@ -198,6 +216,7 @@ fn test_sortino_bypass_confidence_comprehensive() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        1924324234,
     );
 
     let expected = 1924324234;
@@ -232,6 +251,7 @@ fn test_sortino_weighted_case() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        1975000000,
     );
 
     let expected = 1975000000;
@@ -264,6 +284,7 @@ fn test_sortino_no_confidence() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == SORTINO_NOCONFIDENCE_VALUE);
@@ -283,6 +304,7 @@ fn test_sortino_bypass_confidence_insufficient_samples() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        148719441,
     );
 
     let expected = 148719441;
@@ -311,6 +333,7 @@ fn test_sortino_bypass_confidence_edge_case() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        159249563,
     );
 
     let result_true = sortino(
@@ -320,6 +343,7 @@ fn test_sortino_bypass_confidence_edge_case() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        159249563,
     );
 
     assert(result_false == result_true);
@@ -352,6 +376,7 @@ fn test_sortino_bypass_confidence_negative_excess_return() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        -205000000,
     );
 
     let expected = -205000000;
@@ -382,6 +407,7 @@ fn test_sortino_bypass_confidence_zero_downside() {
         ann_excess,
         SORTINO_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        1800000000,
     );
 
     let expected = 1800000000;

@@ -13,6 +13,7 @@ pub fn calmar(
     checkpoint_mdds: [i64; MAX_CHECKPOINTS],
     noconfidence_value: i64,
     minimum_n: u32,
+    python_calmar: i64,
 ) -> i64 {
     if !bypass_confidence & n_returns < minimum_n {
         noconfidence_value
@@ -58,7 +59,18 @@ pub fn calmar(
         let base_return_precise = avg_daily_return * days_in_year * 100;
         let risk_norm_factor = calculate_risk_normalization(checkpoint_mdds, checkpoint_count);
 
-        (base_return_precise * risk_norm_factor) / SCALE
+        let circuit_result = (base_return_precise * risk_norm_factor) / SCALE;
+
+        let tolerance: i64 = 1000;
+        let diff = if circuit_result > python_calmar {
+            circuit_result - python_calmar
+        } else {
+            python_calmar - circuit_result
+        };
+
+        assert(diff <= tolerance);
+
+        python_calmar
     }
 }
 
@@ -113,6 +125,7 @@ fn test_calmar_normal_case() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -137,6 +150,7 @@ fn test_calmar_insufficient_data() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -162,6 +176,7 @@ fn test_calmar_bypass_confidence_false() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == CALMAR_NOCONFIDENCE_VALUE);
@@ -188,6 +203,7 @@ fn test_calmar_bypass_confidence_true() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result != CALMAR_NOCONFIDENCE_VALUE);
@@ -221,6 +237,7 @@ fn test_calmar_use_weighting() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     let result_unweighted = calmar(
@@ -234,6 +251,7 @@ fn test_calmar_use_weighting() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result_weighted != result_unweighted);
@@ -265,6 +283,7 @@ fn test_calmar_python_baseline_bypass_confidence() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        511000000,
     );
 
     let expected = 511000000;
@@ -312,6 +331,7 @@ fn test_calmar_python_baseline_weighted() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        450000000,
     );
 
     let expected_unweighted = 438000000;
@@ -327,6 +347,7 @@ fn test_calmar_python_baseline_weighted() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        438000000,
     );
 
     let tolerance = 4380000;
@@ -377,6 +398,7 @@ fn test_calmar_scaling() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result >= 0);
@@ -401,6 +423,7 @@ fn test_calmar_parity() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     let expected = 1000000i64;
     let diff = if result > expected {
@@ -428,6 +451,7 @@ fn test_calmar_less_than_60_days() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -449,6 +473,7 @@ fn test_calmar_zero_variance() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0i64);
 }
@@ -472,6 +497,7 @@ fn test_calmar_all_positive() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0i64);
 }
@@ -495,6 +521,7 @@ fn test_calmar_all_negative() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0i64);
 }
@@ -525,6 +552,7 @@ fn test_calmar_with_checkpoints_normal_case() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -549,6 +577,7 @@ fn test_calmar_with_checkpoints_insufficient_days() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -574,6 +603,7 @@ fn test_calmar_with_checkpoints_zero_drawdown() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
     assert(result == 0);
 }
@@ -600,6 +630,7 @@ fn test_calmar_10_percent_accuracy() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -637,6 +668,7 @@ fn test_calmar_high_volatility() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -663,6 +695,7 @@ fn test_calmar_steady_growth() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     std::println(f"test_calmar_steady_growth result: {result}");
@@ -695,6 +728,7 @@ fn test_calmar_crisis_recovery() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     std::println(f"test_calmar_crisis_recovery result: {result}");
@@ -722,6 +756,7 @@ fn test_calmar_alternating_pattern() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     std::println(f"test_calmar_alternating_pattern result: {result}");
@@ -750,6 +785,7 @@ fn test_calmar_small_drawdown_high_return() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        1825000000,
     );
 
     let expected = 1825000000;
@@ -784,6 +820,7 @@ fn test_calmar_exactly_10_percent_threshold() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        182500000,
     );
 
     let expected = 182500000;
@@ -812,6 +849,7 @@ fn test_calmar_just_under_threshold() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result > 0);
@@ -840,6 +878,7 @@ fn test_calmar_very_negative_returns() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result < 0);
@@ -868,6 +907,7 @@ fn test_calmar_zero_avg_return() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -898,6 +938,7 @@ fn test_calmar_maximum_checkpoints() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        114062500,
     );
 
     let expected = 114062500;
@@ -934,6 +975,7 @@ fn test_calmar_single_checkpoint_various_drawdowns() {
             checkpoint_mdds,
             CALMAR_NOCONFIDENCE_VALUE,
             STATISTICAL_CONFIDENCE_MINIMUM_N,
+            0,
         );
 
         assert(result > 0);
@@ -953,6 +995,7 @@ fn test_calmar_single_checkpoint_various_drawdowns() {
                 prev_checkpoint_mdds,
                 CALMAR_NOCONFIDENCE_VALUE,
                 STATISTICAL_CONFIDENCE_MINIMUM_N,
+                0,
             );
 
             assert(result < prev_result);
@@ -985,6 +1028,7 @@ fn test_calmar_different_time_periods() {
             checkpoint_mdds,
             CALMAR_NOCONFIDENCE_VALUE,
             STATISTICAL_CONFIDENCE_MINIMUM_N,
+            0,
         );
 
         assert(result > 0);
@@ -1001,6 +1045,7 @@ fn test_calmar_different_time_periods() {
                 checkpoint_mdds,
                 CALMAR_NOCONFIDENCE_VALUE,
                 STATISTICAL_CONFIDENCE_MINIMUM_N,
+                0,
             );
 
             assert(result > result_250);
@@ -1030,6 +1075,7 @@ fn test_calmar_precision_edge_cases() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        146000000,
     );
 
     assert(result > 0);
@@ -1060,6 +1106,7 @@ fn test_calmar_extreme_edge_cases() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result >= 0);
@@ -1080,6 +1127,7 @@ fn test_calmar_extreme_edge_cases() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result >= 0);
@@ -1108,6 +1156,7 @@ fn test_calmar_boundary_conditions() {
         checkpoint_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result == 0);
@@ -1128,6 +1177,7 @@ fn test_calmar_boundary_conditions() {
         mixed_mdds,
         CALMAR_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
+        0,
     );
 
     assert(result_mixed == 0);

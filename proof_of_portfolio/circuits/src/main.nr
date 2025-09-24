@@ -41,6 +41,10 @@ fn main(
     calmar_noconfidence: pub i64,
     stat_confidence_noconfidence: pub i64,
     stat_conf_min_n: pub u32,
+    python_sharpe: pub i64,
+    python_calmar: pub i64,
+    python_sortino: pub i64,
+    python_omega: pub i64,
 ) -> pub [Field; 8] {
     // Intentionally unused, hack to trick the compiler into constraining it
     let mut hk = hotkey;
@@ -134,6 +138,7 @@ fn main(
         ann_excess_return_val,
         sharpe_noconfidence,
         stat_conf_min_n,
+        python_sharpe,
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
@@ -147,6 +152,7 @@ fn main(
         checkpoint_mdds,
         calmar_noconfidence,
         stat_conf_min_n,
+        python_calmar,
     );
     let omega_ratio = omega(
         returns_array,
@@ -157,6 +163,7 @@ fn main(
         omega_loss_min,
         omega_noconfidence,
         stat_conf_min_n,
+        python_omega,
     );
     let sortino_ratio = sortino(
         n_returns,
@@ -165,6 +172,7 @@ fn main(
         ann_excess_return_val,
         sortino_noconfidence,
         stat_conf_min_n,
+        python_sortino,
     );
     let stat_confidence = statistical_confidence(
         n_returns,
