@@ -41,47 +41,13 @@ jobs:
       shell: bash
       run: |
         source .venv/bin/activate
-
-        # Test proof generation and verification with dummy data
         python .github/workflows/test_prove.py
-
-    - name: Verify bb installation
-      shell: bash
-      run: |
-        if command -v bb &> /dev/null; then
-          echo 'bb is installed'
-          bb --version
-        elif [ -f ~/.bb/bb ]; then
-          echo 'bb found in ~/.bb/bb'
-          ~/.bb/bb --version
-        else
-          echo 'bb not found in PATH or ~/.bb/bb'
-          exit 1
-        fi
-
-    - name: Verify nargo installation
-      shell: bash
-      run: |
-        if command -v nargo &> /dev/null; then
-          echo 'nargo is installed'
-          nargo --version
-        elif [ -f ~/.nargo/bin/nargo ]; then
-          echo 'nargo found in ~/.nargo/bin/nargo'
-          ~/.nargo/bin/nargo --version
-        else
-          echo 'nargo not found in PATH or ~/.nargo/bin/nargo'
-          exit 1
-        fi
 
     - name: Test CLI functionality
       shell: bash
       run: |
         source .venv/bin/activate
-
-        # Test pop CLI is available
         pop --version
-
-        # Test generate-test-data command
         pop generate-test-data --num-miners 2 --output-file test_generated.json
 
         if [ -f test_generated.json ]; then
@@ -91,14 +57,3 @@ jobs:
           echo "✗ Test data generation failed"
           exit 1
         fi
-
-    - name: Upload test artifacts on failure
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-artifacts-${{ matrix.os }}-py${{ matrix.python-version }}
-        path: |
-          test_*.json
-          test_*.py
-          *.log
-        retention-days: 7

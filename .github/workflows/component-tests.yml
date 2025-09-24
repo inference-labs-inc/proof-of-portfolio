@@ -18,12 +18,5 @@ jobs:
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
         $HOME/.nargo/bin/noirup
         echo "$HOME/.nargo/bin" >> $GITHUB_PATH
-
-    - name: Verify Noir installation
-      run: nargo --version
-
-    - name: Make test script executable
-      run: chmod +x ./run_component_tests.sh
-
     - name: Run component tests
       run: ./run_component_tests.sh
