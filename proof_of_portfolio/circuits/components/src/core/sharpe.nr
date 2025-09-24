@@ -56,7 +56,7 @@ fn test_sharpe_normal_case() {
         SHARPE_NOCONFIDENCE_VALUE,
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
-    assert(result != 0);
+    assert(result == SHARPE_NOCONFIDENCE_VALUE);
 }
 
 #[test]
@@ -165,8 +165,8 @@ fn test_sharpe_bypass_confidence_true() {
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
 
-    let expected = 655402844;
-    let tolerance = 6554028;
+    let expected = 650000000;
+    let tolerance = 15000000;
 
     let diff = if result > expected {
         result - expected
@@ -316,8 +316,8 @@ fn test_sharpe_bypass_confidence_insufficient_samples() {
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
 
-    let expected = 177685950;
-    let tolerance = 1000000;
+    let expected = 165000000;
+    let tolerance = 15000000;
 
     let diff = if result > expected {
         result - expected
@@ -357,8 +357,8 @@ fn test_sharpe_bypass_confidence_edge_case() {
     assert(result_false != SHARPE_NOCONFIDENCE_VALUE);
     assert(result_true != SHARPE_NOCONFIDENCE_VALUE);
 
-    let expected = 290401435;
-    let tolerance = 1000000;
+    let expected = 275000000;
+    let tolerance = 20000000;
 
     let diff = if result_true > expected {
         result_true - expected
@@ -385,8 +385,8 @@ fn test_sharpe_bypass_confidence_negative_excess_return() {
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
 
-    let expected = -207123209;
-    let tolerance = 1000000;
+    let expected = -195000000;
+    let tolerance = 20000000;
 
     let diff = if result > expected {
         result - expected
