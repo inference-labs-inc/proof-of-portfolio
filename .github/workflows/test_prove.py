@@ -109,6 +109,36 @@ try:
     bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
     nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
 
+    # Log bb version and hash
+    print("\n=== Binary Information ===")
+    if os.path.exists(bb_path):
+        bb_hash = get_file_hash(bb_path)
+        bb_version = subprocess.run(
+            [bb_path, "--version"], capture_output=True, text=True
+        )
+        print(f"bb path: {bb_path}")
+        print(
+            f"bb version: {bb_version.stdout.strip() if bb_version.returncode == 0 else 'Unable to get version'}"
+        )
+        print(f"bb hash: {bb_hash}")
+    else:
+        print(f"bb not found at {bb_path}")
+
+    # Log nargo version and hash
+    if os.path.exists(nargo_path):
+        nargo_hash = get_file_hash(nargo_path)
+        nargo_version = subprocess.run(
+            [nargo_path, "--version"], capture_output=True, text=True
+        )
+        print(f"nargo path: {nargo_path}")
+        print(
+            f"nargo version: {nargo_version.stdout.strip() if nargo_version.returncode == 0 else 'Unable to get version'}"
+        )
+        print(f"nargo hash: {nargo_hash}")
+    else:
+        print(f"nargo not found at {nargo_path}")
+    print("==========================\n")
+
     # Regenerate VK with current bb binary to ensure compatibility
     print("Regenerating VK with current bb binary...")
     vk_result = subprocess.run(
