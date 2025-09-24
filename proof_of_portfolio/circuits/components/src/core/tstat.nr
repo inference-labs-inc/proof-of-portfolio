@@ -11,12 +11,10 @@ pub fn statistical_confidence(
     noconfidence_value: i64,
     minimum_n: u32,
 ) -> i64 {
-    // Check minimum sample size for statistical confidence
     if !bypass_confidence & actual_len < minimum_n {
         if actual_len < 2 {
             noconfidence_value
         } else {
-            // Allow computation for sample sizes between 2 and minimum, but with reduced confidence
             compute_t_statistic(
                 actual_len,
                 avg_daily_return,
@@ -119,4 +117,75 @@ fn test_tstat_exactly_two_samples() {
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result != 0);
+}
+
+#[test]
+fn test_tstat_bypass_confidence_true() {
+    let avg = 100;
+    let variance_val = 500000;
+
+    let result = statistical_confidence(
+        30,
+        true,
+        avg,
+        variance_val,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 77459;
+    let tolerance = 1000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+    assert(result > 0);
+}
+
+#[test]
+fn test_tstat_bypass_confidence_false_insufficient() {
+    let avg = 200;
+    let variance_val = 400000;
+
+    let result = statistical_confidence(
+        30,
+        false,
+        avg,
+        variance_val,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    assert(result == STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE);
+}
+
+#[test]
+fn test_tstat_bypass_confidence_false_sufficient() {
+    let avg = 150;
+    let variance_val = 300000;
+
+    let result = statistical_confidence(
+        75,
+        false,
+        avg,
+        variance_val,
+        STATISTICAL_CONFIDENCE_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 100458;
+    let tolerance = 2000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+    assert(result > 0);
 }

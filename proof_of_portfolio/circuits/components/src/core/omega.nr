@@ -2,6 +2,37 @@ use crate::utils::constants::{
     ARRAY_SIZE, OMEGA_NOCONFIDENCE_VALUE, SCALE, STATISTICAL_CONFIDENCE_MINIMUM_N,
 };
 
+fn generate_linear_weights(length: u32) -> [i64; ARRAY_SIZE] {
+    let mut weights = [0; ARRAY_SIZE];
+
+    let min_weight = 15000000;
+    let max_weight = 100000000;
+    let weight_range = max_weight - min_weight;
+
+    for i in 0..length {
+        let progress = (i as i64) * SCALE / (length as i64);
+        let quadratic_progress = (progress * progress) / SCALE;
+        let weight = min_weight + ((weight_range * quadratic_progress) / SCALE);
+        weights[i] = weight;
+    }
+
+    weights
+}
+
+fn verify_exponential_weights(weights: [i64; ARRAY_SIZE], length: u32) {
+    let min_weight_scaled = 15000000;
+    let max_weight_scaled = SCALE;
+
+    for i in 0..length {
+        assert(weights[i] >= min_weight_scaled);
+        assert(weights[i] <= max_weight_scaled);
+
+        if i > 0 {
+            assert(weights[i] >= weights[i - 1]);
+        }
+    }
+}
+
 pub fn omega(
     log_returns: [i64; ARRAY_SIZE],
     actual_len: u32,
@@ -26,10 +57,10 @@ pub fn omega(
                     let weight = weights[i];
                     let log_return = log_returns[i];
                     if log_return > 0 {
-                        product_sum_positive += log_return * weight;
+                        product_sum_positive += (log_return * weight) / SCALE;
                         sum_weights_positive_raw += weight;
                     } else {
-                        product_sum_negative += log_return * weight;
+                        product_sum_negative += (log_return * weight) / SCALE;
                         sum_weights_negative_raw += weight;
                     }
                 }
@@ -46,37 +77,24 @@ pub fn omega(
                 omega_loss_min
             };
 
-            let scale_factor = 1000000;
-            let product_sum_positive_scaled = product_sum_positive / scale_factor;
-            let product_sum_negative_scaled = product_sum_negative / scale_factor;
+            let positive_sum = (product_sum_positive * sum_weights_negative) / SCALE;
+            let negative_sum = (product_sum_negative * sum_weights_positive) / SCALE;
 
-            let positive_cross = product_sum_positive_scaled * sum_weights_negative;
-            let negative_cross = product_sum_negative_scaled * sum_weights_positive;
-
-            let abs_negative = if negative_cross >= 0 {
-                negative_cross
+            let numerator = positive_sum;
+            let abs_negative_sum = if negative_sum >= 0 {
+                negative_sum
             } else {
-                -negative_cross
-            };
-            let omega_loss_min_scaled = omega_loss_min / scale_factor;
-            let effective_denominator = if abs_negative >= omega_loss_min_scaled {
-                abs_negative
-            } else {
-                omega_loss_min_scaled
+                -negative_sum
             };
 
-            let adjusted_ratio_scale = SCALE * scale_factor;
+            let effective_denominator = if abs_negative_sum >= omega_loss_min {
+                abs_negative_sum
+            } else {
+                omega_loss_min
+            };
 
-            if effective_denominator >= adjusted_ratio_scale {
-                positive_cross / (effective_denominator / adjusted_ratio_scale)
-            } else if effective_denominator != 0 {
-                let max_omega_result = SCALE * 1000; // Cap at 1000x scale to prevent overflow
-                let tentative_result = positive_cross / effective_denominator;
-                if tentative_result <= max_omega_result / adjusted_ratio_scale {
-                    tentative_result * adjusted_ratio_scale
-                } else {
-                    max_omega_result
-                }
+            if effective_denominator > 0 {
+                (numerator * SCALE) / effective_denominator
             } else {
                 0
             }
@@ -296,4 +314,259 @@ fn test_omega_zero_variance() {
         STATISTICAL_CONFIDENCE_MINIMUM_N,
     );
     assert(result == 0i64);
+}
+
+#[test]
+fn test_omega_bypass_confidence_true() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 200000;
+    returns[1] = -100000;
+    returns[2] = 150000;
+    returns[3] = 300000;
+    returns[4] = -200000;
+    returns[5] = 100000;
+    returns[6] = -50000;
+    returns[7] = 250000;
+    returns[8] = -150000;
+    returns[9] = 200000;
+    returns[10] = 180000;
+    returns[11] = -119999;
+    returns[12] = 80000;
+    returns[13] = 220000;
+    returns[14] = -180000;
+    returns[15] = 140000;
+    returns[16] = -80000;
+    returns[17] = 190000;
+    returns[18] = -110000;
+    returns[19] = 160000;
+    returns[20] = 210000;
+    returns[21] = -140000;
+    returns[22] = 90000;
+    returns[23] = 239999;
+    returns[24] = -160000;
+    returns[25] = 130000;
+    returns[26] = -70000;
+    returns[27] = 200000;
+    returns[28] = -100000;
+    returns[29] = 170000;
+
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(
+        returns,
+        30,
+        weights,
+        false,
+        true,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 219863095;
+    let tolerance = 1000000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+}
+
+#[test]
+fn test_omega_bypass_confidence_false() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 200000;
+    returns[1] = -100000;
+    returns[2] = 150000;
+    returns[3] = 300000;
+    returns[4] = -200000;
+
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(
+        returns,
+        30,
+        weights,
+        false,
+        false,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    assert(result == OMEGA_NOCONFIDENCE_VALUE);
+}
+
+#[test]
+fn test_omega_use_weighting() {
+    let mut returns = [0; ARRAY_SIZE];
+    returns[0] = 100000;
+    returns[1] = -100000;
+
+    let mut weights = [0; ARRAY_SIZE];
+    weights[0] = 93858196;
+    weights[1] = 100000000;
+
+    let result_weighted = omega(
+        returns,
+        2,
+        weights,
+        true,
+        true,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let result_unweighted = omega(
+        returns,
+        2,
+        weights,
+        false,
+        true,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    assert(result_unweighted == 10000000);
+
+    let expected_weighted = 9385819;
+    let tolerance = 100000;
+
+    let diff = if result_weighted > expected_weighted {
+        result_weighted - expected_weighted
+    } else {
+        expected_weighted - result_weighted
+    };
+
+    assert(diff <= tolerance);
+    assert(result_weighted != result_unweighted);
+    assert(result_weighted > 0);
+}
+
+#[test]
+fn test_omega_comprehensive_all_positive() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..75 {
+        if i % 5 == 0 {
+            returns[i] = 100000;
+        } else if i % 5 == 1 {
+            returns[i] = 200000;
+        } else if i % 5 == 2 {
+            returns[i] = 150000;
+        } else if i % 5 == 3 {
+            returns[i] = 300000;
+        } else {
+            returns[i] = 250000;
+        }
+    }
+
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(
+        returns,
+        75,
+        weights,
+        false,
+        false,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 1500000000;
+    let tolerance = 10000000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+    assert(result > 0);
+}
+
+#[test]
+fn test_omega_mostly_negative() {
+    let mut returns = [0; ARRAY_SIZE];
+    for i in 0..75 {
+        if i % 5 == 0 {
+            returns[i] = -200000;
+        } else if i % 5 == 1 {
+            returns[i] = -100000;
+        } else if i % 5 == 2 {
+            returns[i] = 50000;
+        } else if i % 5 == 3 {
+            returns[i] = -150000;
+        } else {
+            returns[i] = -300000;
+        }
+    }
+
+    let weights = [100000; ARRAY_SIZE];
+    let result = omega(
+        returns,
+        75,
+        weights,
+        false,
+        false,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 6666666;
+    let tolerance = 100000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+    assert(result > 0);
+}
+
+#[test]
+fn test_omega_weighted_realistic() {
+    let mut returns = [0; ARRAY_SIZE];
+    let pattern = [
+        120000, -80000, 150000, 30000, -120000, 180000, -50000, 90000, -150000, 210000, 60000,
+        -180000, 120000, 80000, -30000,
+    ];
+
+    for i in 0..75 {
+        returns[i] = pattern[i % 15];
+    }
+
+    let mut weights = [0; ARRAY_SIZE];
+    weights = generate_linear_weights(75);
+
+    verify_exponential_weights(weights, 75);
+
+    let result = omega(
+        returns,
+        75,
+        weights,
+        true,
+        false,
+        1000000,
+        OMEGA_NOCONFIDENCE_VALUE,
+        STATISTICAL_CONFIDENCE_MINIMUM_N,
+    );
+
+    let expected = 113719333;
+    let tolerance = 70000000;
+
+    let diff = if result > expected {
+        result - expected
+    } else {
+        expected - result
+    };
+
+    assert(diff <= tolerance);
+    assert(result > 0);
 }
