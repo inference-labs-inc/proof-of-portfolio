@@ -1,27 +1,20 @@
 #!/usr/bin/env python3
-"""Test script for the prove function with dummy data."""
+"""Test script for proof generation and verification with dummy data."""
 
 import sys
-import os
-import hashlib
-import shutil
-import subprocess
-import traceback
+from pathlib import Path
 
-# Add the project root to Python path to use local development version
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-sys.path.insert(0, project_root)
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # ruff: noqa: E402
 import proof_of_portfolio
-import proof_of_portfolio.verifier as verifier_module
 
-miner_hotkey = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
+MINER_HOTKEY = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
 
-
-miner_data = {
+MINER_DATA = {
     "perf_ledgers": {
-        miner_hotkey: [
+        MINER_HOTKEY: [
             {
                 "cps": [
                     {
@@ -54,11 +47,11 @@ miner_data = {
     },
     "daily_returns": [0.01 * (1 + i % 3 - 1) for i in range(30)],
     "positions": {
-        miner_hotkey: {
+        MINER_HOTKEY: {
             "positions": [
                 {
                     "position_uuid": "98765432-10ab-cdef-1234-567890abcdef",
-                    "miner_hotkey": miner_hotkey,
+                    "miner_hotkey": MINER_HOTKEY,
                     "position_type": "LONG",
                     "orders": [
                         {
@@ -84,155 +77,82 @@ miner_data = {
     },
 }
 
-
-def get_file_hash(path):
-    if os.path.exists(path):
-        with open(path, "rb") as f:
-            return hashlib.sha256(f.read()).hexdigest()
-    return "NOT_FOUND"
+DAILY_PNL = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 
 
-daily_pnl = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
-
-
-try:
-    result = proof_of_portfolio.prove_sync(
-        miner_data=miner_data,
-        daily_pnl=daily_pnl,
-        hotkey=miner_hotkey,
-        verbose=True,
+def generate_proof():
+    """Generate proof with test data."""
+    return proof_of_portfolio.prove_sync(
+        miner_data=MINER_DATA,
+        daily_pnl=DAILY_PNL,
+        hotkey=MINER_HOTKEY,
+        verbose=False,
         use_weighting=False,
         bypass_confidence=True,
         witness_only=False,
     )
 
-    bb_path = shutil.which("bb") or os.path.expanduser("~/.bb/bb")
-    nargo_path = shutil.which("nargo") or os.path.expanduser("~/.nargo/bin/nargo")
 
-    # Log bb version and hash
-    print("\n=== Binary Information ===")
-    if os.path.exists(bb_path):
-        bb_hash = get_file_hash(bb_path)
-        bb_version = subprocess.run(
-            [bb_path, "--version"], capture_output=True, text=True
-        )
-        print(f"bb path: {bb_path}")
-        print(
-            f"bb version: {bb_version.stdout.strip() if bb_version.returncode == 0 else 'Unable to get version'}"
-        )
-        print(f"bb hash: {bb_hash}")
-    else:
-        print(f"bb not found at {bb_path}")
+def verify_proof(proof_hex: str, public_inputs_hex: str) -> bool:
+    """Verify generated proof."""
+    return proof_of_portfolio.verify(proof_hex, public_inputs_hex)
 
-    # Log nargo version and hash
-    if os.path.exists(nargo_path):
-        nargo_hash = get_file_hash(nargo_path)
-        nargo_version = subprocess.run(
-            [nargo_path, "--version"], capture_output=True, text=True
-        )
-        print(f"nargo path: {nargo_path}")
-        print(
-            f"nargo version: {nargo_version.stdout.strip() if nargo_version.returncode == 0 else 'Unable to get version'}"
-        )
-        print(f"nargo hash: {nargo_hash}")
-    else:
-        print(f"nargo not found at {nargo_path}")
-    print("==========================\n")
 
-    # Regenerate VK with current bb binary to ensure compatibility
-    print("Regenerating VK with current bb binary...")
-    vk_result = subprocess.run(
-        [
-            bb_path,
-            "write_vk",
-            "-b",
-            "proof_of_portfolio/circuits/target/circuits.json",
-            "-o",
-            "proof_of_portfolio/circuits/vk",
-            "-v",
-        ],
-        capture_output=True,
-        text=True,
-    )
+def load_proof_files(proof_dir: Path) -> tuple[str, str]:
+    """Load proof and public inputs from files."""
+    proof_path = proof_dir / "proof"
+    public_inputs_path = proof_dir / "public_inputs"
 
-    # Check CRS hash for comparison with local
-    crs_path = os.path.expanduser("~/.bb-crs/bn254_g1.dat")
-    if os.path.exists(crs_path):
-        crs_hash = get_file_hash(crs_path)
-        crs_size = os.path.getsize(crs_path)
-        print(f"CRS bn254_g1.dat hash: {crs_hash}, size: {crs_size} bytes")
-    else:
-        print("CRS bn254_g1.dat not found")
+    if not (proof_path.exists() and public_inputs_path.exists()):
+        raise FileNotFoundError("Proof files not found")
 
-    # Check circuit bytecode hash
-    circuit_hash = get_file_hash("proof_of_portfolio/circuits/target/circuits.json")
-    print(f"Circuit bytecode hash: {circuit_hash}")
+    with open(proof_path, "rb") as f:
+        proof_hex = f.read().hex()
 
-    if result.get("status") == "success":
+    with open(public_inputs_path, "rb") as f:
+        public_inputs_hex = f.read().hex()
+
+    return proof_hex, public_inputs_hex
+
+
+def main() -> int:
+    """Run proof generation and verification test."""
+    try:
+        result = generate_proof()
+
+        if result.get("status") != "success":
+            print(f"✗ Prove function failed: {result.get('message', 'unknown error')}")
+            return 1
+
         print("✓ Prove function executed successfully")
-        print(f"Portfolio metrics: {result.get('portfolio_metrics', {})}")
 
         proof_results = result.get("proof_results", {})
-        if proof_results.get("proof_generated"):
-            print("✓ Proof was generated successfully")
-
-            try:
-                proof_path = os.path.join("proof_of_portfolio/circuits/proof", "proof")
-                public_inputs_path = os.path.join(
-                    "proof_of_portfolio/circuits/proof", "public_inputs"
-                )
-
-                if os.path.exists(proof_path) and os.path.exists(public_inputs_path):
-                    with open(proof_path, "rb") as f:
-                        proof_hex = f.read().hex()
-
-                    with open(public_inputs_path, "rb") as f:
-                        public_inputs_hex = f.read().hex()
-
-                    vk_path = os.path.join(
-                        os.path.dirname(verifier_module.__file__),
-                        "circuits",
-                        "vk",
-                        "vk",
-                    )
-                    if os.path.exists(vk_path):
-                        vk_hash = hashlib.sha256(open(vk_path, "rb").read()).hexdigest()
-                        vk_size = os.path.getsize(vk_path)
-                        print(
-                            f"VK file found at {vk_path}, size: {vk_size} bytes, hash: {vk_hash}"
-                        )
-                    else:
-                        print(f"VK file NOT found at {vk_path}")
-
-                    # Verify the proof using hex data
-                    verification_result = proof_of_portfolio.verify(
-                        proof_hex, public_inputs_hex
-                    )
-
-                    if verification_result:
-                        print("✓ Proof verification successful")
-                    else:
-                        print("✗ CRITICAL: Proof verification failed")
-                else:
-                    print("✗ Proof files not found at expected paths")
-                    print(f"  Expected: {proof_path}")
-                    print(f"  Expected: {public_inputs_path}")
-                    exit(1)
-
-            except Exception as ve:
-                print(f"✗ Proof verification exception: {str(ve)}")
-                exit(1)
-        else:
+        if not proof_results.get("proof_generated"):
             print("✗ No proof was generated")
-            exit(1)
-    elif result.get("status") == "error":
-        print(f"✗ Prove function failed: {result.get('message', 'unknown error')}")
-        exit(1)
-    else:
-        print(f"⚠ Prove function returned unexpected status: {result.get('status')}")
+            return 1
 
-except Exception as e:
-    print(f"✗ Exception during prove function: {str(e)}")
+        print("✓ Proof was generated successfully")
 
-    traceback.print_exc()
-    exit(1)
+        proof_dir = project_root / "proof_of_portfolio" / "circuits" / "proof"
+        proof_hex, public_inputs_hex = load_proof_files(proof_dir)
+
+        if verify_proof(proof_hex, public_inputs_hex):
+            print("✓ Proof verification successful")
+            return 0
+        else:
+            print("✗ Proof verification failed")
+            return 1
+
+    except FileNotFoundError as e:
+        print(f"✗ {e}")
+        return 1
+    except Exception as e:
+        print(f"✗ Exception during test: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
