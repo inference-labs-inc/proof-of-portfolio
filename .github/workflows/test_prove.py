@@ -3,15 +3,22 @@
 
 import sys
 from pathlib import Path
+import traceback
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
-
 # ruff: noqa: E402
 import proof_of_portfolio
 
-MINER_HOTKEY = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
+ptn_path = project_root / "proprietary-trading-network"
+sys.path.insert(0, str(ptn_path))
+# ruff: noqa: E402
+from vali_objects.vali_dataclasses.perf_ledger import PerfLedger, PerfCheckpoint
+from vali_objects.utils.metrics import Metrics
 
+SCALE = 100000000
+MINER_HOTKEY = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
+DAILY_PNL = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
 MINER_DATA = {
     "perf_ledgers": {
         MINER_HOTKEY: [
@@ -45,7 +52,7 @@ MINER_DATA = {
             }
         ]
     },
-    "daily_returns": [0.01 * (1 + i % 3 - 1) for i in range(30)],
+    "daily_returns": DAILY_PNL,
     "positions": {
         MINER_HOTKEY: {
             "positions": [
@@ -77,19 +84,102 @@ MINER_DATA = {
     },
 }
 
-DAILY_PNL = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
+
+def create_perf_ledger():
+    """Create a proper PerfLedger from test data."""
+
+    checkpoints = []
+    cumulative_return = 1.0
+    max_return = 1.0
+
+    for i, daily_ret in enumerate(DAILY_PNL):
+        cumulative_return *= 1 + daily_ret
+        max_return = max(max_return, cumulative_return)
+        mdd = (max_return - cumulative_return) / max_return if max_return > 0 else 0.0
+
+        checkpoint = PerfCheckpoint(
+            last_update_ms=int((1704067200.0 + i * 86400) * 1000),
+            prev_portfolio_ret=DAILY_PNL[i - 1] if i > 0 else 0.0,
+            prev_portfolio_spread_fee=1.0,
+            prev_portfolio_carry_fee=1.0,
+            accum_ms=0,
+            open_ms=int((1704067200.0 + i * 86400) * 1000),
+            n_updates=1,
+            gain=max(0, daily_ret * 1000),
+            loss=min(0, daily_ret * 1000),
+            spread_fee_loss=0.0,
+            carry_fee_loss=0.0,
+            mdd=mdd,
+            mpv=cumulative_return,
+            pnl_gain=max(0, daily_ret * 1000),
+            pnl_loss=min(0, daily_ret * 1000),
+        )
+        checkpoints.append(checkpoint)
+
+    perf_ledger = PerfLedger(cps=checkpoints)
+    return perf_ledger
+
+
+def calculate_ptn_metrics():
+    """Calculate metrics using PTN's functions as source of truth."""
+
+    circuit_daily_returns = DAILY_PNL
+
+    perf_ledger = create_perf_ledger()
+
+    sharpe = Metrics.sharpe(
+        log_returns=circuit_daily_returns,
+        bypass_confidence=True,
+        weighting=False,
+        days_in_year=365,
+    )
+
+    sortino = Metrics.sortino(
+        log_returns=circuit_daily_returns,
+        bypass_confidence=True,
+        weighting=False,
+        days_in_year=365,
+    )
+
+    calmar = Metrics.calmar(
+        log_returns=circuit_daily_returns,
+        ledger=perf_ledger,
+        bypass_confidence=True,
+        weighting=False,
+        days_in_year=365,
+    )
+
+    omega = Metrics.omega(
+        log_returns=circuit_daily_returns, bypass_confidence=True, weighting=False
+    )
+
+    return {
+        "sharpe": sharpe,
+        "sortino": sortino,
+        "calmar": calmar,
+        "omega": omega,
+        "ptn_daily_returns": circuit_daily_returns,
+    }
 
 
 def generate_proof():
     """Generate proof with test data."""
+
+    ptn_results = calculate_ptn_metrics()
+    augmented_scores = {
+        k: v for k, v in ptn_results.items() if k != "ptn_daily_returns"
+    }
+    ptn_daily_returns = ptn_results["ptn_daily_returns"]
+
     return proof_of_portfolio.prove_sync(
         miner_data=MINER_DATA,
-        daily_pnl=DAILY_PNL,
+        daily_pnl=ptn_daily_returns,
         hotkey=MINER_HOTKEY,
-        verbose=False,
+        verbose=True,
         use_weighting=False,
         bypass_confidence=True,
         witness_only=False,
+        augmented_scores=augmented_scores,
     )
 
 
@@ -121,35 +211,23 @@ def main() -> int:
         result = generate_proof()
 
         if result.get("status") != "success":
-            print(f"✗ Prove function failed: {result.get('message', 'unknown error')}")
             return 1
-
-        print("✓ Prove function executed successfully")
 
         proof_results = result.get("proof_results", {})
         if not proof_results.get("proof_generated"):
-            print("✗ No proof was generated")
             return 1
-
-        print("✓ Proof was generated successfully")
 
         proof_dir = project_root / "proof_of_portfolio" / "circuits" / "proof"
         proof_hex, public_inputs_hex = load_proof_files(proof_dir)
 
         if verify_proof(proof_hex, public_inputs_hex):
-            print("✓ Proof verification successful")
             return 0
         else:
-            print("✗ Proof verification failed")
             return 1
 
-    except FileNotFoundError as e:
-        print(f"✗ {e}")
+    except FileNotFoundError:
         return 1
-    except Exception as e:
-        print(f"✗ Exception during test: {e}")
-        import traceback
-
+    except Exception:
         traceback.print_exc()
         return 1
 

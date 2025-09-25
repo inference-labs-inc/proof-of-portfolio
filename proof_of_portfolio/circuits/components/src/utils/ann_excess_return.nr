@@ -27,7 +27,10 @@ pub fn ann_excess_return(
         sum_of_weights,
     );
     let annualized = avg * days_in_year;
-    annualized - annual_risk_free
+    let result = annualized - annual_risk_free;
+
+    println(f"[ANN_EXCESS] actual_len={actual_len}, avg={avg}, annualized={annualized}, annual_risk_free={annual_risk_free}, result={result}");
+    result
 }
 
 #[test]

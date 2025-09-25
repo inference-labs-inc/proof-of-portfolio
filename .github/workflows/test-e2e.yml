@@ -37,6 +37,12 @@ jobs:
         source .venv/bin/activate
         uv pip install -e .
 
+    - name: Clone PTN repository
+      uses: actions/checkout@v4
+      with:
+        repository: taoshidev/proprietary-trading-network
+        path: proprietary-trading-network
+
     - name: Test end-to-end proof generation and verification
       shell: bash
       run: |

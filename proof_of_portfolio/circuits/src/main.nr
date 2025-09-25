@@ -8,19 +8,16 @@ use components::core::merkle::{
 use components::utils::{
     ann_excess_return::ann_excess_return,
     average::average,
-    constants::{
-        ARRAY_SIZE, MAX_CHECKPOINTS, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE,
-    },
+    constants::{ARRAY_SIZE, MAX_DAYS, MAX_RETURNS, MAX_SIGNALS, MERKLE_DEPTH, SCALE},
     downside_variance::downside_variance,
     variance::variance,
 };
 
 fn main(
-    hotkey: pub str<48>, // Public hotkey identifier (SS58 addresses are 48 chars)
+    hotkey: pub str<48>,
     log_returns: [i64; MAX_DAYS],
     n_returns: u32,
-    checkpoint_count: u32,
-    checkpoint_mdds: [i64; MAX_CHECKPOINTS],
+    risk_norm_factor: pub i64,
     daily_pnl: [i64; ARRAY_SIZE],
     n_pnl: u32,
     signals: [TradingSignal; MAX_SIGNALS],
@@ -131,6 +128,23 @@ fn main(
 
     let avg_daily_pnl = average(daily_pnl, n_pnl, weights, use_weighting, sum_of_weights);
 
+    println(
+        f"[MAIN] Input metrics: python_sharpe={python_sharpe}, python_calmar={python_calmar}, python_sortino={python_sortino}, python_omega={python_omega}",
+    );
+    println(
+        f"[MAIN] Basic inputs: n_returns={n_returns}, use_weighting={use_weighting}, bypass_confidence={bypass_confidence}",
+    );
+
+    // Show first few returns for debugging
+    let r0 = returns_array[0];
+    let r1 = returns_array[1];
+    let r2 = returns_array[2];
+    println(f"[MAIN] First 3 returns: {r0}, {r1}, {r2}");
+
+    println(
+        f"[MAIN] Pre-calculations: variance_val={variance_val}, ann_excess_return_val={ann_excess_return_val}, downside_variance_val={downside_variance_val}",
+    );
+
     let sharpe_ratio = sharpe(
         n_returns,
         bypass_confidence,
@@ -142,14 +156,13 @@ fn main(
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
-        returns_array,
-        n_returns,
+        daily_pnl,
+        n_pnl,
         weights,
         use_weighting,
         bypass_confidence,
         days_in_year,
-        checkpoint_count,
-        checkpoint_mdds,
+        risk_norm_factor,
         calmar_noconfidence,
         stat_conf_min_n,
         python_calmar,

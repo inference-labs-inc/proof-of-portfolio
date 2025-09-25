@@ -1,4 +1,4 @@
-use crate::utils::{average::average, constants::{ARRAY_SIZE, SCALE}};
+use crate::utils::{average::average, constants::ARRAY_SIZE};
 
 pub fn downside_variance(
     daily_returns: [i64; ARRAY_SIZE],
@@ -10,86 +10,88 @@ pub fn downside_variance(
 ) -> i64 {
     let mut downside_variance = 0;
 
-    // First pass: collect downside returns and calculate downside average
-    let mut downside_returns = [0; ARRAY_SIZE];
-    let mut downside_weights = [0; ARRAY_SIZE];
-    let mut downside_count = 0;
-    let mut downside_sum_weights = 0;
+    let sum_of_weights = if use_weighting {
+        let mut sum: i64 = 0;
+        for i in 0..ARRAY_SIZE {
+            if (i as u32) < actual_len {
+                sum += weights[i];
+            }
+        }
+        sum
+    } else {
+        actual_len as i64
+    };
+
+    let mean = average(
+        daily_returns,
+        actual_len,
+        weights,
+        use_weighting,
+        sum_of_weights,
+    );
+
+    println(f"[DOWNSIDE_VAR] Using daily_rf={daily_rf} not mean={mean}");
+
+    let mut downside_returns: [i64; ARRAY_SIZE] = [0; ARRAY_SIZE];
+    let mut downside_count: u32 = 0;
+    let mut downside_sum: i64 = 0;
 
     for i in 0..ARRAY_SIZE {
         if (i as u32) < actual_len {
-            if daily_returns[i] < daily_rf {
-                downside_returns[downside_count] = daily_returns[i];
-                if use_weighting {
-                    downside_weights[downside_count] = weights[i];
-                    downside_sum_weights += weights[i];
-                } else {
-                    downside_weights[downside_count] = SCALE / 1000; // Equal weight
-                    downside_sum_weights += SCALE / 1000;
-                }
+            let return_val = daily_returns[i];
+            if return_val < daily_rf {
+                downside_returns[downside_count] = return_val;
+                downside_sum += return_val;
                 downside_count += 1;
+                println(
+                    f"[DOWNSIDE_VAR] Downside return {downside_count}: {return_val}",
+                );
+            } else {
+                println(
+                    f"[DOWNSIDE_VAR] i={i}, return={return_val} >= daily_rf={daily_rf}, skipping",
+                );
             }
         }
     }
 
-    // If no downside returns, use high variance (will result in low ratio)
-    if downside_count == 0 {
-        downside_variance = SCALE * SCALE; // Very high variance
-    } else {
-        // Calculate downside average
-        let downside_avg = average(
-            downside_returns,
-            downside_count,
-            downside_weights,
-            use_weighting,
-            downside_sum_weights,
+    let mut sum_sq_diff = 0;
+    if downside_count > 0 {
+        let downside_mean = downside_sum / (downside_count as i64);
+        println(
+            f"[DOWNSIDE_VAR] Downside count: {downside_count}, sum: {downside_sum}, mean: {downside_mean}",
         );
 
-        // Calculate variance of downside returns
-        let mut proceed = false;
-        if use_weighting {
-            if downside_count >= 2 {
-                proceed = true;
+        for i in 0..ARRAY_SIZE {
+            if i < downside_count {
+                let return_val = downside_returns[i];
+                let diff_from_downside_mean = return_val - downside_mean;
+                let sq_diff = diff_from_downside_mean * diff_from_downside_mean;
+                println(
+                    f"[DOWNSIDE_VAR] Downside {i}: return={return_val}, diff={diff_from_downside_mean}, sq_diff={sq_diff}",
+                );
+                sum_sq_diff += sq_diff;
             }
-        } else {
-            if downside_count > ddof {
-                proceed = true;
-            }
-        }
-
-        if proceed {
-            let mut sum_sq_diff = 0;
-
-            if use_weighting {
-                let mut sum_weights_sq = 0;
-                for i in 0..ARRAY_SIZE {
-                    if (i as u32) < downside_count {
-                        let diff = downside_returns[i] - downside_avg;
-                        let weighted_sq_diff = ((diff / 100) * (diff / 100) * downside_weights[i]) / (SCALE / 10000);
-                        sum_sq_diff += weighted_sq_diff;
-                        sum_weights_sq += (downside_weights[i] / 100 * downside_weights[i] / 100) * (SCALE / 10000);
-                    }
-                }
-
-                let denominator = downside_sum_weights - (sum_weights_sq / downside_sum_weights);
-                if denominator > 0 {
-                    downside_variance = sum_sq_diff / denominator;
-                } else {
-                    downside_variance = SCALE;
-                }
-            } else {
-                for i in 0..ARRAY_SIZE {
-                    if (i as u32) < downside_count {
-                        let diff = downside_returns[i] - downside_avg;
-                        sum_sq_diff += ((diff / 100) * (diff / 100)) / (SCALE / 10000);
-                    }
-                }
-                downside_variance = sum_sq_diff / ((downside_count - ddof) as i64);
-            }
-        } else {
-            downside_variance = SCALE;
         }
     }
+
+    if use_weighting {
+        if sum_of_weights > 0 {
+            downside_variance = sum_sq_diff / sum_of_weights;
+        }
+    } else {
+        if downside_count > 0 {
+            downside_variance = sum_sq_diff / (downside_count as i64);
+        }
+    }
+
+    let denominator_val = if use_weighting {
+        sum_of_weights
+    } else {
+        downside_count as i64
+    };
+    println(
+        f"[DOWNSIDE_VAR] Final: sum_sq_diff={sum_sq_diff}, denominator={denominator_val}, result={downside_variance}",
+    );
 
     downside_variance
 }

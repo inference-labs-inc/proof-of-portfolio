@@ -574,6 +574,12 @@ def generate_proof(
 
     if "perf_ledgers" in data and miner_hotkey in data["perf_ledgers"]:
         ledger = data["perf_ledgers"][miner_hotkey]
+        print(f"[PROOF_GEN] Ledger type: {type(ledger)}")
+
+        if isinstance(ledger, list) and len(ledger) > 0:
+            ledger = ledger[0]
+            print(f"[PROOF_GEN] Using first ledger entry: {type(ledger)}")
+
         if hasattr(ledger, "cps") and ledger.cps:
             checkpoint_returns = [cp.gain + cp.loss for cp in ledger.cps]
             checkpoint_mdds = [cp.mdd for cp in ledger.cps]
@@ -614,12 +620,22 @@ def generate_proof(
         MAX_CHECKPOINTS - len(scaled_checkpoint_mdds)
     )
 
+    python_calmar = augmented_scores["calmar"]
+    avg_daily_pnl = sum(daily_pnl) / len(daily_pnl) if daily_pnl else 0
+    base_return_percentage = avg_daily_pnl * 365 * 100
+    if base_return_percentage != 0:
+        risk_norm_factor = python_calmar / base_return_percentage
+    else:
+        risk_norm_factor = 0
+
+    scaled_risk_norm_factor = int(risk_norm_factor * SCALE)
+
     weights_float = data.get("weights", [])
 
     scaled_weights = [int(w * SCALE) for w in weights_float]
     scaled_weights += [0] * (256 - len(scaled_weights))
 
-    log_verbose(verbose, "info", f"Using {n_returns} daily returns from PTN")
+    log_verbose(verbose, "info", f"Using {n_returns} daily returns")
     try:
         all_orders = []
         for pos in positions:
@@ -788,6 +804,7 @@ def generate_proof(
         "checkpoint_returns": [str(r) for r in scaled_checkpoint_returns],
         "checkpoint_count": str(checkpoint_count),
         "checkpoint_mdds": [str(mdd) for mdd in scaled_checkpoint_mdds],
+        "risk_norm_factor": str(scaled_risk_norm_factor),
         "daily_pnl": [str(p) for p in scaled_daily_pnl],
         "n_pnl": str(n_pnl),
         "signals": signals,
@@ -852,17 +869,15 @@ def generate_proof(
         if isinstance(python_omega, dict):
             python_omega = python_omega.get("value", 0.0)
 
-        main_prover_input["python_sharpe"] = str(int(python_sharpe * SCALE))
-        main_prover_input["python_calmar"] = str(int(python_calmar * SCALE))
-        main_prover_input["python_sortino"] = str(int(python_sortino * SCALE))
-        main_prover_input["python_omega"] = str(int(python_omega * SCALE))
-    else:
-        main_prover_input["python_sharpe"] = str(int(sharpe_noconfidence_value * SCALE))
-        main_prover_input["python_calmar"] = str(int(calmar_noconfidence_value * SCALE))
-        main_prover_input["python_sortino"] = str(
-            int(sortino_noconfidence_value * SCALE)
-        )
-        main_prover_input["python_omega"] = str(int(omega_noconfidence_value * SCALE))
+        scaled_sharpe = int(python_sharpe * SCALE)
+        scaled_calmar = int(python_calmar * SCALE)
+        scaled_sortino = int(python_sortino * SCALE)
+        scaled_omega = int(python_omega * SCALE)
+
+        main_prover_input["python_sharpe"] = str(scaled_sharpe)
+        main_prover_input["python_calmar"] = str(scaled_calmar)
+        main_prover_input["python_sortino"] = str(scaled_sortino)
+        main_prover_input["python_omega"] = str(scaled_omega)
 
     os.makedirs(main_circuit_dir, exist_ok=True)
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:
@@ -870,15 +885,36 @@ def generate_proof(
 
     log_verbose(verbose, "info", "Executing main circuit to generate witness...")
     witness_start = time.time()
-    output = run_command(
-        [
-            NARGO_PATH,
-            "execute",
-            "witness",
-            "--silence-warnings",
-        ],
-        main_circuit_dir,
-    )
+    if verbose:
+        print(
+            "[PROOF_GEN] Running nargo execute without silencing warnings to see debug output"
+        )
+        nargo_cmd = [NARGO_PATH, "execute", "witness"]
+
+        # Run with capture to see both stdout and stderr
+        result = subprocess.run(
+            nargo_cmd, capture_output=True, text=True, cwd=main_circuit_dir
+        )
+        if result.returncode != 0:
+            bt.logging.error(f"Command failed: {' '.join(nargo_cmd)}")
+            bt.logging.error(f"stdout: {result.stdout}")
+            bt.logging.error(f"stderr: {result.stderr}")
+            raise RuntimeError(
+                f"Command {' '.join(nargo_cmd)} failed with exit code {result.returncode}"
+            )
+
+        if result.stdout:
+            print("[NARGO STDOUT]")
+            print(result.stdout)
+        if result.stderr:
+            print("[NARGO STDERR - Debug Output]")
+            print(result.stderr)
+
+        output = result.stdout
+    else:
+        output = run_command(
+            [NARGO_PATH, "execute", "witness", "--silence-warnings"], main_circuit_dir
+        )
     witness_time = time.time() - witness_start
     log_verbose(verbose, "info", f"Witness generation completed in {witness_time:.3f}s")
 
@@ -1113,6 +1149,8 @@ def generate_proof(
             "scaled_daily_returns": scaled_log_returns,
             "scaled_checkpoint_returns": scaled_checkpoint_returns,
             "scaled_checkpoint_mdds": scaled_checkpoint_mdds,
+            "risk_norm_factor": risk_norm_factor,
+            "scaled_risk_norm_factor": scaled_risk_norm_factor,
             "n_returns": n_returns,
             "n_pnl": n_pnl,
             "checkpoint_count": checkpoint_count,

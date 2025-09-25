@@ -19,16 +19,34 @@ pub fn average(
             }
             if sum_of_weights != 0 {
                 result = weighted_sum / sum_of_weights;
+                println(
+                    f"[AVERAGE] weighted: weighted_sum={weighted_sum}, sum_of_weights={sum_of_weights}, result={result}",
+                );
+            } else {
+                println(f"[AVERAGE] weighted: sum_of_weights=0, returning 0");
             }
         } else {
             let mut sum: i64 = 0;
+            println(
+                f"[AVERAGE] unweighted calculation starting, actual_len={actual_len}",
+            );
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
-                    sum += daily_returns[i];
+                    let return_val = daily_returns[i];
+                    println(f"[AVERAGE] i={i}, return_val={return_val}");
+                    sum += return_val;
+                    println(f"[AVERAGE] sum now={sum}");
                 }
             }
-            result = sum / (actual_len as i64);
+            let denominator = actual_len as i64;
+            println(f"[AVERAGE] Final: sum={sum}, denominator={denominator}");
+            result = sum / denominator;
+            println(
+                f"[AVERAGE] unweighted: sum={sum}, actual_len={actual_len}, result={result}",
+            );
         }
+    } else {
+        println(f"[AVERAGE] actual_len=0, returning 0");
     }
     result
 }

@@ -28,6 +28,10 @@ pub fn variance(
             use_weighting,
             sum_of_weights,
         );
+
+        println(
+            f"[VARIANCE] actual_len={actual_len}, use_weighting={use_weighting}, mean={mean}",
+        );
         if use_weighting {
             let mut weighted_sum_sq_diff: i64 = 0;
 
@@ -35,8 +39,7 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    let pre_scaled_sq_diff = sq_diff / SCALE;
-                    weighted_sum_sq_diff += pre_scaled_sq_diff * weights[i];
+                    weighted_sum_sq_diff += sq_diff * weights[i] / SCALE;
                 }
             }
 
@@ -46,19 +49,32 @@ pub fn variance(
         } else {
             let mut sum_sq_diff: i64 = 0;
 
+            println(f"[VARIANCE] Starting variance calculation with mean={mean}");
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
-                    let diff = daily_returns[i] - mean;
+                    let return_val = daily_returns[i];
+                    let diff = return_val - mean;
                     let sq_diff = diff * diff;
-                    let scaled_sq_diff = sq_diff / SCALE;
-                    sum_sq_diff += scaled_sq_diff;
+                    println(
+                        f"[VARIANCE] i={i}, return_val={return_val}, diff={diff}, sq_diff={sq_diff}",
+                    );
+                    sum_sq_diff += sq_diff;
+                    println(f"[VARIANCE] sum_sq_diff now={sum_sq_diff}");
                 }
             }
 
             let denominator = actual_len as i64;
+            println(
+                f"[VARIANCE] sum_sq_diff={sum_sq_diff}, denominator={denominator}",
+            );
             variance = sum_sq_diff / denominator;
+            println(
+                f"[VARIANCE] Final variance calculation: {sum_sq_diff} / {denominator} = {variance}",
+            );
         }
     }
+
+    println(f"[VARIANCE] Final variance={variance}");
     variance
 }
 
