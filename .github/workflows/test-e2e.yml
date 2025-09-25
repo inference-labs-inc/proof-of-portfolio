@@ -43,6 +43,12 @@ jobs:
         repository: taoshidev/proprietary-trading-network
         path: proprietary-trading-network
 
+    - name: Install PTN requirements
+      shell: bash
+      run: |
+        source .venv/bin/activate
+        uv pip install -r proprietary-trading-network/requirements.txt
+
     - name: Test end-to-end proof generation and verification
       shell: bash
       run: |
