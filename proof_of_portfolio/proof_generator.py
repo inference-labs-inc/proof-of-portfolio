@@ -1151,8 +1151,12 @@ def generate_proof(
             "n_pnl": n_pnl,
             "checkpoint_count": checkpoint_count,
             "signals_count": signals_count,
-            "sum_of_weights": sum(weights_float) if weights_float else 0,
-            "weights_count": len(weights_float) if weights_float else 0,
+            "sum_of_weights": sum(weights_float)
+            if weights_float is not None and len(weights_float) > 0
+            else 0,
+            "weights_count": len(weights_float)
+            if weights_float is not None and len(weights_float) > 0
+            else 0,
         },
         "proof_results": {
             "witness_generation_time": witness_time,
