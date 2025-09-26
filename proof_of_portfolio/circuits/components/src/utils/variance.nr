@@ -39,12 +39,14 @@ pub fn variance(
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
                     let sq_diff = diff * diff;
-                    weighted_sum_sq_diff += sq_diff * weights[i] / SCALE;
+                    // Downscale sq_diff by 10000 first to prevent overflow, then multiply by weight
+                    let scaled_sq_diff = sq_diff / 10000;
+                    weighted_sum_sq_diff += scaled_sq_diff * weights[i] / SCALE;
                 }
             }
 
             if sum_of_weights != 0 {
-                variance = weighted_sum_sq_diff / sum_of_weights;
+                variance = (weighted_sum_sq_diff / sum_of_weights) * 10000;
             }
         } else {
             let mut sum_sq_diff: i64 = 0;
