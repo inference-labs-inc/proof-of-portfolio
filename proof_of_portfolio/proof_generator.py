@@ -620,7 +620,17 @@ def generate_proof(
         MAX_CHECKPOINTS - len(scaled_checkpoint_mdds)
     )
 
-    python_calmar = augmented_scores["calmar"]
+    def extract_metric_value(scores_dict, metric_name):
+        metric_data = scores_dict.get(metric_name, 0)
+        if isinstance(metric_data, dict):
+            return metric_data.get("value", 0)
+        return metric_data
+
+    python_calmar = extract_metric_value(augmented_scores, "calmar")
+    python_sharpe = extract_metric_value(augmented_scores, "sharpe")
+    python_sortino = extract_metric_value(augmented_scores, "sortino")
+    python_omega = extract_metric_value(augmented_scores, "omega")
+
     avg_daily_pnl = sum(daily_pnl) / len(daily_pnl) if daily_pnl else 0
     base_return_percentage = avg_daily_pnl * 365 * 100
     if base_return_percentage != 0:
@@ -854,30 +864,16 @@ def generate_proof(
         ),
     }
 
-    if augmented_scores:
-        python_sharpe = augmented_scores.get("sharpe", 0.0)
-        python_calmar = augmented_scores.get("calmar", 0.0)
-        python_sortino = augmented_scores.get("sortino", 0.0)
-        python_omega = augmented_scores.get("omega", 0.0)
+    # Scale and add the python metrics to the prover input
+    scaled_sharpe = int(python_sharpe * SCALE)
+    scaled_calmar = int(python_calmar * SCALE)
+    scaled_sortino = int(python_sortino * SCALE)
+    scaled_omega = int(python_omega * SCALE)
 
-        if isinstance(python_sharpe, dict):
-            python_sharpe = python_sharpe.get("value", 0.0)
-        if isinstance(python_calmar, dict):
-            python_calmar = python_calmar.get("value", 0.0)
-        if isinstance(python_sortino, dict):
-            python_sortino = python_sortino.get("value", 0.0)
-        if isinstance(python_omega, dict):
-            python_omega = python_omega.get("value", 0.0)
-
-        scaled_sharpe = int(python_sharpe * SCALE)
-        scaled_calmar = int(python_calmar * SCALE)
-        scaled_sortino = int(python_sortino * SCALE)
-        scaled_omega = int(python_omega * SCALE)
-
-        main_prover_input["python_sharpe"] = str(scaled_sharpe)
-        main_prover_input["python_calmar"] = str(scaled_calmar)
-        main_prover_input["python_sortino"] = str(scaled_sortino)
-        main_prover_input["python_omega"] = str(scaled_omega)
+    main_prover_input["python_sharpe"] = str(scaled_sharpe)
+    main_prover_input["python_calmar"] = str(scaled_calmar)
+    main_prover_input["python_sortino"] = str(scaled_sortino)
+    main_prover_input["python_omega"] = str(scaled_omega)
 
     os.makedirs(main_circuit_dir, exist_ok=True)
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:
