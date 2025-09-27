@@ -156,8 +156,8 @@ fn main(
     );
     let dmd = daily_max_drawdown(returns_array, n_returns);
     let calmar_ratio = calmar(
-        daily_pnl,
-        n_pnl,
+        returns_array,
+        n_returns,
         weights,
         use_weighting,
         bypass_confidence,

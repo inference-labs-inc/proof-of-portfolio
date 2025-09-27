@@ -18,7 +18,8 @@ from vali_objects.utils.metrics import Metrics
 
 SCALE = 100000000
 MINER_HOTKEY = "5HTestMinerHotkey123456789abcdefghijklmnopqrstuv"
-DAILY_PNL = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
+DAILY_RETURNS = [0.01, -0.005, 0.02, 0.015, -0.01, 0.005, 0.025, -0.002, 0.018, 0.008]
+DAILY_PNL = [100.0, -50.0, 200.0, 150.0, -100.0, 50.0, 250.0, -20.0, 180.0, 80.0]
 MINER_DATA = {
     "perf_ledgers": {
         MINER_HOTKEY: [
@@ -52,7 +53,7 @@ MINER_DATA = {
             }
         ]
     },
-    "daily_returns": DAILY_PNL,
+    "daily_returns": DAILY_RETURNS,
     "positions": {
         MINER_HOTKEY: {
             "positions": [
@@ -92,27 +93,27 @@ def create_perf_ledger():
     cumulative_return = 1.0
     max_return = 1.0
 
-    for i, daily_ret in enumerate(DAILY_PNL):
+    for i, daily_ret in enumerate(DAILY_RETURNS):
         cumulative_return *= 1 + daily_ret
         max_return = max(max_return, cumulative_return)
         mdd = (max_return - cumulative_return) / max_return if max_return > 0 else 0.0
 
         checkpoint = PerfCheckpoint(
             last_update_ms=int((1704067200.0 + i * 86400) * 1000),
-            prev_portfolio_ret=DAILY_PNL[i - 1] if i > 0 else 0.0,
+            prev_portfolio_ret=DAILY_RETURNS[i - 1] if i > 0 else 0.0,
             prev_portfolio_spread_fee=1.0,
             prev_portfolio_carry_fee=1.0,
             accum_ms=0,
             open_ms=int((1704067200.0 + i * 86400) * 1000),
             n_updates=1,
-            gain=max(0, daily_ret * 1000),
-            loss=min(0, daily_ret * 1000),
+            gain=max(0, DAILY_PNL[i]),
+            loss=min(0, DAILY_PNL[i]),
             spread_fee_loss=0.0,
             carry_fee_loss=0.0,
             mdd=mdd,
             mpv=cumulative_return,
-            pnl_gain=max(0, daily_ret * 1000),
-            pnl_loss=min(0, daily_ret * 1000),
+            pnl_gain=max(0, DAILY_PNL[i]),
+            pnl_loss=min(0, DAILY_PNL[i]),
         )
         checkpoints.append(checkpoint)
 
@@ -123,7 +124,7 @@ def create_perf_ledger():
 def calculate_ptn_metrics():
     """Calculate metrics using PTN's functions as source of truth."""
 
-    circuit_daily_returns = DAILY_PNL
+    circuit_daily_returns = DAILY_RETURNS
 
     perf_ledger = create_perf_ledger()
 
@@ -169,11 +170,10 @@ def generate_proof():
     augmented_scores = {
         k: v for k, v in ptn_results.items() if k != "ptn_daily_returns"
     }
-    ptn_daily_returns = ptn_results["ptn_daily_returns"]
 
     return proof_of_portfolio.prove_sync(
         miner_data=MINER_DATA,
-        daily_pnl=ptn_daily_returns,
+        daily_pnl=DAILY_PNL,
         hotkey=MINER_HOTKEY,
         verbose=True,
         use_weighting=False,
