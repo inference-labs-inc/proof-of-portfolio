@@ -1151,12 +1151,16 @@ def generate_proof(
             "n_pnl": n_pnl,
             "checkpoint_count": checkpoint_count,
             "signals_count": signals_count,
-            "sum_of_weights": sum(weights_float)
-            if weights_float is not None and len(weights_float) > 0
-            else 0,
-            "weights_count": len(weights_float)
-            if weights_float is not None and len(weights_float) > 0
-            else 0,
+            "sum_of_weights": (
+                sum(weights_float)
+                if weights_float is not None and len(weights_float) > 0
+                else 0
+            ),
+            "weights_count": (
+                len(weights_float)
+                if weights_float is not None and len(weights_float) > 0
+                else 0
+            ),
         },
         "proof_results": {
             "witness_generation_time": witness_time,
@@ -1169,7 +1173,10 @@ def generate_proof(
         },
     }
 
-    if miner_hotkey:
-        save_zk_results(results, miner_hotkey)
+    save_hotkey = miner_hotkey if miner_hotkey else "none"
+    try:
+        save_zk_results(results, save_hotkey)
+    except Exception as e:
+        bt.logging.error(f"Failed to save ZK results: {e}")
 
     return results
