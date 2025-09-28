@@ -33,19 +33,24 @@ pub fn variance(
             f"[VARIANCE] actual_len={actual_len}, use_weighting={use_weighting}, mean={mean}",
         );
         if use_weighting {
-            let mut weighted_sum_sq_diff: i64 = 0;
+            let mut weighted_sum_sq_diff: u128 = 0;
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
-                    let sq_diff = diff * diff;
-                    let scaled_sq_diff = sq_diff / 1000;
-                    weighted_sum_sq_diff += scaled_sq_diff * weights[i] / SCALE;
+                    // Cast to u128 for the multiplication to avoid overflow
+                    let diff_u128 = diff as u128;
+                    let sq_diff: u128 = diff_u128 * diff_u128;
+                    let weight_u128 = weights[i] as u128;
+                    let scale_u128 = SCALE as u128;
+                    weighted_sum_sq_diff += (sq_diff * weight_u128) / scale_u128;
                 }
             }
 
             if sum_of_weights != 0 {
-                variance = (weighted_sum_sq_diff / sum_of_weights) * 1000;
+                let sum_weights_u128 = sum_of_weights as u128;
+                let scale_u128 = SCALE as u128;
+                variance = (weighted_sum_sq_diff / (sum_weights_u128 / scale_u128)) as i64;
             }
         } else {
             let mut sum_sq_diff: i64 = 0;
