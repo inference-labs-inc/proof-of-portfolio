@@ -54,6 +54,7 @@ MINER_DATA = {
         ]
     },
     "daily_returns": DAILY_RETURNS,
+    "weights": [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55],
     "positions": {
         MINER_HOTKEY: {
             "positions": [
@@ -121,8 +122,8 @@ def create_perf_ledger():
     return perf_ledger
 
 
-def calculate_ptn_metrics():
-    """Calculate metrics using PTN's functions as source of truth."""
+def calculate_metrics():
+    """Calculate metrics"""
 
     circuit_daily_returns = DAILY_RETURNS
 
@@ -163,10 +164,56 @@ def calculate_ptn_metrics():
     }
 
 
+def calculate_metrics_weighted():
+    """Calculate weighted metrics"""
+
+    circuit_daily_returns = DAILY_RETURNS
+
+    perf_ledger = create_perf_ledger()
+
+    ptn_weights = Metrics.weighting_distribution(circuit_daily_returns)
+    print(f"Calculated weights: {ptn_weights.tolist()}")
+
+    sharpe = Metrics.sharpe(
+        log_returns=circuit_daily_returns,
+        bypass_confidence=True,
+        weighting=True,
+        days_in_year=365,
+    )
+
+    sortino = Metrics.sortino(
+        log_returns=circuit_daily_returns,
+        bypass_confidence=True,
+        weighting=True,
+        days_in_year=365,
+    )
+
+    calmar = Metrics.calmar(
+        log_returns=circuit_daily_returns,
+        ledger=perf_ledger,
+        bypass_confidence=True,
+        weighting=True,
+        days_in_year=365,
+    )
+
+    omega = Metrics.omega(
+        log_returns=circuit_daily_returns, bypass_confidence=True, weighting=True
+    )
+
+    return {
+        "sharpe": sharpe,
+        "sortino": sortino,
+        "calmar": calmar,
+        "omega": omega,
+        "ptn_daily_returns": circuit_daily_returns,
+        "ptn_weights": ptn_weights.tolist(),
+    }
+
+
 def generate_proof():
     """Generate proof with test data."""
 
-    ptn_results = calculate_ptn_metrics()
+    ptn_results = calculate_metrics()
     augmented_scores = {
         k: v for k, v in ptn_results.items() if k != "ptn_daily_returns"
     }
@@ -205,13 +252,49 @@ def load_proof_files(proof_dir: Path) -> tuple[str, str]:
     return proof_hex, public_inputs_hex
 
 
+def generate_weighted_proof():
+    """Generate proof with test data using weighting."""
+
+    ptn_results = calculate_metrics_weighted()
+    augmented_scores = {
+        k: v
+        for k, v in ptn_results.items()
+        if k not in ["ptn_daily_returns", "ptn_weights"]
+    }
+
+    weighted_miner_data = MINER_DATA.copy()
+    weighted_miner_data["weights"] = ptn_results["ptn_weights"]
+
+    return proof_of_portfolio.prove_sync(
+        miner_data=weighted_miner_data,
+        daily_pnl=DAILY_PNL,
+        hotkey=MINER_HOTKEY,
+        verbose=True,
+        use_weighting=True,  # Enable weighting for this test
+        bypass_confidence=True,
+        witness_only=True,  # Only generate witness, no proof
+        augmented_scores=augmented_scores,
+    )
+
+
 def main() -> int:
     """Run proof generation and verification test."""
     try:
+        print("Running unweighted test...")
         result = generate_proof()
 
         if result.get("status") != "success":
+            print("Unweighted test failed")
             return 1
+
+        print("Running weighted test...")
+        weighted_result = generate_weighted_proof()
+
+        if weighted_result.get("status") != "success":
+            print("Weighted test failed")
+            return 1
+
+        print("Both tests passed! Running full proof generation...")
 
         proof_results = result.get("proof_results", {})
         if not proof_results.get("proof_generated"):

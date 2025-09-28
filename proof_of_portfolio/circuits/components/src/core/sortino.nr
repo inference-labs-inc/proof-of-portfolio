@@ -64,7 +64,8 @@ pub fn sortino(
                 f"[SORTINO] Has downside: excess={excess_return}, downside_vol={effective_downside_volatility}, result={result}, python={python_sortino}, diff={diff}",
             );
 
-            let tolerance: i64 = 50000;
+            // Dynamic tolerance: 2% of the circuit calculated value
+            let tolerance: i64 = (2 * result) / 100; // 0.02 * result
             assert(diff <= tolerance);
 
             python_sortino

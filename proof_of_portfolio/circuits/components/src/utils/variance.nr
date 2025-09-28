@@ -34,23 +34,67 @@ pub fn variance(
         );
         if use_weighting {
             let mut weighted_sum_sq_diff: u128 = 0;
+            let mut max_diff: i64 = 0;
+            let mut min_diff: i64 = 0;
+
+            println(
+                f"[VARIANCE-W] Starting weighted variance, sum_of_weights={sum_of_weights}",
+            );
 
             for i in 0..ARRAY_SIZE {
                 if (i as u32) < actual_len {
                     let diff = daily_returns[i] - mean;
-                    // Cast to u128 for the multiplication to avoid overflow
-                    let diff_u128 = diff as u128;
-                    let sq_diff: u128 = diff_u128 * diff_u128;
-                    let weight_u128 = weights[i] as u128;
-                    let scale_u128 = SCALE as u128;
-                    weighted_sum_sq_diff += (sq_diff * weight_u128) / scale_u128;
+
+                    if diff > max_diff {
+                        max_diff = diff;
+                    }
+                    if diff < min_diff {
+                        min_diff = diff;
+                    }
+
+                    let abs_diff: u128 = if diff < 0 {
+                        (-diff) as u128
+                    } else {
+                        diff as u128
+                    };
+
+                    let sq_diff: u128 = abs_diff * abs_diff;
+
+                    let return_val = daily_returns[i];
+                    println(
+                        f"[VARIANCE-W] i={i}, return={return_val}, diff={diff}, abs_diff={abs_diff}, sq_diff={sq_diff}",
+                    );
+
+                    let weight_val = weights[i];
+                    let weight_u128: u128 = weight_val as u128;
+                    let scale_u128: u128 = SCALE as u128;
+                    let contrib = (sq_diff * weight_u128) / scale_u128;
+                    weighted_sum_sq_diff += contrib;
+
+                    println(
+                        f"[VARIANCE-W] weight={weight_val}, contrib={contrib}, sum={weighted_sum_sq_diff}",
+                    );
                 }
             }
 
+            println(f"[VARIANCE-W] max_diff={max_diff}, min_diff={min_diff}");
+            println(
+                f"[VARIANCE-W] final weighted_sum_sq_diff={weighted_sum_sq_diff}",
+            );
+
             if sum_of_weights != 0 {
-                let sum_weights_u128 = sum_of_weights as u128;
-                let scale_u128 = SCALE as u128;
-                variance = (weighted_sum_sq_diff / (sum_weights_u128 / scale_u128)) as i64;
+                let sum_weights_u128: u128 = sum_of_weights as u128;
+                let scale_u128: u128 = SCALE as u128;
+
+                let scaled_numerator = weighted_sum_sq_diff * scale_u128;
+                variance = (scaled_numerator / sum_weights_u128) as i64;
+
+                println(
+                    f"[VARIANCE-W] weighted_sum_sq_diff={weighted_sum_sq_diff}, sum_weights_u128={sum_weights_u128}",
+                );
+                println(
+                    f"[VARIANCE-W] scaled_numerator={scaled_numerator}, final variance={variance}",
+                );
             }
         } else {
             let mut sum_sq_diff: i64 = 0;
