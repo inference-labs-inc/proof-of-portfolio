@@ -294,7 +294,7 @@ def main() -> int:
             print("Weighted test failed")
             return 1
 
-        print("Both tests passed! Running full proof generation...")
+        print("Both tests passed! Running verification.")
 
         proof_results = result.get("proof_results", {})
         if not proof_results.get("proof_generated"):
@@ -304,8 +304,10 @@ def main() -> int:
         proof_hex, public_inputs_hex = load_proof_files(proof_dir)
 
         if verify_proof(proof_hex, public_inputs_hex):
+            print("Proof verified")
             return 0
         else:
+            print("Proof failed to verify")
             return 1
 
     except FileNotFoundError:
