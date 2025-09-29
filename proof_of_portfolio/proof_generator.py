@@ -396,6 +396,7 @@ def generate_bb_proof(circuit_dir):
         witness_file,
         "-o",
         proof_dir,
+        "--zk",
     ]
     bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
     bt.logging.info(f"Working directory: {circuit_dir}")
