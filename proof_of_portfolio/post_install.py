@@ -94,7 +94,9 @@ def install_nargo():
         home = Path.home()
         noirup_cmd = str(home / ".nargo" / "bin" / "noirup")
 
-        result = subprocess.run([noirup_cmd], capture_output=True, text=True)
+        result = subprocess.run(
+            [noirup_cmd, "--version", "1.0.0-beta.12"], capture_output=True, text=True
+        )
         return result.returncode == 0
     except Exception as e:
         print(f"Error installing nargo: {e}")
