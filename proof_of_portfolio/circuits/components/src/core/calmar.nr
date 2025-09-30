@@ -1,4 +1,5 @@
 use crate::utils::constants::{ARRAY_SIZE, SCALE};
+use crate::utils::average::average;
 
 pub fn calmar(
     returns_array: [i64; ARRAY_SIZE],
@@ -27,31 +28,7 @@ pub fn calmar(
             n_returns as i64
         };
 
-        let avg_daily_return = if use_weighting {
-            let mut weighted_sum: i64 = 0;
-            for i in 0..ARRAY_SIZE {
-                if (i as u32) < n_returns {
-                    weighted_sum += (returns_array[i] * weights[i]) / SCALE;
-                }
-            }
-            if sum_of_weights == 0 {
-                0
-            } else {
-                weighted_sum / (sum_of_weights / SCALE)
-            }
-        } else {
-            if n_returns == 0 {
-                0
-            } else {
-                let mut sum: i64 = 0;
-                for i in 0..ARRAY_SIZE {
-                    if (i as u32) < n_returns {
-                        sum += returns_array[i];
-                    }
-                }
-                sum / (n_returns as i64)
-            }
-        };
+        let avg_daily_return = average(returns_array, n_returns, weights, use_weighting, sum_of_weights);
 
         let base_return_precise = avg_daily_return * days_in_year * 100;
         println(

@@ -17,7 +17,7 @@ repos:
         exclude: circuits\.json$
       - id: check-yaml
       - id: check-json
-        exclude: circuits\.json$
+        exclude: (circuits\.json$|/target/)
       - id: check-toml
 
   - repo: https://github.com/scop/pre-commit-shfmt
