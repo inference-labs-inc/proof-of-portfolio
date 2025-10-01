@@ -3,7 +3,7 @@
 import os
 import shutil
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import wraps
 import subprocess
 from pathlib import Path
@@ -11,6 +11,7 @@ import json
 import time
 import traceback
 import bittensor as bt
+import threading
 
 BB_PATH = os.path.expanduser("~/.bb/bb")
 NARGO_PATH = os.path.expanduser("~/.nargo/bin/nargo")
@@ -22,6 +23,8 @@ from .verifier import verify as verify
 
 
 _dependencies_checked = False
+_proof_lock = threading.Lock()
+_background_executor = None
 
 
 def ensure_dependencies():
@@ -385,6 +388,98 @@ def prove_instant_mdd(hotkey, ledger_element):
         return {"status": "error", "hotkey": hotkey, "message": str(e)}
 
 
+def _get_background_executor():
+    """Get or create the singleton background executor for proof generation."""
+    global _background_executor
+    if _background_executor is None:
+        _background_executor = ThreadPoolExecutor(max_workers=1)
+    return _background_executor
+
+
+def _background_prove_worker(
+    miner_data,
+    daily_pnl,
+    hotkey,
+    verbose,
+    vali_config,
+    use_weighting,
+    bypass_confidence,
+    daily_checkpoints,
+    account_size,
+    witness_only,
+    wallet,
+    augmented_scores,
+):
+    """
+    Worker that runs in background thread and acquires lock before proving.
+    Calls generate_proof directly (not via ProcessPoolExecutor) so the lock
+    properly serializes bb prove execution.
+
+    This blocks until the lock is acquired, ensuring proofs are queued and
+    processed sequentially.
+    """
+    bt.logging.info(
+        f"Background proof worker starting for {hotkey[:8] if hotkey else 'unknown'}..."
+    )
+
+    with _proof_lock:
+        bt.logging.info(
+            f"Lock acquired for {hotkey[:8] if hotkey else 'unknown'}, starting proof generation..."
+        )
+
+        try:
+            result = generate_proof(
+                data=miner_data,
+                daily_pnl=daily_pnl,
+                miner_hotkey=hotkey,
+                verbose=verbose,
+                vali_config=vali_config,
+                use_weighting=use_weighting,
+                bypass_confidence=bypass_confidence,
+                daily_checkpoints=daily_checkpoints,
+                account_size=account_size,
+                witness_only=witness_only,
+                wallet=wallet,
+                augmented_scores=augmented_scores,
+            )
+
+            proof_results = result.get("proof_results", {})
+            proof_generated = proof_results.get("proof_generated", False)
+
+            if proof_generated:
+                status = "success"
+            else:
+                status = "proof_generation_failed"
+
+            final_result = {
+                "status": status,
+                "portfolio_metrics": result.get("portfolio_metrics", {}),
+                "merkle_roots": result.get("merkle_roots", {}),
+                "data_summary": result.get("data_summary", {}),
+                "proof_results": proof_results,
+                "proof_generated": proof_generated,
+            }
+
+            bt.logging.info(
+                f"Proof generation completed for {hotkey[:8] if hotkey else 'unknown'}: {final_result.get('status')}"
+            )
+            return final_result
+
+        except Exception as e:
+            bt.logging.error(
+                f"Error in background proof worker for {hotkey[:8] if hotkey else 'unknown'}: {type(e).__name__}: {e}"
+            )
+            bt.logging.error(traceback.format_exc())
+            return {
+                "status": "error",
+                "message": str(e),
+                "proof_generated": False,
+                "traceback": traceback.format_exc(),
+            }
+        finally:
+            bt.logging.info(f"Lock released for {hotkey[:8] if hotkey else 'unknown'}")
+
+
 @requires_dependencies
 def prove_sync(
     miner_data,
@@ -425,3 +520,72 @@ def prove_sync(
         wallet=wallet,
         augmented_scores=augmented_scores,
     )
+
+
+@requires_dependencies
+def prove_async(
+    miner_data,
+    daily_pnl=None,
+    hotkey=None,
+    verbose=False,
+    vali_config=None,
+    use_weighting=False,
+    bypass_confidence=False,
+    daily_checkpoints=2,
+    account_size=None,
+    witness_only=False,
+    wallet=None,
+    augmented_scores=None,
+):
+    """
+    Asynchronous proof generation that runs in background without blocking.
+    Uses a lock to ensure only one bb prove process runs at a time.
+
+    This function returns immediately with a status indicating the proof was queued.
+    The actual proof generation happens in the background, and results are saved to ~/.pop/
+
+    Args:
+        miner_data: Dictionary containing perf_ledgers and positions for the miner
+        daily_pnl: Daily PnL values
+        hotkey: Miner's hotkey
+        verbose: Boolean to control logging verbosity
+        vali_config: Validator configuration
+        use_weighting: Whether to use weighting
+        bypass_confidence: Whether to bypass confidence checks
+        daily_checkpoints: Number of daily checkpoints
+        account_size: Account size for the miner
+        witness_only: If True, only generate witness without full proof
+        wallet: Wallet for signing
+        augmented_scores: Augmented scores dictionary
+
+    Returns:
+        Dictionary with immediate status indicating proof was queued
+    """
+    executor = _get_background_executor()
+
+    bt.logging.info(
+        f"Queueing background proof generation for {hotkey[:8] if hotkey else 'unknown'}..."
+    )
+
+    future = executor.submit(
+        _background_prove_worker,
+        miner_data,
+        daily_pnl,
+        hotkey,
+        verbose,
+        vali_config,
+        use_weighting,
+        bypass_confidence,
+        daily_checkpoints,
+        account_size,
+        witness_only,
+        wallet,
+        augmented_scores,
+    )
+
+    return {
+        "status": "queued",
+        "message": f"Proof generation queued for {hotkey[:8] if hotkey else 'unknown'}",
+        "proof_generated": False,
+        "future": future,
+    }
