@@ -190,65 +190,77 @@ class Miner:
         try:
             output_str = result.stdout
 
-            def parse_array_from_output(array_name, s):
-                hex_array_pattern = re.compile(
-                    rf"{array_name}: \[\[(0x[0-9a-fA-F, ]+)\]\]", re.DOTALL
+            def parse_hex_root(text):
+                match = re.search(r"root: (0x[0-9a-fA-F]+)", text)
+                return str(int(match.group(1), 16)) if match else None
+
+            def parse_nested_hex_array(text, start_marker, end_marker):
+                start_idx = text.find(start_marker)
+                if start_idx == -1:
+                    return []
+
+                start_idx += len(start_marker)
+                end_idx = text.find(end_marker, start_idx)
+                if end_idx == -1:
+                    return []
+
+                section = text[start_idx:end_idx]
+                result = []
+                depth = 0
+                current_array = []
+                current_hex = ""
+
+                i = 0
+                while i < len(section):
+                    char = section[i]
+
+                    if char == "[":
+                        depth += 1
+                        if depth == 2:
+                            current_array = []
+                    elif char == "]":
+                        if current_hex:
+                            current_array.append(str(int(current_hex, 16)))
+                            current_hex = ""
+                        depth -= 1
+                        if depth == 1:
+                            result.append(current_array)
+                            current_array = []
+                    elif char == "0" and i + 1 < len(section) and section[i + 1] == "x":
+                        if current_hex:
+                            current_array.append(str(int(current_hex, 16)))
+                        current_hex = "0x"
+                        i += 1
+                    elif current_hex and (char.isdigit() or char in "abcdefABCDEF"):
+                        current_hex += char
+                    elif current_hex and char in ", ":
+                        current_array.append(str(int(current_hex, 16)))
+                        current_hex = ""
+
+                    i += 1
+
+                return result
+
+            merkle_root = parse_hex_root(output_str)
+            if not merkle_root:
+                raise ValueError("Could not parse Merkle root from output")
+
+            if "MerkleTree {" in output_str:
+                path_elements = parse_nested_hex_array(
+                    output_str, "path_elements: ", ", path_indices:"
                 )
-                hex_match = hex_array_pattern.search(s)
+                path_indices = parse_nested_hex_array(
+                    output_str, "path_indices: ", ", root:"
+                )
 
-                if hex_match:
-                    hex_values = re.findall(r"0x([0-9a-fA-F]+)", hex_match.group(1))
-                    values = [str(int(hex_val, 16)) for hex_val in hex_values]
-                    return values
+                if path_elements and path_indices:
+                    print("Successfully parsed Merkle tree data from circuit output.")
+                    return merkle_root, path_elements, path_indices
 
-                pattern = re.compile(rf'"{array_name}": Vec\((.*?)\), "', re.DOTALL)
-                match = pattern.search(s)
-                if not match:
-                    raise ValueError(f"Could not find {array_name} in output")
-
-                array_content = match.group(1)
-
-                field_strs = re.findall(r"Field\(([^)]+)\)", array_content)
-
-                PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-                values = []
-                for field_str in field_strs:
-                    val = int(field_str)
-                    if val < 0:
-                        val = PRIME + val
-                    values.append(str(val))
-                return values
-
-            root_match = re.search(r"root: (0x[0-9a-fA-F]+)", output_str)
-            if root_match:
-                merkle_root = str(int(root_match.group(1), 16))
-            else:
-                root_match = re.search(r'"root": Field\(([^)]+)\)', output_str)
-                if not root_match:
-                    raise ValueError("Could not parse Merkle root from output.")
-
-                PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-                root_val = int(root_match.group(1))
-                if root_val < 0:
-                    root_val = PRIME + root_val
-                merkle_root = str(root_val)
-
-            path_elements_flat = parse_array_from_output("path_elements", output_str)
-            path_indices_flat = parse_array_from_output("path_indices", output_str)
-
-            merkle_depth = 8
-
-            path_elements = [
-                path_elements_flat[i : i + merkle_depth]
-                for i in range(0, len(path_elements_flat), merkle_depth)
-            ]
-            path_indices = [
-                path_indices_flat[i : i + merkle_depth]
-                for i in range(0, len(path_indices_flat), merkle_depth)
-            ]
-
-            print("Successfully parsed Merkle tree data from circuit output.")
-            return merkle_root, path_elements, path_indices
+            print(
+                "Warning: Could not parse path_elements/path_indices, returning tree with root only"
+            )
+            return merkle_root, [], []
 
         except Exception as e:
             print(f"Failed to parse Merkle generator output: {e}")
