@@ -3,6 +3,8 @@ import os
 import subprocess
 import toml
 import re
+import logging
+from pathlib import Path
 from . import requires_dependencies
 
 
@@ -29,6 +31,20 @@ class Miner:
         self.TREE_GEN_PROVER_TOML = os.path.join(self.TREE_GEN_DIR, "Prover.toml")
         self.MAX_SIGNALS = 512
 
+        log_dir = Path.home() / ".pop"
+        log_dir.mkdir(exist_ok=True)
+        self.log_file = log_dir / f"{ss58_address[:16]}_log.log"
+
+        self.logger = logging.getLogger(f"pop.{ss58_address[:8]}")
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.handlers.clear()
+
+        handler = logging.FileHandler(self.log_file)
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        )
+        self.logger.addHandler(handler)
+
     def prepare_signals_from_data(self, data_json_path):
         """
         Reads the data.json file for a hotkey, extracts all their orders,
@@ -40,19 +56,19 @@ class Miner:
         Returns:
             tuple: (padded_signals, actual_len)
         """
-        print(f"Preparing signals from {data_json_path}...")
+        self.logger.info(f"Preparing signals from {data_json_path}")
         try:
             with open(data_json_path, "r") as f:
                 positions = json.load(f)
         except FileNotFoundError:
-            print(f"ERROR: Data file not found at {data_json_path}")
+            self.logger.error(f"Data file not found at {data_json_path}")
             return None, 0
         except json.JSONDecodeError:
-            print(f"ERROR: Could not decode JSON from {data_json_path}")
+            self.logger.error(f"Could not decode JSON from {data_json_path}")
             return None, 0
 
         if not positions:
-            print(f"Warning: No positions found in {data_json_path}")
+            self.logger.warning(f"No positions found in {data_json_path}")
             return [], 0
 
         orders = []
@@ -61,7 +77,7 @@ class Miner:
             if "positions" in positions:
                 position_list = positions["positions"]
             else:
-                print(f"Warning: Unexpected data structure for {data_json_path}")
+                self.logger.warning(f"Unexpected data structure for {data_json_path}")
                 return [], 0
         else:
             position_list = positions
@@ -131,7 +147,7 @@ class Miner:
             }
         ] * (self.MAX_SIGNALS - actual_len)
 
-        print(f"Successfully prepared {actual_len} signals.")
+        self.logger.info(f"Successfully prepared {actual_len} signals")
         return padded_signals, actual_len
 
     def run_merkle_generator(self, signals, actual_len):
@@ -145,7 +161,7 @@ class Miner:
         Returns:
             tuple: (merkle_root, path_elements, path_indices) or None if failed
         """
-        print("Running Merkle Generator circuit...")
+        self.logger.info("Running Merkle Generator circuit")
 
         merkle_input = {"signals": signals, "actual_len": actual_len}
 
@@ -167,10 +183,10 @@ class Miner:
         for path in nargo_paths:
             if os.path.isfile(path) and os.access(path, os.X_OK):
                 nargo_cmd = path
-                print(f"Found nargo at: {nargo_cmd}")
+                self.logger.info(f"Found nargo at: {nargo_cmd}")
                 break
 
-        print("Executing nargo... (This might take a moment)")
+        self.logger.info("Executing nargo")
         result = subprocess.run(
             [nargo_cmd, "execute", witness_name, "--silence-warnings"],
             cwd=self.TREE_GEN_DIR,
@@ -179,11 +195,10 @@ class Miner:
         )
 
         if result.returncode != 0:
-            print("Merkle generator execution failed!")
-            print(result.stderr)
+            self.logger.error(f"Merkle generator execution failed: {result.stderr}")
             return None
 
-        print(
+        self.logger.info(
             f"Merkle generator executed successfully. Witness saved to {witness_path}"
         )
 
@@ -254,17 +269,18 @@ class Miner:
                 )
 
                 if path_elements and path_indices:
-                    print("Successfully parsed Merkle tree data from circuit output.")
+                    self.logger.info(
+                        "Successfully parsed Merkle tree data from circuit output"
+                    )
                     return merkle_root, path_elements, path_indices
 
-            print(
-                "Warning: Could not parse path_elements/path_indices, returning tree with root only"
+            self.logger.warning(
+                "Could not parse path_elements/path_indices, returning tree with root only"
             )
             return merkle_root, [], []
 
         except Exception as e:
-            print(f"Failed to parse Merkle generator output: {e}")
-            print("Raw output:", result.stdout)
+            self.logger.error(f"Failed to parse Merkle generator output: {e}")
             return None
 
     @requires_dependencies

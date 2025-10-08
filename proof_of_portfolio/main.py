@@ -23,6 +23,7 @@ Utility Commands:
 import argparse
 import json
 import sys
+import logging
 from pathlib import Path
 from typing import Tuple, Optional
 
@@ -30,6 +31,22 @@ from .miner import Miner
 from .validator import score_child, score_all
 from .analyze_data import split_input_json
 from .demos import main as demo_main, generate_input_data
+
+
+def setup_logging(hotkey):
+    log_dir = Path.home() / ".pop"
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / f"{hotkey[:16]}_log.log"
+
+    logger = logging.getLogger(f"pop.{hotkey[:8]}")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+
+    return logger, log_file
 
 
 def _handle_data_file_path(
@@ -116,7 +133,11 @@ def generate_tree(args):
                 print("Please provide a hotkey using the --hotkey option.")
                 return 1
 
-        print(f"Generating merkle tree for miner {hotkey} using data from {data_file}")
+        logger, log_file = setup_logging(hotkey)
+        logger.info(
+            f"Generating merkle tree for miner {hotkey} using data from {data_file}"
+        )
+        print(f"Generating merkle tree for {hotkey[:8]}... (logs: {log_file})")
 
         # Create a Miner instance
         miner = Miner(hotkey, f"Miner-{hotkey[:8] if len(hotkey) > 8 else hotkey}")
@@ -128,23 +149,25 @@ def generate_tree(args):
             else None
         )
         if output_path is None:
-            print(
-                "Note: --output parameter was omitted, tree will be saved in the same directory as the data file."
-            )
+            logger.info("No output path specified, using data file directory")
 
         tree_data = miner.generate_tree(str(data_file), output_path)
 
         if not tree_data:
+            logger.error(f"Failed to generate tree for {hotkey}")
             print(f"Error: Failed to generate tree for {hotkey}")
             return 1
 
-        print(f"Successfully generated merkle tree for {hotkey}")
+        logger.info(f"Successfully generated merkle tree for {hotkey}")
 
         # Generate score
         parent_dir = data_file.parent
         score_data = score_child(str(parent_dir))
 
         if score_data:
+            logger.info(
+                f"Score - Root: {score_data['merkle_root']}, Length: {score_data['actual_len']}"
+            )
             print(f"Score data saved to {parent_dir / 'score.json'}")
             print(f"Merkle root: {score_data['merkle_root']}")
             print(f"Actual length: {score_data['actual_len']}")

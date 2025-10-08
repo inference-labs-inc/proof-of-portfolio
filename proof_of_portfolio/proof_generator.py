@@ -5,6 +5,7 @@ import os
 import time
 import json
 import math
+import logging
 import bittensor as bt
 import traceback
 import requests
@@ -23,7 +24,25 @@ SCALE = 10**8  # Base scaling factor (10^8) - used for all ratio outputs
 PRIME = 21888242871839275222246405745257275088548364400416034343698204186575808495617
 
 
-def log_verbose(verbose, level, message):
+def setup_proof_logging(hotkey):
+    log_dir = Path.home() / ".pop"
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / f"{hotkey[:16]}_proof_log.log"
+
+    logger = logging.getLogger(f"pop.proof.{hotkey[:8]}")
+    logger.setLevel(logging.DEBUG)
+    logger.handlers.clear()
+
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+
+    return logger, log_file
+
+
+def log_verbose(verbose, level, message, logger=None):
+    if logger:
+        getattr(logger, level.lower())(message)
     if verbose:
         getattr(bt.logging, level)(message)
 
@@ -43,10 +62,15 @@ def scale_from_int(value):
     return value / SCALE
 
 
-def run_command(command, cwd):
+def run_command(command, cwd, logger=None):
     result = subprocess.run(command, capture_output=True, text=True, cwd=cwd)
     if result.returncode != 0:
-        bt.logging.error(f"Command failed: {' '.join(command)}")
+        msg = f"Command failed: {' '.join(command)}"
+        if logger:
+            logger.error(msg)
+            logger.error(f"stdout: {result.stdout}")
+            logger.error(f"stderr: {result.stderr}")
+        bt.logging.error(msg)
         bt.logging.error(f"stdout: {result.stdout}")
         bt.logging.error(f"stderr: {result.stderr}")
         raise RuntimeError(
@@ -470,6 +494,16 @@ def generate_proof(
     if verbose is None:
         verbose = is_demo_mode
 
+    logger = None
+    log_file = None
+    if miner_hotkey:
+        logger, log_file = setup_proof_logging(miner_hotkey)
+        logger.info(f"Starting proof generation for miner {miner_hotkey[:8]}...")
+        print(f"Generating proof for {miner_hotkey[:8]}... (logs: {log_file})")
+
+    def log(level, message):
+        log_verbose(verbose, level, message, logger)
+
     if vali_config:
         days_in_year_crypto = vali_config.DAYS_IN_YEAR_CRYPTO
         weighted_average_decay_max = vali_config.WEIGHTED_AVERAGE_DECAY_MAX
@@ -505,21 +539,17 @@ def generate_proof(
         calmar_noconfidence_value = -100
         statistical_confidence_noconfidence_value = -100
 
-    log_verbose(
-        verbose,
+    log(
         "info",
         f"generate_proof called with miner_hotkey={miner_hotkey[:8] if miner_hotkey else None}",
     )
-    log_verbose(
-        verbose,
+    log(
         "info",
         f"Mode: {'Demo' if is_demo_mode else 'Production'}, verbose={verbose}",
     )
     try:
         if data is None:
-            log_verbose(
-                verbose, "info", "Loading data from validator_checkpoint.json..."
-            )
+            log("info", "Loading data from validator_checkpoint.json...")
             with open("validator_checkpoint.json", "r") as f:
                 data = json.load(f)
     except Exception as e:
@@ -532,13 +562,12 @@ def generate_proof(
 
     if miner_hotkey is None:
         miner_hotkey = list(data["perf_ledgers"].keys())[0]
-        log_verbose(
-            verbose,
+        log(
             "info",
             f"No hotkey specified, using first available: {miner_hotkey}",
         )
     else:
-        log_verbose(verbose, "info", f"Using specified hotkey: {miner_hotkey}")
+        log("info", f"Using specified hotkey: {miner_hotkey}")
 
     if miner_hotkey not in data["perf_ledgers"]:
         raise ValueError(
@@ -551,14 +580,13 @@ def generate_proof(
     scaled_daily_pnl = [scale_to_int(p) for p in daily_pnl]
     scaled_daily_pnl += [0] * (ARRAY_SIZE - n_pnl)
     positions = data["positions"][miner_hotkey]["positions"]
-    log_verbose(verbose, "info", "Preparing circuit inputs...")
+    log("info", "Preparing circuit inputs...")
 
     daily_log_returns = data.get("daily_returns", [])
     n_returns = len(daily_log_returns)
 
     if n_returns > MAX_DAYS:
-        log_verbose(
-            verbose,
+        log(
             "warning",
             f"Truncating {n_returns} daily returns to {MAX_DAYS} (circuit limit)",
         )
@@ -585,8 +613,7 @@ def generate_proof(
             checkpoint_returns = [cp.gain + cp.loss for cp in ledger.cps]
             checkpoint_mdds = [cp.mdd for cp in ledger.cps]
             checkpoint_count = len(checkpoint_returns)
-            log_verbose(
-                verbose,
+            log(
                 "info",
                 f"Extracted {checkpoint_count} checkpoint returns and MDDs",
             )
@@ -594,16 +621,14 @@ def generate_proof(
             checkpoint_returns = [cp["gain"] + cp["loss"] for cp in ledger["cps"]]
             checkpoint_mdds = [cp["mdd"] for cp in ledger["cps"]]
             checkpoint_count = len(checkpoint_returns)
-            log_verbose(
-                verbose,
+            log(
                 "info",
                 f"Extracted {checkpoint_count} checkpoint returns and MDDs (dict format)",
             )
 
     MAX_CHECKPOINTS = 512
     if checkpoint_count > MAX_CHECKPOINTS:
-        log_verbose(
-            verbose,
+        log(
             "warning",
             f"Truncating {checkpoint_count} checkpoint returns to {MAX_CHECKPOINTS} (circuit limit)",
         )
@@ -646,7 +671,7 @@ def generate_proof(
     scaled_weights = [int(w * SCALE) for w in weights_float]
     scaled_weights += [0] * (256 - len(scaled_weights))
 
-    log_verbose(verbose, "info", f"Using {n_returns} daily returns")
+    log("info", f"Using {n_returns} daily returns")
     try:
         all_orders = []
         for pos in positions:
@@ -654,8 +679,7 @@ def generate_proof(
 
         signals_count = len(all_orders)
         if signals_count > MAX_SIGNALS:
-            log_verbose(
-                verbose,
+            log(
                 "warning",
                 f"Truncating {signals_count} signals to {MAX_SIGNALS} (circuit limit)",
             )
@@ -723,8 +747,7 @@ def generate_proof(
         }
     ] * (MAX_SIGNALS - len(signals))
 
-    log_verbose(
-        verbose,
+    log(
         "info",
         f"Prepared {n_returns} daily returns and {signals_count} signals for circuit",
     )
@@ -763,7 +786,7 @@ def generate_proof(
             f"Circuit Config: MAX_DAYS={MAX_DAYS}, MAX_CHECKPOINTS={MAX_CHECKPOINTS}, DAILY_CHECKPOINTS=2"
         )
 
-    log_verbose(verbose, "info", "Running tree_generator circuit...")
+    log("info", "Running tree_generator circuit...")
     bt.logging.info(f"Generating tree for hotkey {miner_hotkey[:8]}...")
     current_dir = os.path.dirname(os.path.abspath(__file__))
     tree_generator_dir = os.path.join(current_dir, "tree_generator")
@@ -776,6 +799,7 @@ def generate_proof(
     output = run_command(
         [NARGO_PATH, "execute", "--silence-warnings"],
         tree_generator_dir,
+        logger,
     )
 
     tree = parse_circuit_output(output)
@@ -788,14 +812,10 @@ def generate_proof(
             "Unexpected tree_generator output structure, expected MerkleTree dict with leaf_hashes, path_elements, path_indices, and root"
         )
 
-    log_verbose(
-        verbose, "info", f"Generated signals Merkle root: {signals_merkle_root}"
-    )
-    log_verbose(
-        verbose, "info", "Returns Merkle root will be calculated within circuit"
-    )
-    log_verbose(verbose, "info", f"Number of daily returns: {n_returns}")
-    log_verbose(verbose, "info", "Running main proof of portfolio circuit...")
+    log("info", f"Generated signals Merkle root: {signals_merkle_root}")
+    log("info", "Returns Merkle root will be calculated within circuit")
+    log("info", f"Number of daily returns: {n_returns}")
+    log("info", "Running main proof of portfolio circuit...")
     bt.logging.info(f"Generating witness for hotkey {miner_hotkey[:8]}...")
     main_circuit_dir = os.path.join(current_dir, "circuits")
 
@@ -880,7 +900,7 @@ def generate_proof(
     with open(os.path.join(main_circuit_dir, "Prover.toml"), "w") as f:
         toml.dump(main_prover_input, f)
 
-    log_verbose(verbose, "info", "Executing main circuit to generate witness...")
+    log("info", "Executing main circuit to generate witness...")
     witness_start = time.time()
     if verbose:
         print(
@@ -910,14 +930,16 @@ def generate_proof(
         output = result.stdout
     else:
         output = run_command(
-            [NARGO_PATH, "execute", "witness", "--silence-warnings"], main_circuit_dir
+            [NARGO_PATH, "execute", "witness", "--silence-warnings"],
+            main_circuit_dir,
+            logger,
         )
     witness_time = time.time() - witness_start
-    log_verbose(verbose, "info", f"Witness generation completed in {witness_time:.3f}s")
+    log("info", f"Witness generation completed in {witness_time:.3f}s")
 
     fields = parse_circuit_output(output)
-    log_verbose(verbose, "info", f"Circuit output: {output}")
-    log_verbose(verbose, "info", f"Parsed fields: {fields}")
+    log("info", f"Circuit output: {output}")
+    log("info", f"Parsed fields: {fields}")
     if len(fields) < 8:
         raise RuntimeError(
             f"Expected 8 output fields from main circuit, got {len(fields)}: {fields}"
@@ -1179,5 +1201,13 @@ def generate_proof(
         save_zk_results(results, save_hotkey)
     except Exception as e:
         bt.logging.error(f"Failed to save ZK results: {e}")
+
+    if logger:
+        logger.info("Proof generation completed successfully")
+        logger.info(f"Signals Merkle Root: {signals_merkle_root}")
+        logger.info(f"Returns Merkle Root: {returns_merkle_root}")
+        print(
+            f"Proof generated for {miner_hotkey[:8]} - Signals Root: {signals_merkle_root}"
+        )
 
     return results
