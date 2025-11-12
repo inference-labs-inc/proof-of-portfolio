@@ -195,33 +195,17 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
         testnet: Whether this is a testnet proof
 
     Returns:
-        API response dictionary or None if failed
+        Dict with success status and url/error, or None if validation fails
     """
-    bt.logging.info(
-        f"[UPLOAD] Starting upload_proof: wallet={bool(wallet)}, proof_hex={bool(proof_hex)}, public_inputs_hex={bool(public_inputs_hex)}, testnet={testnet}"
-    )
-
-    if not wallet:
-        bt.logging.warning("[UPLOAD] Missing wallet for upload")
-        return None
-    if not proof_hex:
-        bt.logging.warning("[UPLOAD] Missing proof_hex for upload")
-        return None
-    if not public_inputs_hex:
-        bt.logging.warning("[UPLOAD] Missing public_inputs_hex for upload")
+    if not all([wallet, proof_hex, public_inputs_hex]):
+        bt.logging.warning("Upload validation failed: missing required parameters")
         return None
 
     try:
-        # Sign timestamp
-        bt.logging.info(
-            f"[UPLOAD] Signing with wallet hotkey: {wallet.hotkey.ss58_address[:8]}..."
-        )
         timestamp = str(int(time.time()))
         signature = wallet.hotkey.sign(timestamp.encode())
         signature_b64 = base64.b64encode(signature).decode()
-        bt.logging.info(f"[UPLOAD] Signature created, length: {len(signature_b64)}")
 
-        # Prepare request
         url = "https://api.omron.ai/ptn/upload-proof"
         headers = {
             "x-signature": signature_b64,
@@ -236,59 +220,53 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
             "public_signals": public_inputs_hex,
         }
 
-        bt.logging.info(
-            f"[UPLOAD] Payload sizes - proof: {len(proof_hex)}, public_signals: {len(public_inputs_hex)}"
-        )
-        bt.logging.info(
-            f"[UPLOAD] Uploading proof for {wallet.hotkey.ss58_address[:8]} to {url}..."
-        )
-
+        bt.logging.debug(f"Uploading proof for {wallet.hotkey.ss58_address[:8]}...")
         response = requests.post(url, headers=headers, json=payload, timeout=30)
 
-        bt.logging.info(f"[UPLOAD] Response status code: {response.status_code}")
-
         if response.status_code == 200:
-            bt.logging.success("✅ [UPLOAD] Proof uploaded successfully!")
             result = response.json()
-            bt.logging.info(f"[UPLOAD] Response data: {result}")
-            return result
+            bt.logging.info(f"Response: {result}")
+            return {"success": True, "url": result.get("url", ""), "data": result}
         else:
-            bt.logging.error(
-                f"❌ [UPLOAD] Proof upload failed: {response.status_code} - {response.text}"
-            )
-            return None
+            bt.logging.error(f"Upload failed: {response.status_code} - {response.text}")
+            return {"success": False, "error": response.text}
 
     except requests.exceptions.Timeout as e:
-        bt.logging.error(f"[UPLOAD] Timeout error uploading proof: {str(e)}")
+        bt.logging.error(f"Upload timeout: {str(e)}")
         return None
     except requests.exceptions.ConnectionError as e:
-        bt.logging.error(f"[UPLOAD] Connection error uploading proof: {str(e)}")
+        bt.logging.error(f"Upload connection error: {str(e)}")
         return None
     except Exception as e:
-        bt.logging.error(
-            f"[UPLOAD] Unexpected error uploading proof: {type(e).__name__}: {str(e)}"
-        )
-        import traceback
-
-        bt.logging.error(f"[UPLOAD] Traceback: {traceback.format_exc()}")
+        bt.logging.error(f"Upload error: {type(e).__name__}: {str(e)}")
+        bt.logging.debug(traceback.format_exc())
         return None
 
 
-def save_zk_results(results, miner_hotkey):
+def save_zk_results(results, miner_hotkey, use_tmp=True):
     """
-    Save ZK proof results to disk in ~/.pop/ directory.
+    Save ZK proof results to disk in tmp or ~/.pop/ directory.
 
     Args:
         results: The ZK results dictionary to save
         miner_hotkey: The miner's hotkey for filename
+        use_tmp: If True, save to tmp directory. If False, save to ~/.pop/
+
+    Returns:
+        Path to the saved file
     """
     try:
-        pop_dir = Path.home() / ".pop"
-        pop_dir.mkdir(exist_ok=True)
-
         timestamp = int(time.time())
         filename = f"{miner_hotkey}_{timestamp}.json"
-        filepath = pop_dir / filename
+
+        if use_tmp:
+            tmp_dir = Path("/tmp/.pop")
+            tmp_dir.mkdir(exist_ok=True)
+            filepath = tmp_dir / filename
+        else:
+            pop_dir = Path.home() / ".pop"
+            pop_dir.mkdir(exist_ok=True)
+            filepath = pop_dir / filename
 
         with open(filepath, "w") as f:
             json.dump(results, f, indent=2, default=str)
@@ -1107,29 +1085,24 @@ def generate_proof(
         except Exception as e:
             bt.logging.error(f"Error reading proof files: {str(e)}")
 
-    # Upload proof if wallet provided and proof generation was successful
     upload_result = None
-    bt.logging.info(
-        f"[MAIN] Pre-upload check: wallet={bool(wallet)}, proof_hex={bool(proof_hex)} (len={len(proof_hex) if proof_hex else 0}), public_inputs_hex={bool(public_inputs_hex)} (len={len(public_inputs_hex) if public_inputs_hex else 0}), witness_only={witness_only}"
-    )
+    can_upload = wallet and proof_hex and public_inputs_hex and not witness_only
 
-    if wallet and proof_hex and public_inputs_hex and not witness_only:
-        bt.logging.info(
-            f"[MAIN] All conditions met, calling upload_proof with testnet={testnet}"
-        )
+    if can_upload:
+        bt.logging.info(f"Uploading proof (testnet={testnet})...")
         upload_result = upload_proof(proof_hex, public_inputs_hex, wallet, testnet)
     else:
-        bt.logging.warning("[MAIN] Skipping upload - conditions not met:")
-        if not wallet:
-            bt.logging.warning("[MAIN]   - wallet is None/False")
-        if not proof_hex:
-            bt.logging.warning("[MAIN]   - proof_hex is None/False")
-        if not public_inputs_hex:
-            bt.logging.warning("[MAIN]   - public_inputs_hex is None/False")
-        if witness_only:
-            bt.logging.warning("[MAIN]   - witness_only is True")
-
-    bt.logging.info(f"[MAIN] Proof upload result: {upload_result}")
+        missing = [
+            k
+            for k, v in {
+                "wallet": wallet,
+                "proof_hex": proof_hex,
+                "public_inputs_hex": public_inputs_hex,
+                "witness_only": not witness_only,
+            }.items()
+            if not v
+        ]
+        bt.logging.debug(f"Skipping upload: {', '.join(missing)}")
 
     # Build results dictionary
     results = {
@@ -1197,8 +1170,29 @@ def generate_proof(
     }
 
     save_hotkey = miner_hotkey if miner_hotkey else "none"
+    tmp_filepath = None
+
     try:
-        save_zk_results(results, save_hotkey)
+        tmp_filepath = save_zk_results(results, save_hotkey, use_tmp=True)
+        bt.logging.info(f"Results saved to tmp: {tmp_filepath}")
+
+        upload_success = isinstance(upload_result, dict) and upload_result.get(
+            "success", False
+        )
+
+        if upload_success:
+            upload_url = upload_result.get("url", "N/A")
+            bt.logging.success(f"✅ Upload successful! URL: {upload_url}")
+
+            if tmp_filepath and os.path.exists(tmp_filepath):
+                os.remove(tmp_filepath)
+                bt.logging.info(f"Temporary file deleted: {tmp_filepath}")
+        else:
+            reason = "not attempted" if upload_result is None else "failed"
+            bt.logging.warning(
+                f"Upload {reason}, results remain in tmp: {tmp_filepath}"
+            )
+
     except Exception as e:
         bt.logging.error(f"Failed to save ZK results: {e}")
 
