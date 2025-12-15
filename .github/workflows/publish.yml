@@ -30,6 +30,17 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
 
+      - name: Install Noir
+        run: |
+          curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
+          $HOME/.nargo/bin/noirup
+          echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+
+      - name: Compile Noir circuits
+        run: |
+          cd proof_of_portfolio/circuits
+          nargo compile
+
       - name: Set version
         id: version
         run: |
