@@ -121,7 +121,10 @@ def parse_circuit_output(output):
 
         if "root:" in struct_content:
             start = struct_content.find("root:") + len("root:")
-            root_section = struct_content[start:].strip().rstrip("}")
+            end = struct_content.find(",", start)
+            if end == -1:
+                end = struct_content.find("}", start)
+            root_section = struct_content[start:end].strip()
             tree["root"] = root_section.strip()
 
         return tree
@@ -373,6 +376,7 @@ def generate_bb_proof(circuit_dir):
 
     witness_file = os.path.join(target_dir, "witness.gz")
     circuit_file = os.path.join(target_dir, "circuits.json")
+    vk_file = os.path.join(circuit_dir, "vk", "vk")
 
     bt.logging.info("Checking required files:")
     bt.logging.info(
@@ -381,12 +385,16 @@ def generate_bb_proof(circuit_dir):
     bt.logging.info(
         f"  circuit_file: {circuit_file} (exists: {os.path.exists(circuit_file)})"
     )
+    bt.logging.info(f"  vk_file: {vk_file} (exists: {os.path.exists(vk_file)})")
 
     if not os.path.exists(witness_file):
         bt.logging.error(f"Witness file not found: {witness_file}")
         return None, False
     if not os.path.exists(circuit_file):
         bt.logging.error(f"Circuit file not found: {circuit_file}")
+        return None, False
+    if not os.path.exists(vk_file):
+        bt.logging.error(f"VK file not found: {vk_file}")
         return None, False
 
     prove_cmd = [
@@ -398,7 +406,8 @@ def generate_bb_proof(circuit_dir):
         witness_file,
         "-o",
         proof_dir,
-        "--zk",
+        "-k",
+        vk_file,
     ]
     bt.logging.info(f"Running bb prove command: {' '.join(prove_cmd)}")
     bt.logging.info(f"Working directory: {circuit_dir}")

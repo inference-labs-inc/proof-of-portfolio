@@ -137,52 +137,20 @@ install_noir() {
 install_barretenberg() {
     echo -e "\033[34mInstalling/updating Barretenberg...\033[0m"
 
+    BB_VERSION="3.0.0-nightly.20251104"
+
     mkdir -p "$HOME/.bb"
 
-    # Detect OS and download appropriate binary from inference-labs-inc/bb
-    BB_VERSION="bb-v0.87.0-20250919-165810"
-    BB_BASE_URL="https://github.com/inference-labs-inc/bb/releases/download/$BB_VERSION"
-
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        # Detect Ubuntu version
-        if [ -f /etc/os-release ]; then
-            . /etc/os-release
-            if [[ "$VERSION_ID" == "24.04"* ]]; then
-                BB_BINARY="bb-linux-x86_64-ubuntu2404"
-            else
-                # Default to ubuntu2204 build for older/other versions
-                BB_BINARY="bb-linux-x86_64-ubuntu2204"
-            fi
-        else
-            BB_BINARY="bb-linux-x86_64-ubuntu2204"
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS - use bbup for now as we don't have pre-built macOS binaries
-        echo "Installing bb via bbup for macOS..."
-        curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
-        refresh_path
-        BBUP_CMD=$(find_executable "bbup" ".bb" || true)
-        if [ -n "$BBUP_CMD" ]; then
-            $BBUP_CMD --version 0.87.0
-        fi
-        refresh_path
-        BB_CMD=$(find_executable "bb" ".bb" || true)
-        if [ -n "$BB_CMD" ]; then
-            echo -e "\033[32mBarretenberg successfully installed!\033[0m"
-            $BB_CMD --version
-        else
-            echo -e "\033[31mFailed to install Barretenberg.\033[0m"
-            exit 1
-        fi
-        return
+    echo "Installing bb via bbup..."
+    curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
+    refresh_path
+    BBUP_CMD=$(find_executable "bbup" ".bb" || true)
+    if [ -n "$BBUP_CMD" ]; then
+        $BBUP_CMD --version $BB_VERSION
     else
-        echo -e "\033[31mUnsupported OS: $OSTYPE\033[0m"
+        echo -e "\033[31mFailed to install bbup.\033[0m"
         exit 1
     fi
-
-    echo "Downloading $BB_BINARY..."
-    curl -L "$BB_BASE_URL/$BB_BINARY" -o "$HOME/.bb/bb"
-    chmod +x "$HOME/.bb/bb"
 
     refresh_path
     BB_CMD=$(find_executable "bb" ".bb" || true)
