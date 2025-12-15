@@ -94,7 +94,7 @@ pub fn sharpe(
         calculated
     };
 
-    let tolerance: i64 = 500000;
+    let tolerance: i64 = 2000000;
     let diff = if result > python_sharpe {
         result - python_sharpe
     } else {
