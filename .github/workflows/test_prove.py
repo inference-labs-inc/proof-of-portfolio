@@ -13,7 +13,7 @@ import proof_of_portfolio
 ptn_path = project_root / "proprietary-trading-network"
 sys.path.insert(0, str(ptn_path))
 # ruff: noqa: E402
-from vali_objects.vali_dataclasses.perf_ledger import PerfLedger, PerfCheckpoint
+from vali_objects.vali_dataclasses.ledger.perf.perf_ledger import PerfLedger, PerfCheckpoint
 from vali_objects.utils.metrics import Metrics
 
 SCALE = 100000000
