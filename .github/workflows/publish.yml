@@ -30,16 +30,18 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
 
-      - name: Install Noir
+      - name: Install Noir and Barretenberg
         run: |
-          curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-          $HOME/.nargo/bin/noirup
+          bash install.sh -n -r
           echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.bb" >> $GITHUB_PATH
 
-      - name: Compile Noir circuits
+      - name: Compile Noir circuits and generate VK
         run: |
           cd proof_of_portfolio/circuits
           nargo compile
+          mkdir -p vk
+          bb write_vk -b target/circuits.json -o vk/vk
 
       - name: Set version
         id: version

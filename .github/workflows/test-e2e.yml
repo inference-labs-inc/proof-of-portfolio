@@ -30,6 +30,21 @@ jobs:
       with:
         enable-cache: true
 
+    - name: Install Noir and Barretenberg
+      shell: bash
+      run: |
+        bash install.sh -n -r
+        echo "$HOME/.nargo/bin" >> $GITHUB_PATH
+        echo "$HOME/.bb" >> $GITHUB_PATH
+
+    - name: Compile circuits and generate VK
+      shell: bash
+      run: |
+        cd proof_of_portfolio/circuits
+        nargo compile
+        mkdir -p vk
+        bb write_vk -b target/circuits.json -o vk/vk
+
     - name: Install package
       shell: bash
       run: |
