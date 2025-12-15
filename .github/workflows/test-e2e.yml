@@ -51,6 +51,8 @@ jobs:
 
     - name: Test end-to-end proof generation and verification
       shell: bash
+      env:
+        PYTHONPATH: ${{ github.workspace }}/proprietary-trading-network
       run: |
         source .venv/bin/activate
         python .github/workflows/test_prove.py
