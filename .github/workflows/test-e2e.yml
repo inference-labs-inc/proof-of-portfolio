@@ -51,10 +51,18 @@ jobs:
 
     - name: Test end-to-end proof generation and verification
       shell: bash
-      env:
-        PYTHONPATH: ${{ github.workspace }}/proprietary-trading-network
       run: |
         source .venv/bin/activate
+        echo "=== Debug: Directory structure ==="
+        ls -la proprietary-trading-network/
+        ls -la proprietary-trading-network/vali_objects/
+        ls -la proprietary-trading-network/vali_objects/vali_dataclasses/
+        echo "=== Debug: __init__.py files ==="
+        cat proprietary-trading-network/vali_objects/__init__.py || echo "no __init__.py"
+        cat proprietary-trading-network/vali_objects/vali_dataclasses/__init__.py || echo "no __init__.py"
+        echo "=== Debug: Testing import ==="
+        export PYTHONPATH="${{ github.workspace }}/proprietary-trading-network:$PYTHONPATH"
+        python -c "import sys; sys.path.insert(0, '${{ github.workspace }}/proprietary-trading-network'); import vali_objects; print('vali_objects imported from:', vali_objects.__file__)"
         python .github/workflows/test_prove.py
 
     - name: Test CLI functionality
