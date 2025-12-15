@@ -42,6 +42,7 @@ jobs:
       run: |
         cd proof_of_portfolio/circuits
         nargo compile
+        rm -rf vk
         mkdir -p vk
         bb write_vk -b target/circuits.json -o vk/vk
 

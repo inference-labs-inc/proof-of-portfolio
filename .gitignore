@@ -53,3 +53,4 @@ proof-of-portfolio.code-workspace
 *.egg-info
 **proof
 **.gz
+**/vk/
