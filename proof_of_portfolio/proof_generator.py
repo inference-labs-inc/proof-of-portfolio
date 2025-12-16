@@ -209,7 +209,7 @@ def upload_proof(proof_hex, public_inputs_hex, wallet, testnet=True):
         signature = wallet.hotkey.sign(timestamp.encode())
         signature_b64 = base64.b64encode(signature).decode()
 
-        url = "https://api.omron.ai/ptn/upload-proof"
+        url = "https://sn2-api.inferencelabs.com/ptn/upload-proof"
         headers = {
             "x-signature": signature_b64,
             "x-timestamp": timestamp,

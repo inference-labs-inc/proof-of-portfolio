@@ -8,7 +8,7 @@ def get_validator_miner_proof(
     validator_hotkey: str,
     miner_hotkey: str,
     include_testnet: bool = False,
-    api_base_url: str = "https://api.omron.ai",
+    api_base_url: str = "https://sn2-api.inferencelabs.com",
 ) -> Optional[Dict[str, Any]]:
     """
     Fetch the latest proof for a specific miner from a validator.
@@ -63,7 +63,7 @@ def fetch_and_verify_miner_proof(
     validator_hotkey: str,
     miner_hotkey: str,
     include_testnet: bool = False,
-    api_base_url: str = "https://api.omron.ai",
+    api_base_url: str = "https://sn2-api.inferencelabs.com",
 ) -> Optional[Dict[str, Any]]:
     """
     Fetch and verify a proof for a specific miner from a validator.

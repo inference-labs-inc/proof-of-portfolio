@@ -2,7 +2,7 @@
 
 **A decentralized framework for verifiable, private performance metrics using Zero-Knowledge Proofs.**
 
-[Explorer](https://ptn.omron.ai) | [Docs](https://inferencelabs.gitbook.io/proof-of-portfolio/) | [PyPI](https://pypi.org/project/proof-of-portfolio/) | [API](https://api.omron.ai/docs#tag/default/get/ptn/{validator_hotkey})
+[Explorer](https://sn2-ptn.inferencelabs.com) | [Docs](https://inferencelabs.gitbook.io/proof-of-portfolio/) | [PyPI](https://pypi.org/project/proof-of-portfolio/) | [API](https://sn2-api.inferencelabs.com/docs#tag/default/get/ptn/{validator_hotkey})
 
 Proof of Portfolio (PoP) is a framework that enables **Validators** to generate verifiable attestations of private portfolio performance. The system provides tooling for the original data owners (**Miners**) and consumers (**Signal Purchasers**) to cryptographically verify these attestations—ensuring both data inclusion and correctness of calculated metrics—all without the validator ever exposing the underlying private data.
 
@@ -35,9 +35,9 @@ This is achieved by combining Merkle trees to commit to a history of portfolio d
 
 The PoP system establishes trust through a validator-centric attestation model. It assumes a validator already has access to a set of private miner data. The tooling then facilitates a cryptographic process built on two key principles:
 
-1.  **Merkle Trees**: A validator takes a miner's private portfolio history (checkpoints, positions, orders) and builds a Merkle tree from it. The resulting **Merkle Root** is made public. This root acts as a secure, tamper-proof fingerprint of the miner's entire dataset.
+1. **Merkle Trees**: A validator takes a miner's private portfolio history (checkpoints, positions, orders) and builds a Merkle tree from it. The resulting **Merkle Root** is made public. This root acts as a secure, tamper-proof fingerprint of the miner's entire dataset.
 
-2.  **Zero-Knowledge Proofs (ZKPs)**: Using circuits written in Noir, the validator generates a proof that specific performance metrics were calculated correctly over the private data corresponding to the public Merkle root.
+2. **Zero-Knowledge Proofs (ZKPs)**: Using circuits written in Noir, the validator generates a proof that specific performance metrics were calculated correctly over the private data corresponding to the public Merkle root.
 
 This combination allows for **verifiable, private computation**. Miners and signal purchasers can trust the publicly-stated performance metrics because:
 
@@ -144,9 +144,11 @@ This command outputs a Merkle root. The miner can then compare this root to the 
 ### Utility Commands
 
 - **`generate-test-data`**: Creates a randomized `validator_checkpoint.json`-style file for testing.
+
   ```bash
   pop generate-test-data --num-miners 5 --output-file test_data.json
   ```
+
 - **`save-tree`**: A helper utility to save a `tree.json` file to a different location.
 
 ---
