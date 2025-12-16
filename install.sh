@@ -138,9 +138,29 @@ install_barretenberg() {
     echo -e "\033[34mInstalling/updating Barretenberg...\033[0m"
 
     BB_VERSION="3.0.0-nightly.20251104"
-
     mkdir -p "$HOME/.bb"
 
+    # Ubuntu 22.04 needs pre-built binary due to glibc
+    if [[ "$OSTYPE" == "linux-gnu"* ]] && [ -f /etc/os-release ]; then
+        . /etc/os-release
+        if [[ "$VERSION_ID" == "22.04"* ]]; then
+            echo "Downloading pre-built bb for Ubuntu 22.04..."
+            curl -L "https://github.com/inference-labs-inc/bb/releases/download/bb-v$BB_VERSION/bb" -o "$HOME/.bb/bb"
+            chmod +x "$HOME/.bb/bb"
+            refresh_path
+            BB_CMD=$(find_executable "bb" ".bb" || true)
+            if [ -n "$BB_CMD" ]; then
+                echo -e "\033[32mBarretenberg successfully installed!\033[0m"
+                $BB_CMD --version
+            else
+                echo -e "\033[31mFailed to install Barretenberg.\033[0m"
+                exit 1
+            fi
+            return
+        fi
+    fi
+
+    # All other platforms use bbup
     echo "Installing bb via bbup..."
     curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
     refresh_path
